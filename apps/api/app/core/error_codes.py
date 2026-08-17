@@ -1,0 +1,6 @@
+from enum import StrEnum
+
+
+class ErrorCode(StrEnum):
+    DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"

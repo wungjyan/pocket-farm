@@ -1,0 +1,27 @@
+{
+  "name": "pocket-farm",
+  "version": "1.0.0",
+  "description": "Pocket Farm monorepo",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.8",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "mermaid": "^11.16.1",
+    "vitepress": "2.0.0-alpha.19",
+    "vitepress-mermaid-renderer": "^1.2.0",
+    "vue": "^3.5.41"
+  }
+}

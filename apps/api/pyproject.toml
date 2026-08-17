@@ -1,0 +1,32 @@
+[project]
+name = "server"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "aiomysql>=0.3.2",
+    "alembic>=1.18.5",
+    "fastapi>=0.141.1",
+    "greenlet>=3.5.4",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.0.51",
+    "uvicorn[standard]>=0.52.1",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "ruff>=0.16.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

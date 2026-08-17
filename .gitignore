@@ -1,0 +1,18 @@
+# Node.js dependencies
+node_modules/
+
+# VitePress generated files
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Python generated files
+**/__pycache__/
+*.py[cod]
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Local operating-system files
+.DS_Store
