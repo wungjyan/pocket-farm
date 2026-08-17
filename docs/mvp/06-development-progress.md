@@ -43,8 +43,20 @@
 
 - `Settings`、异步 Engine、`async_sessionmaker` 和每请求独立的 `AsyncSession` Dependency 已就绪。
 - 已建立带命名约定的 SQLAlchemy `DeclarativeBase`。
-- 已建立基础应用异常结构，响应格式为 `detail.code` 和 `detail.message`。
+- 已建立统一响应结构：`success`、`data`、`error`。
+- 成功响应将业务结果放在 `data`；错误响应将 `data` 置为 `null`，并在 `error` 中返回 `code`、`message` 和可选的 `details`。
+- 已统一处理业务异常、参数校验错误、HTTP 错误和未处理异常。
 - 已提供 `GET /health`，通过异步 `SELECT 1` 验证数据库连接。
+
+统一响应示例：
+
+```json
+{
+  "success": true,
+  "data": { "status": "ok" },
+  "error": null
+}
+```
 
 ### Migration
 
@@ -56,7 +68,7 @@
 
 - `uv run alembic current`：通过，当前为 `ea649aaf28e0 (head)`。
 - `uv run alembic check`：通过，无待生成 migration。
-- `uv run pytest`：通过（1 passed）。
+- `uv run pytest`：通过（3 passed）。
 - `uv run ruff check .` 和 `uv run ruff format --check .`：通过。
 - 启动 Uvicorn 后，`GET /health` 返回 `200 {"status":"ok"}`。
 

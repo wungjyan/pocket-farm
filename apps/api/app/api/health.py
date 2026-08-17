@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db_session
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
+from app.schemas.response import ApiResponse
 
 router = APIRouter(tags=["health"])
 
@@ -15,8 +16,10 @@ class HealthResponse(BaseModel):
     status: str
 
 
-@router.get("/health", response_model=HealthResponse)
-async def health_check(session: AsyncSession = Depends(get_db_session)) -> HealthResponse:
+@router.get("/health", response_model=ApiResponse[HealthResponse])
+async def health_check(
+    session: AsyncSession = Depends(get_db_session),
+) -> ApiResponse[HealthResponse]:
     """Confirm that the API can make an asynchronous MySQL query."""
     try:
         await session.execute(text("SELECT 1"))
@@ -28,4 +31,4 @@ async def health_check(session: AsyncSession = Depends(get_db_session)) -> Healt
             message="Database is unavailable.",
         ) from exc
 
-    return HealthResponse(status="ok")
+    return ApiResponse.success_response(data=HealthResponse(status="ok"))
