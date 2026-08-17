@@ -4,6 +4,7 @@ import httpx
 from fastapi import FastAPI, Query
 
 from app.core.exceptions import register_exception_handlers
+from app.db.session import engine
 from app.main import app
 
 validation_app = FastAPI()
@@ -18,7 +19,9 @@ async def validate(value: int = Query(...)) -> dict[str, int]:
 async def request_path(path: str, asgi_app: FastAPI = app) -> httpx.Response:
     transport = httpx.ASGITransport(app=asgi_app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        return await client.get(path)
+        response = await client.get(path)
+    await engine.dispose()
+    return response
 
 
 def test_health_check_returns_ok() -> None:

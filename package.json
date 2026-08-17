@@ -5,7 +5,9 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "miniapp:dev": "pnpm --filter uni-preset-vue dev:mp-weixin",
+    "miniapp:build": "pnpm --filter uni-preset-vue build:mp-weixin"
   },
   "keywords": [],
   "author": "",
