@@ -25,6 +25,10 @@ export default defineConfig({
           { text: "API 与安全设计", link: "/mvp/04-api-security" },
           { text: "MVP 开发计划", link: "/mvp/05-development-plan" },
           { text: "MVP 开发进度", link: "/mvp/06-development-progress" },
+          {
+            text: "小程序页面架构与视觉基线",
+            link: "/mvp/07-miniapp-information-architecture",
+          },
         ],
       },
     ],
@@ -46,6 +50,10 @@ export default defineConfig({
           { text: "API 与安全设计", link: "/mvp/04-api-security" },
           { text: "MVP 开发计划", link: "/mvp/05-development-plan" },
           { text: "MVP 开发进度", link: "/mvp/06-development-progress" },
+          {
+            text: "小程序页面架构与视觉基线",
+            link: "/mvp/07-miniapp-information-architecture",
+          },
         ],
       },
     ],

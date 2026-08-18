@@ -16,7 +16,9 @@ erDiagram
     PRODUCTION o|--o{ FARM_OPERATION : relates_to
     PRODUCTION ||--o{ HARVEST_RECORD : yields
     USER ||--o{ FARM_OPERATION : operates
+    USER ||--o{ FARM_OPERATION : creates
     USER ||--o{ HARVEST_RECORD : harvests
+    USER ||--o{ HARVEST_RECORD : creates
 
     USER {
         bigint id PK
@@ -58,12 +60,14 @@ erDiagram
         bigint plot_id FK
         bigint production_id FK
         bigint operator_id FK
+        bigint created_by FK
         datetime operated_at
     }
     HARVEST_RECORD {
         bigint id PK
         bigint production_id FK
         bigint operator_id FK
+        bigint created_by FK
         datetime harvested_at
     }
 ```
@@ -456,6 +460,7 @@ operation_type
 work_method
 operated_at
 operator_id
+created_by
 
 remark
 
@@ -469,6 +474,10 @@ plot_id：
 
 production_id：
 可空
+
+`operator_id`：必填，关联实际执行工作的 User。
+
+`created_by`：必填，关联创建该记录的 User；只能由后端根据当前 JWT 写入。
 
 因此空闲地块也可以记录 FarmOperation。
 
@@ -521,6 +530,7 @@ unit
 work_method
 harvested_at
 operator_id
+created_by
 
 product_name
 grade
@@ -534,6 +544,8 @@ HarvestRecord 必须属于 Production。
 不允许：
 
 production_id = NULL
+
+`operator_id` 与 `created_by` 均为必填 User 外键。前者表示实际执行收获的成员，后者表示在系统中创建记录的成员。
 
 ---
 
@@ -553,7 +565,7 @@ HarvestRecord 不负责结束 Production。
 
 ---
 
-## 22. Operator
+## 22. Operator 与记录人
 
 FarmOperation.operator_id
 HarvestRecord.operator_id
@@ -562,7 +574,19 @@ HarvestRecord.operator_id
 
 User.id
 
-默认当前登录用户。
+`operator_id` 表示实际执行农事、采收、捕捞或出栏的人员。默认使用当前登录用户，但允许在当前 Farm 的有效成员中选择其他用户。
+
+`created_by` 表示在系统中创建该记录的用户，必须由后端根据当前 JWT 自动写入，前端不能传入或修改。创建记录时：
+
+```text
+created_by = current_user.id
+```
+
+编辑记录时保留原始 `created_by`、`created_at`，不改为当前编辑用户。
+
+对于 `operator_id`，创建或修改时必须验证对应 User 存在且是资源所属 Farm 的有效 FarmMember。
+
+当 `operator_id == created_by` 时，前端详情可以只展示“操作人”；二者不同时，同时展示“操作人”和“记录人”。
 
 执行操作时必须验证：
 

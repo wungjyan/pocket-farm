@@ -94,6 +94,7 @@ FastAPI 可以通过 AsyncSession 异步连接 MySQL。
 - 手机号验证码登录
 - 获取当前用户
 - 修改当前用户昵称
+- 所有接口使用统一响应结构：`success`、`data`、`error`
 
 开发与测试环境：
 
@@ -258,6 +259,8 @@ farm_operations
 
 OperationType
 
+`FarmOperation.operator_id` 表示实际操作人，默认当前用户但允许选择当前 Farm 的其他有效成员；`created_by` 由后端根据 JWT 自动写入，客户端不可传入或修改。
+
 功能：
 
 - 创建农事
@@ -316,6 +319,8 @@ harvest_records
 
 Production Harvest List
 Plot Harvest List
+
+`HarvestRecord.operator_id` 表示实际采收、捕捞或出栏人员，默认当前用户但允许选择当前 Farm 的其他有效成员；`created_by` 由后端根据 JWT 自动写入，客户端不可传入或修改。
 
 测试：
 
@@ -531,6 +536,9 @@ Production B 生菜 ACTIVE
 - 重复结束禁止
 
 - Operator 必须属于 Farm
+- `operator_id` 与 `created_by` 语义分离：操作人可选择当前 Farm 成员，记录人由 JWT 自动写入
+- 创建或编辑记录时不得通过客户端覆盖 `created_by`
+- 编辑记录不得修改原始 `created_by` 与 `created_at`
 
 - 可预测 ID 不能造成越权
 

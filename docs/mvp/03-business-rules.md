@@ -286,6 +286,16 @@ workMethod = MANUAL
 operatedAt = 当前时间
 operator = 当前用户
 
+`operator` 表示实际执行农事的 Farm 成员。前端默认选择当前用户，但允许改选当前 Farm 的其他有效成员。请求中的 `operatorId` 必须由后端校验其对应用户存在且属于当前 Farm；不允许仅依赖前端的成员选择列表。
+
+系统另行保存 `createdBy`：它表示在系统中创建记录的用户，必须由后端从 JWT 获取，前端不能传入、指定或修改。创建时：
+
+```text
+createdBy = current_user.id
+```
+
+编辑时保留原始 `createdBy` 与 `createdAt`，不因编辑人变化而更新。MVP 暂不增加 `updatedBy` 或完整审计日志。
+
 照片可以后续增加。
 
 不要让文件上传阻塞第一版。
@@ -375,6 +385,10 @@ unit *
 workMethod = MANUAL
 harvestedAt = 当前时间
 operator = 当前用户
+
+`operator` 表示实际执行采收、捕捞或出栏的 Farm 成员。前端默认当前用户，但允许改选当前 Farm 的其他有效成员；后端必须验证该成员归属于当前 Farm。
+
+HarvestRecord 同样保存 `createdBy`，由后端根据 JWT 自动写入，前端不可传入或修改；编辑时保留原始 `createdBy` 与 `createdAt`。
 
 选填：
 

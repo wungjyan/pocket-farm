@@ -147,6 +147,8 @@ FarmOperation
 
 还需要验证 Production 确实属于同一个 Plot。
 
+`operator_id` 还必须满足：对应 User 存在，且是该 Farm 的有效 FarmMember。`created_by` 不接受客户端传入，由后端从当前 JWT 写入；创建和编辑接口都不得允许客户端覆盖它。
+
 ---
 
 ## 11. HarvestRecord 权限
@@ -156,6 +158,8 @@ HarvestRecord
 → Plot
 → Farm
 → FarmMember
+
+`operator_id` 必须属于 Production 所属 Farm 的有效 FarmMember。`created_by` 始终由后端从当前 JWT 获取，客户端不可指定或修改。
 
 ---
 
@@ -267,24 +271,36 @@ GET /api/v1/plots/{plotId}/harvests
 
 ---
 
+### 操作人和记录人的 API 字段约束
+
+FarmOperation 与 HarvestRecord 的创建请求可以传入 `operatorId`；未传入时由后端默认使用当前登录用户。传入后必须验证该用户属于资源所属 Farm 的有效 FarmMember。
+
+编辑请求仅在需要变更实际执行人时传入 `operatorId`，同样执行 FarmMember 校验。
+
+`createdBy`、`createdAt` 属于服务端维护字段：
+
+- 不接受客户端在创建或编辑请求中传入
+- 创建时由 JWT 当前用户写入 `createdBy`
+- 编辑时保持原始 `createdBy` 与 `createdAt`
+- 响应可以返回记录人信息，供详情页在操作人与记录人不同时展示
+
+---
+
 ## 13. Response
 
-成功接口直接返回明确 Pydantic Response。
+所有接口统一使用简单稳定的响应 envelope：
 
-不要为了统一包装成：
-
+```json
 {
-  "code": 0,
-  "data": {
-    "data": ...
-  }
+  "success": true,
+  "data": {},
+  "error": null
 }
+```
 
-这种多层结构。
+成功响应将业务结果放在 `data`；错误响应将 `success` 设为 `false`，将 `data` 置为 `null`，并在 `error` 中返回错误信息。避免出现 `data.data` 等多层重复包装。
 
-可以使用简单稳定形式。
-
-列表接口统一使用分页 Response，不使用 `code/data` 包装：
+列表接口的分页结果放在 `data` 中：
 
 ```json
 {
@@ -303,12 +319,19 @@ GET /api/v1/plots/{plotId}/harvests
 
 ## 14. Error Response
 
-错误格式统一，例如：
+错误 envelope 统一，例如：
 
+```json
 {
-  "code": "PRODUCTION_ALREADY_ENDED",
-  "message": "该种养已经结束"
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "PRODUCTION_ALREADY_ENDED",
+    "message": "该种养已经结束",
+    "details": null
+  }
 }
+```
 
 至少区分：
 
@@ -317,7 +340,7 @@ UNAUTHORIZED
 FORBIDDEN
 NOT_FOUND
 BUSINESS_CONFLICT
-INTERNAL_ERROR
+INTERNAL_SERVER_ERROR
 
 不要向客户端返回：
 
