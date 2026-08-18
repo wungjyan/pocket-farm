@@ -1,22 +1,12 @@
 <template>
-  <view class="page profile-page">
-    <view class="page-heading">
-      <text class="eyebrow">账号信息</text>
-      <text class="page-title">个人资料</text>
-      <text class="page-description">修改应用内展示的昵称，让记录更容易被辨认。</text>
+  <view class="pf-page profile-page">
+    <view class="page-intro">
+      <text class="page-description">修改应用内展示的昵称，后续记录会使用这个名称。</text>
     </view>
 
-    <view class="identity-preview">
-      <uv-avatar :text="avatarText" size="64" bg-color="#2F7D4A" color="#FFFFFF" />
-      <view class="identity-copy">
-        <text class="identity-label">当前昵称</text>
-        <text class="identity-value">{{ form.nickname.trim() || "未设置昵称" }}</text>
-      </view>
-    </view>
-
-    <view class="form-section">
+    <view class="form-card pf-card">
       <text class="field-label">昵称</text>
-      <view class="input-shell">
+      <view class="input-shell" :class="{ 'input-shell--focused': inputFocused }">
         <uv-input
           v-model="form.nickname"
           maxlength="50"
@@ -25,29 +15,31 @@
           placeholder="请输入昵称"
           placeholder-style="color: #929A93;"
           color="#202821"
+          @focus="inputFocused = true"
+          @blur="inputFocused = false"
         />
       </view>
-      <text class="field-help">昵称会显示在首页和后续的生产记录中</text>
-    </view>
+      <text class="field-help">昵称会显示在首页和生产记录中</text>
 
-    <uv-button
-      type="primary"
-      size="large"
-      shape="square"
-      :loading="saving"
-      loading-text="保存中"
-      custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
-      @click="handleSave"
-    >
-      保存修改
-    </uv-button>
+      <uv-button
+        type="primary"
+        size="large"
+        shape="square"
+        :loading="saving"
+        loading-text="保存中"
+        custom-style="height: 88rpx; margin-top: 36rpx; border-radius: 16rpx;"
+        @click="handleSave"
+      >
+        保存修改
+      </uv-button>
+    </view>
 
     <uv-toast ref="toastRef" />
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { reactive, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
@@ -55,8 +47,8 @@ import { getCurrentUser, updateCurrentUser } from "../../services/user";
 
 const form = reactive({ nickname: "" });
 const saving = ref(false);
+const inputFocused = ref(false);
 const toastRef = ref<{ error: (message: string) => void; success: (message: string) => void } | null>(null);
-const avatarText = computed(() => form.nickname.trim().slice(0, 1) || "我");
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -101,82 +93,31 @@ onShow(loadUser);
 </script>
 
 <style lang="scss" scoped>
-.page {
-  min-height: 100vh;
-  box-sizing: border-box;
-  padding: 28rpx 32rpx 64rpx;
-  background: #f7f8f3;
+@import "../../styles/design-tokens.scss";
+
+.profile-page {
+  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
 }
 
-.page-heading {
-  padding: 12rpx 4rpx 30rpx;
-}
-
-.eyebrow {
-  display: block;
-  color: #2f7d4a;
-  font-size: 24rpx;
-  font-weight: 600;
-}
-
-.page-title {
-  display: block;
-  margin-top: 10rpx;
-  color: #202821;
-  font-size: 40rpx;
-  font-weight: 700;
+.page-intro {
+  padding: 12rpx 4rpx 28rpx;
 }
 
 .page-description {
   display: block;
-  margin-top: 12rpx;
-  color: #667068;
+  color: $pf-color-text-secondary;
   font-size: 25rpx;
   line-height: 1.55;
 }
 
-.identity-preview {
-  display: flex;
-  align-items: center;
-  padding: 24rpx;
-  border-radius: 22rpx;
-  background: #eaf4ec;
-}
-
-.identity-copy {
-  margin-left: 18rpx;
-}
-
-.identity-label,
-.identity-value {
-  display: block;
-}
-
-.identity-label {
-  color: #2f7d4a;
-  font-size: 23rpx;
-  font-weight: 600;
-}
-
-.identity-value {
-  margin-top: 8rpx;
-  color: #202821;
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.form-section {
-  margin-top: 32rpx;
-  padding: 28rpx 24rpx 24rpx;
-  border: 1rpx solid #e2e6e0;
-  border-radius: 22rpx;
-  background: #ffffff;
+.form-card {
+  padding: 28rpx 24rpx;
 }
 
 .field-label {
   display: block;
   margin-bottom: 14rpx;
-  color: #202821;
+  color: $pf-color-text;
   font-size: 27rpx;
   font-weight: 600;
 }
@@ -187,9 +128,13 @@ onShow(loadUser);
   box-sizing: border-box;
   align-items: center;
   padding: 0 20rpx;
-  border: 1rpx solid #e2e6e0;
-  border-radius: 14rpx;
-  background: #f7f8f3;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-control;
+  background: $pf-color-surface;
+}
+
+.input-shell--focused {
+  border-color: $pf-color-primary;
 }
 
 .input-shell :deep(.uv-input) {
@@ -199,7 +144,7 @@ onShow(loadUser);
 .field-help {
   display: block;
   margin-top: 14rpx;
-  color: #929a93;
+  color: $pf-color-text-muted;
   font-size: 22rpx;
   line-height: 1.45;
 }

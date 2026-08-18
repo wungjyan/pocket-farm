@@ -1,0 +1,20 @@
+/* 掌上农场公共视觉 token。页面样式优先引用这些变量，避免各页重新定义颜色和圆角。 */
+$pf-color-page: #f7f8f3;
+$pf-color-surface: #ffffff;
+$pf-color-surface-muted: #f3f5f1;
+$pf-color-primary: #2f7d4a;
+$pf-color-primary-pressed: #276a3e;
+$pf-color-primary-soft: #eaf4ec;
+$pf-color-text: #202821;
+$pf-color-text-secondary: #667068;
+$pf-color-text-muted: #929a93;
+$pf-color-border: #e2e6e0;
+$pf-color-divider: #ecefeb;
+
+$pf-radius-control: 16rpx;
+$pf-radius-card: 32rpx;
+$pf-radius-list: 24rpx;
+
+$pf-space-page-x: 32rpx;
+$pf-space-page-bottom: 64rpx;
+$pf-space-section: 40rpx;

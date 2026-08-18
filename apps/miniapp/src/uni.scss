@@ -13,6 +13,7 @@
  */
 
 @import '@/uni_modules/uv-ui-tools/theme.scss';
+@import '@/styles/design-tokens.scss';
 
 /* 掌上农场主题 */
 
@@ -64,7 +65,7 @@ $uni-text-color-disable: #c8cec8;
 
 /* 背景颜色 */
 $uni-bg-color: #fff;
-$uni-bg-color-grey: #f3f5f1;
+$uni-bg-color-grey: #f7f8f3;
 $uni-bg-color-hover: #eaf4ec; // 点击状态颜色
 $uni-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩颜色
 

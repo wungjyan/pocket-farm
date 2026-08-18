@@ -1,0 +1,52 @@
+@import "./design-tokens.scss";
+
+/* 页面基础层 */
+.pf-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: $pf-color-page;
+}
+
+.pf-page-content {
+  padding: 8rpx $pf-space-page-x $pf-space-page-bottom;
+}
+
+/* 区块标题只负责层级，不额外包裹卡片。 */
+.pf-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: $pf-space-section 4rpx 16rpx;
+}
+
+.pf-section-title {
+  color: $pf-color-text;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.pf-section-note,
+.pf-section-action {
+  font-size: 23rpx;
+}
+
+.pf-section-note {
+  color: $pf-color-text-muted;
+}
+
+.pf-section-action {
+  color: $pf-color-primary;
+}
+
+/* 普通白色承载面，控制圆角和边界感。 */
+.pf-card {
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-list;
+  background: $pf-color-surface;
+}
+
+.pf-card--emphasis {
+  border: 0;
+  border-radius: $pf-radius-card;
+  background: $pf-color-primary-soft;
+}

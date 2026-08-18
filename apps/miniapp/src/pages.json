@@ -30,6 +30,12 @@
       }
     },
     {
+      "path": "pages/farms/index",
+      "style": {
+        "navigationBarTitleText": "我的农场"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"
