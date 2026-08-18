@@ -36,6 +36,31 @@
       }
     },
     {
+      "path": "pages/farms/create",
+      "style": {
+        "navigationBarTitleText": "创建农场"
+      }
+    },
+    {
+      "path": "pages/farms/detail",
+      "style": {
+        "navigationBarTitleText": "农场设置"
+      }
+    },
+    {
+      "path": "pages/farms/edit",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "编辑农场信息"
+      }
+    },
+    {
+      "path": "pages/farms/members",
+      "style": {
+        "navigationBarTitleText": "成员管理"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"

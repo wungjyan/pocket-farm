@@ -40,7 +40,7 @@ type RequestMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 interface RequestOptions {
   url: string;
   method?: RequestMethod;
-  data?: Record<string, unknown>;
+  data?: object;
 }
 
 export function request<T>({ url, method = "GET", data }: RequestOptions): Promise<T> {
@@ -51,13 +51,18 @@ export function request<T>({ url, method = "GET", data }: RequestOptions): Promi
       url: `${API_BASE_URL}${url}`,
       // uni-app 类型声明遗漏了 PATCH，但微信小程序运行时支持该方法。
       method: method as unknown as "GET" | "POST" | "PUT" | "DELETE" | "OPTIONS" | "HEAD" | "TRACE" | "CONNECT",
-      data,
+      data: data as Record<string, unknown> | undefined,
       header: token ? { Authorization: `Bearer ${token}` } : {},
       success: (response) => {
         const envelope = response.data as ApiEnvelope<T>;
 
         if (response.statusCode === 401) {
           clearAuthToken();
+        }
+
+        if (response.statusCode === 204) {
+          resolve(undefined as T);
+          return;
         }
 
         if (

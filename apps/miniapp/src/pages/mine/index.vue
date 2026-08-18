@@ -29,7 +29,7 @@
           </view>
           <view class="menu-copy">
             <text class="menu-title">我的农场</text>
-            <text class="menu-description">管理拥有和加入的农场</text>
+            <text class="menu-description">切换或管理你的农场</text>
           </view>
           <uv-icon name="arrow-right" size="17" color="#929A93" />
         </view>

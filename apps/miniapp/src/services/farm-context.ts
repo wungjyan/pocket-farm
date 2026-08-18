@@ -1,10 +1,13 @@
 import { computed, ref } from "vue";
+import { getMyFarms, type Farm } from "./farm";
 
 const CURRENT_FARM_KEY = "pocket_farm_current_farm";
 
 export interface FarmSummary {
   id: number;
+  farmCode?: string;
   name: string;
+  region?: string | null;
   role?: "OWNER" | "ADMIN" | "MEMBER";
   plotCount?: number;
   activeProductionCount?: number;
@@ -63,12 +66,28 @@ export function useFarmContext() {
     persistFarm(null);
   }
 
+  async function refreshFromApi(): Promise<FarmSummary | null> {
+    const page = await getMyFarms();
+    return syncAvailableFarms(page.items.map(toFarmSummary));
+  }
+
   return {
     currentFarm,
     currentFarmName,
     hasCurrentFarm,
     selectFarm,
     syncAvailableFarms,
+    refreshFromApi,
     clearFarm,
+  };
+}
+
+export function toFarmSummary(farm: Farm): FarmSummary {
+  return {
+    id: farm.id,
+    farmCode: farm.farmCode,
+    name: farm.name,
+    region: farm.region,
+    role: farm.myRole || undefined,
   };
 }

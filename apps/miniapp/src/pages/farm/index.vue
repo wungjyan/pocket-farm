@@ -36,7 +36,7 @@
           type="primary"
           shape="square"
           custom-style="width: 100%; height: 84rpx; margin-top: 28rpx; border-radius: 16rpx;"
-          @click="showComingSoon"
+          @click="openCreateFarm"
         >
           创建农场
         </uv-button>
@@ -49,10 +49,13 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { onShow } from "@dcloudio/uni-app";
 import PfPageHeader from "../../components/PfPageHeader.vue";
+import { clearAuthToken } from "../../services/auth";
+import { ApiRequestError } from "../../services/http";
 import { useFarmContext } from "../../services/farm-context";
 
-const { currentFarmName, hasCurrentFarm } = useFarmContext();
+const { currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
 const hasFarm = hasCurrentFarm;
 const plotCount = ref(0);
 const activeProductionCount = ref(0);
@@ -61,6 +64,22 @@ const toastRef = ref<{ show: (options: { type?: string; message: string }) => vo
 function showComingSoon(): void {
   toastRef.value?.show({ type: "default", message: "相关功能将在后续阶段开放" });
 }
+
+function openCreateFarm(): void {
+  uni.navigateTo({ url: "/pages/farms/create" });
+}
+
+onShow(async () => {
+  try {
+    await refreshFromApi();
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      clearAuthToken();
+      uni.reLaunch({ url: "/pages/auth/login" });
+    }
+    // The farm page keeps its local context while a transient refresh fails.
+  }
+});
 </script>
 
 <style lang="scss" scoped>

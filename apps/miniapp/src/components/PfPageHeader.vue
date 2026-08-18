@@ -12,18 +12,23 @@
 <script setup lang="ts">
 import { useCustomHeader } from "../composables/useCustomHeader";
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     title: string;
     showBack?: boolean;
     showTitle?: boolean;
+    backHandler?: () => void;
   }>(),
-  { showBack: false, showTitle: true },
+  { showBack: false, showTitle: true, backHandler: undefined },
 );
 
 const { headerStyle, headerInnerStyle } = useCustomHeader();
 
 function handleBack(): void {
+  if (props.backHandler) {
+    props.backHandler();
+    return;
+  }
   uni.navigateBack();
 }
 </script>

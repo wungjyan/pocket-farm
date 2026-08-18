@@ -58,7 +58,7 @@
           type="primary"
           shape="square"
           custom-style="width: 100%; height: 84rpx; margin-top: 28rpx; border-radius: 16rpx;"
-          @click="showComingSoon"
+          @click="openCreateFarm"
         >
           创建农场
         </uv-button>
@@ -79,7 +79,7 @@ import { getCurrentUser, type User } from "../../services/user";
 import { useFarmContext } from "../../services/farm-context";
 
 const user = ref<User | null>(null);
-const { currentFarmName, hasCurrentFarm } = useFarmContext();
+const { currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
 const hasFarm = hasCurrentFarm;
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const displayName = computed(() => user.value?.nickname || maskPhone(user.value?.phoneNumber || "用户"));
@@ -99,9 +99,14 @@ function showComingSoon(): void {
   toastRef.value?.show({ type: "default", message: "相关功能将在后续阶段开放" });
 }
 
+function openCreateFarm(): void {
+  uni.navigateTo({ url: "/pages/farms/create" });
+}
+
 onShow(async () => {
   try {
-    user.value = await getCurrentUser();
+    const [currentUser] = await Promise.all([getCurrentUser(), refreshFromApi()]);
+    user.value = currentUser;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       clearAuthToken();

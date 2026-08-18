@@ -2,7 +2,7 @@ import asyncio
 import os
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, or_, select
 
 os.environ.setdefault(
     "DATABASE_URL",
@@ -13,10 +13,30 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-only-secret-at-least-32-bytes")
 
 async def remove_test_user() -> None:
     from app.db.session import async_session_factory, engine
+    from app.models.farm import Farm, FarmMember
     from app.models.user import User
 
     async with async_session_factory() as session:
-        await session.execute(delete(User).where(User.phone_number == "13800000001"))
+        test_phones = [f"1380000000{index}" for index in range(1, 7)]
+        user_ids = list(
+            (await session.scalars(select(User.id).where(User.phone_number.in_(test_phones)))).all()
+        )
+        farm_ids = list(
+            (await session.scalars(select(Farm.id).where(Farm.created_by.in_(user_ids)))).all()
+        )
+        if user_ids or farm_ids:
+            await session.execute(
+                delete(FarmMember).where(
+                    or_(
+                        FarmMember.user_id.in_(user_ids),
+                        FarmMember.farm_id.in_(farm_ids),
+                    )
+                )
+            )
+        if farm_ids:
+            await session.execute(delete(Farm).where(Farm.id.in_(farm_ids)))
+        if user_ids:
+            await session.execute(delete(User).where(User.id.in_(user_ids)))
         await session.commit()
     await engine.dispose()
 
