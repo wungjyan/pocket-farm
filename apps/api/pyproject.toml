@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiomysql>=0.3.2",
     "alembic>=1.18.5",
+    "cryptography>=50.0.0",
     "fastapi>=0.141.1",
     "greenlet>=3.5.4",
     "pydantic-settings>=2.15.0",
