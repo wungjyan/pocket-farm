@@ -9,20 +9,38 @@
             <text class="farm-summary__value">{{ plotCount }}</text>
             <text class="farm-summary__label">个地块</text>
           </view>
-          <view class="farm-summary__divider" />
-          <view class="farm-summary__item">
-            <text class="farm-summary__value">{{ activeProductionCount }}</text>
-            <text class="farm-summary__label">进行中种养</text>
-          </view>
         </view>
 
         <view class="pf-section-heading">
           <text class="pf-section-title">地块</text>
-          <text class="pf-section-action" @tap="showComingSoon">创建地块</text>
+          <text v-if="canManagePlots" class="pf-section-action" @tap="openCreatePlot">创建地块</text>
         </view>
-        <view class="pf-card plot-placeholder">
-          <uv-icon name="grid" size="22" color="#2F7D4A" />
-          <text>地块列表将在接入农场接口后显示</text>
+        <view v-if="loadingPlots" class="pf-card state-card">
+          <uv-loading-icon mode="circle" color="#2F7D4A" />
+          <text>正在加载地块</text>
+        </view>
+        <view v-else-if="plots.length" class="plot-list">
+          <view v-for="plot in plots" :key="plot.id" class="plot-card pf-card" @tap="openPlot(plot.id)">
+            <view class="plot-card__main">
+              <text class="plot-card__name">{{ plot.name }}</text>
+              <text class="plot-card__meta">{{ plotTypeLabel(plot.type) }} · {{ areaLabel(plot) }}</text>
+            </view>
+            <uv-icon name="arrow-right" size="17" color="#929A93" />
+          </view>
+        </view>
+        <view v-else class="pf-card empty-plot">
+          <uv-icon name="grid" size="24" color="#2F7D4A" />
+          <text>还没有地块</text>
+          <uv-button
+            v-if="canManagePlots"
+            type="primary"
+            size="small"
+            shape="square"
+            custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+            @click="openCreatePlot"
+          >
+            创建地块
+          </uv-button>
         </view>
       </template>
 
@@ -48,30 +66,86 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { useFarmContext } from "../../services/farm-context";
+import { getFarmPlots, type Plot, type PlotType } from "../../services/plot";
+import { formatNumber } from "../../utils/number";
 
-const { currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
+const { currentFarm, currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
 const hasFarm = hasCurrentFarm;
 const plotCount = ref(0);
-const activeProductionCount = ref(0);
+const plots = ref<Plot[]>([]);
+const loadingPlots = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 
-function showComingSoon(): void {
-  toastRef.value?.show({ type: "default", message: "相关功能将在后续阶段开放" });
+const canManagePlots = computed(
+  () => currentFarm.value?.role === "OWNER" || currentFarm.value?.role === "ADMIN",
+);
+
+const plotTypeLabels: Record<PlotType, string> = {
+  FIELD: "大田",
+  PADDY: "水田",
+  GREENHOUSE: "大棚",
+  ORCHARD: "果园",
+  FOREST: "林地",
+  POND: "鱼塘",
+  BARN: "栏舍",
+  OTHER: "其他",
+};
+
+function plotTypeLabel(type: PlotType | null): string {
+  return type ? plotTypeLabels[type] : "未分类";
+}
+
+function areaLabel(plot: Plot): string {
+  if (plot.areaValue === null || plot.areaValue === undefined || !plot.areaUnit) return "面积未填写";
+  const units: Record<string, string> = { MU: "亩", SQUARE_METER: "平方米", HECTARE: "公顷" };
+  return `${formatNumber(plot.areaValue)}${units[plot.areaUnit] || ""}`;
+}
+
+async function loadPlots(): Promise<void> {
+  if (!currentFarm.value) {
+    plots.value = [];
+    plotCount.value = 0;
+    return;
+  }
+  loadingPlots.value = true;
+  try {
+    const page = await getFarmPlots(currentFarm.value.id);
+    plots.value = page.items;
+    plotCount.value = page.total;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      clearAuthToken();
+      uni.reLaunch({ url: "/pages/auth/login" });
+      return;
+    }
+    toastRef.value?.show({ type: "default", message: error instanceof ApiRequestError ? error.message : "地块加载失败" });
+  } finally {
+    loadingPlots.value = false;
+  }
 }
 
 function openCreateFarm(): void {
   uni.navigateTo({ url: "/pages/farms/create" });
 }
 
+function openCreatePlot(): void {
+  if (currentFarm.value) uni.navigateTo({ url: `/pages/plots/create?farmId=${currentFarm.value.id}` });
+}
+
+function openPlot(plotId: number): void {
+  uni.navigateTo({ url: `/pages/plots/detail?plotId=${plotId}` });
+}
+
 onShow(async () => {
   try {
     await refreshFromApi();
+    await loadPlots();
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       clearAuthToken();
@@ -111,13 +185,6 @@ onShow(async () => {
   font-size: 23rpx;
 }
 
-.farm-summary__divider {
-  width: 1rpx;
-  height: 34rpx;
-  margin: 0 24rpx;
-  background: $pf-color-divider;
-}
-
 .empty-state {
   margin-top: 32rpx;
   padding: 32rpx 28rpx 28rpx;
@@ -154,16 +221,61 @@ onShow(async () => {
   line-height: 1.5;
 }
 
-.plot-placeholder {
+.plot-list {
   display: flex;
-  min-height: 104rpx;
+  flex-direction: column;
+}
+
+.plot-card {
+  display: flex;
   align-items: center;
-  padding: 0 24rpx;
-  color: $pf-color-text-muted;
+  justify-content: space-between;
+  min-height: 104rpx;
+  padding: 22rpx 24rpx;
+}
+
+.plot-card + .plot-card {
+  margin-top: 16rpx;
+}
+
+.plot-card__main {
+  min-width: 0;
+}
+
+.plot-card__name,
+.plot-card__meta {
+  display: block;
+}
+
+.plot-card__name {
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: 29rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plot-card__meta {
+  margin-top: 8rpx;
+  color: $pf-color-text-secondary;
   font-size: 23rpx;
 }
 
-.plot-placeholder text {
-  margin-left: 14rpx;
+.state-card,
+.empty-plot {
+  display: flex;
+  min-height: 140rpx;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $pf-color-text-secondary;
+  font-size: 24rpx;
+}
+
+.state-card text,
+.empty-plot text {
+  margin-top: 14rpx;
 }
 </style>

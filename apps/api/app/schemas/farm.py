@@ -1,9 +1,11 @@
 from datetime import datetime
-from typing import Annotated
+from decimal import Decimal
+from typing import Annotated, Any
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from app.models.farm import FarmMemberRole
+from app.models.plot import AreaUnit, PlotType
 
 
 class CreateFarmRequest(BaseModel):
@@ -65,3 +67,86 @@ class MemberPage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class CreatePlotRequest(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=100)]
+    plot_type: PlotType | None = Field(
+        default=None,
+        validation_alias=AliasChoices("type", "plotType", "plot_type"),
+        serialization_alias="type",
+    )
+    area_value: Annotated[Decimal | None, Field(default=None, gt=0)] = Field(
+        default=None,
+        validation_alias=AliasChoices("areaValue", "area_value"),
+        serialization_alias="areaValue",
+    )
+    area_unit: AreaUnit | None = Field(
+        default=None,
+        validation_alias=AliasChoices("areaUnit", "area_unit"),
+        serialization_alias="areaUnit",
+    )
+    boundary: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def validate_area_and_boundary(self) -> "CreatePlotRequest":
+        if (self.area_value is None) != (self.area_unit is None):
+            raise ValueError("areaValue and areaUnit must be provided together.")
+        _validate_boundary(self.boundary)
+        return self
+
+
+class UpdatePlotRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    plot_type: PlotType | None = Field(
+        default=None,
+        validation_alias=AliasChoices("type", "plotType", "plot_type"),
+        serialization_alias="type",
+    )
+    area_value: Decimal | None = Field(
+        default=None,
+        gt=0,
+        validation_alias=AliasChoices("areaValue", "area_value"),
+        serialization_alias="areaValue",
+    )
+    area_unit: AreaUnit | None = Field(
+        default=None,
+        validation_alias=AliasChoices("areaUnit", "area_unit"),
+        serialization_alias="areaUnit",
+    )
+    boundary: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def validate_fields(self) -> "UpdatePlotRequest":
+        if "name" in self.model_fields_set and self.name is None:
+            raise ValueError("name cannot be null.")
+        area_fields = {"area_value", "area_unit"} & self.model_fields_set
+        if area_fields and area_fields != {"area_value", "area_unit"}:
+            raise ValueError("areaValue and areaUnit must be updated together.")
+        _validate_boundary(self.boundary)
+        return self
+
+
+class PlotResponse(BaseModel):
+    id: int
+    farm_id: int = Field(serialization_alias="farmId")
+    name: str
+    plot_type: PlotType | None = Field(default=None, serialization_alias="type")
+    area_value: Decimal | None = Field(default=None, serialization_alias="areaValue")
+    area_unit: AreaUnit | None = Field(default=None, serialization_alias="areaUnit")
+    area_m2: Decimal | None = Field(default=None, serialization_alias="areaM2")
+    boundary: dict[str, Any] | None = None
+    created_at: datetime = Field(serialization_alias="createdAt")
+    updated_at: datetime = Field(serialization_alias="updatedAt")
+
+
+class PlotPage(BaseModel):
+    items: list[PlotResponse]
+    page: int
+    page_size: int = Field(serialization_alias="pageSize")
+    total: int
+
+
+def _validate_boundary(boundary: dict[str, Any] | None) -> None:
+    if boundary is not None and boundary.get("coordinateSystem") != "GCJ02":
+        raise ValueError('boundary.coordinateSystem must be "GCJ02".')

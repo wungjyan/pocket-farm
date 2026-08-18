@@ -61,6 +61,25 @@
       }
     },
     {
+      "path": "pages/plots/create",
+      "style": {
+        "navigationBarTitleText": "创建地块"
+      }
+    },
+    {
+      "path": "pages/plots/detail",
+      "style": {
+        "navigationBarTitleText": "地块详情"
+      }
+    },
+    {
+      "path": "pages/plots/edit",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "编辑地块"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"
