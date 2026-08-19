@@ -15,21 +15,24 @@
 
       <view class="section-label">账户与农场</view>
       <view class="menu-card pf-card">
-        <view class="menu-row" @tap="openProfile">
-          <view class="menu-icon menu-icon--green">
-            <uv-icon name="account" size="20" color="#2F7D4A" />
-          </view>
-          <text class="menu-title">个人资料</text>
-          <uv-icon name="arrow-right" size="17" color="#929A93" />
-        </view>
-        <view class="menu-divider" />
         <view class="menu-row" @tap="openFarms">
           <view class="menu-icon menu-icon--green">
             <uv-icon name="grid" size="20" color="#2F7D4A" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">我的农场</text>
-            <text class="menu-description">切换或管理你的农场</text>
+            <text class="menu-description">{{ currentFarmDescription }}</text>
+          </view>
+          <uv-icon name="arrow-right" size="17" color="#929A93" />
+        </view>
+        <view class="menu-divider" />
+        <view class="menu-row" @tap="openFarmSettings">
+          <view class="menu-icon menu-icon--green">
+            <uv-icon name="setting" size="20" color="#2F7D4A" />
+          </view>
+          <view class="menu-copy">
+            <text class="menu-title">当前农场管理</text>
+            <text class="menu-description">农场信息、成员管理与退出农场</text>
           </view>
           <uv-icon name="arrow-right" size="17" color="#929A93" />
         </view>
@@ -59,12 +62,17 @@ import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getCurrentUser, type User } from "../../services/user";
+import { useFarmContext } from "../../services/farm-context";
 
 const user = ref<User | null>(null);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
+const { currentFarm, hasCurrentFarm, refreshFromApi } = useFarmContext();
 const displayName = computed(() => user.value?.nickname || maskPhone(user.value?.phoneNumber || "用户"));
 const maskedPhone = computed(() => maskPhone(user.value?.phoneNumber || ""));
 const avatarText = computed(() => displayName.value.slice(0, 1));
+const currentFarmDescription = computed(() =>
+  hasCurrentFarm.value ? `当前：${currentFarm.value?.name}` : "请选择当前农场",
+);
 
 function maskPhone(phone: string): string {
   return phone.length === 11 ? `${phone.slice(0, 3)}****${phone.slice(-4)}` : phone;
@@ -78,6 +86,14 @@ function openFarms(): void {
   uni.navigateTo({ url: "/pages/farms/index" });
 }
 
+function openFarmSettings(): void {
+  if (!currentFarm.value) {
+    openFarms();
+    return;
+  }
+  uni.navigateTo({ url: `/pages/farms/detail?farmId=${currentFarm.value.id}` });
+}
+
 function showComingSoon(): void {
   toastRef.value?.show({ type: "default", message: "相关功能将在后续阶段开放" });
 }
@@ -89,7 +105,8 @@ function handleLogout(): void {
 
 onShow(async () => {
   try {
-    user.value = await getCurrentUser();
+    const [currentUser] = await Promise.all([getCurrentUser(), refreshFromApi()]);
+    user.value = currentUser;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       clearAuthToken();

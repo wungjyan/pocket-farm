@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { onShow } from "@dcloudio/uni-app";
 import FarmForm from "../../components/FarmForm.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -47,7 +47,6 @@ import { getFarm, updateFarm, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
 import { toFarmSummary, useFarmContext } from "../../services/farm-context";
 
-const farmId = ref(0);
 const farm = ref<Farm | null>(null);
 const loading = ref(true);
 const saving = ref(false);
@@ -65,15 +64,16 @@ function handleUnauthorized(): void {
 }
 
 async function loadFarm(): Promise<void> {
-  if (!farmId.value) {
-    loadError.value = "农场信息无效";
+  const farmId = currentFarm.value?.id;
+  if (!farmId) {
+    loadError.value = "请先选择当前农场";
     loading.value = false;
     return;
   }
   loading.value = true;
   loadError.value = "";
   try {
-    farm.value = await getFarm(farmId.value);
+    farm.value = await getFarm(farmId);
     dirty.value = false;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
@@ -91,9 +91,14 @@ async function saveFarm(input: { name: string; region: string | null }): Promise
     toastRef.value?.error("请输入农场名称");
     return;
   }
+  const farmId = currentFarm.value?.id;
+  if (!farmId) {
+    toastRef.value?.error("请先选择当前农场");
+    return;
+  }
   saving.value = true;
   try {
-    const result = await updateFarm(farmId.value, input);
+    const result = await updateFarm(farmId, input);
     farm.value = result;
     dirty.value = false;
     if (currentFarm.value?.id === result.id) {
@@ -127,12 +132,8 @@ function handleBack(): void {
   });
 }
 
-onLoad((options) => {
-  farmId.value = Number(options?.farmId || 0);
-});
-
 onShow(() => {
-  if (farmId.value && !saving.value) loadFarm();
+  if (!saving.value) loadFarm();
 });
 </script>
 

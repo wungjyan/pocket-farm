@@ -25,7 +25,7 @@
           v-for="farm in farms"
           :key="farm.id"
           class="farm-row pf-card"
-          @tap="openSettings(farm)"
+          @tap="selectCurrentFarm(farm)"
         >
           <view class="farm-row__main">
             <view class="farm-row__copy">
@@ -38,15 +38,6 @@
             <uv-icon name="arrow-right" size="17" color="#929A93" />
           </view>
 
-          <view class="farm-row__actions">
-            <view
-              v-if="currentFarm?.id !== farm.id"
-              class="set-current-button"
-              @tap.stop="setCurrentFarm(farm)"
-            >
-              <text>切换</text>
-            </view>
-          </view>
         </view>
       </view>
 
@@ -66,7 +57,6 @@
       </view>
     </view>
 
-    <uv-toast ref="toastRef" />
   </view>
 </template>
 
@@ -81,7 +71,6 @@ import { toFarmSummary, useFarmContext } from "../../services/farm-context";
 const farms = ref<Farm[]>([]);
 const loading = ref(false);
 const loadError = ref("");
-const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const { currentFarm, selectFarm, syncAvailableFarms } = useFarmContext();
 
 function handleUnauthorized(): void {
@@ -107,13 +96,9 @@ async function loadFarms(): Promise<void> {
   }
 }
 
-function setCurrentFarm(farm: Farm): void {
+function selectCurrentFarm(farm: Farm): void {
   selectFarm(toFarmSummary(farm));
-  toastRef.value?.show({ type: "success", message: `已切换到${farm.name}` });
-}
-
-function openSettings(farm: Farm): void {
-  uni.navigateTo({ url: `/pages/farms/detail?farmId=${farm.id}` });
+  uni.navigateBack();
 }
 
 function openCreateFarm(): void {
@@ -145,9 +130,7 @@ onShow(loadFarms);
 }
 
 .farm-row__main,
-.farm-row__name-line,
-.farm-row__actions,
-.set-current-button {
+.farm-row__name-line {
   display: flex;
   align-items: center;
 }
@@ -188,19 +171,6 @@ onShow(loadFarms);
   margin-top: 8rpx;
   color: $pf-color-text-muted;
   font-size: 23rpx;
-}
-
-.farm-row__actions {
-  justify-content: flex-end;
-  margin-top: 8rpx;
-}
-
-.set-current-button {
-  padding: 6rpx 16rpx;
-  border: 1rpx solid $pf-color-border;
-  border-radius: 999rpx;
-  color: $pf-color-primary;
-  font-size: 22rpx;
 }
 
 .create-action {

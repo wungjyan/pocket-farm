@@ -61,10 +61,10 @@
         <view class="danger-card pf-card">
           <view
             class="danger-row"
-            @tap="handleLeave"
+            @click="handleLeave"
           >
             <view class="danger-icon">
-              <uv-icon name="logout" size="20" color="#C96A45" />
+              <uv-icon name="close-circle" size="20" color="#C96A45" />
             </view>
             <view class="danger-copy">
               <text class="danger-title">退出农场</text>
@@ -139,7 +139,7 @@ async function loadSettings(): Promise<void> {
 }
 
 function openEdit(): void {
-  uni.navigateTo({ url: `/pages/farms/edit?farmId=${farmId.value}` });
+  uni.navigateTo({ url: "/pages/farms/edit" });
 }
 
 function openMembers(): void {
