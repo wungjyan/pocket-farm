@@ -11,9 +11,9 @@
 
 ## 当前阶段
 
-**Phase 3：Plot 已完成。**
+**Phase 4：Species + Production 已完成。**
 
-下一阶段为 **Phase 4：Species + Production**。尚未开始。
+下一阶段为 **Phase 5：FarmOperation**。尚未开始。
 
 ## 阶段状态
 
@@ -23,7 +23,7 @@
 | 1 | Auth + User | 已完成 | 2026-08-17 |
 | 2 | Farm + FarmMember | 已完成 | 2026-08-18 |
 | 3 | Plot | 已完成 | 2026-08-18 |
-| 4 | Species + Production | 未开始 | - |
+| 4 | Species + Production | 已完成 | 2026-08-19 |
 | 5 | FarmOperation | 未开始 | - |
 | 6 | HarvestRecord | 未开始 | - |
 | 7 | 结束种养 | 未开始 | - |
@@ -178,6 +178,41 @@
 ### 未解决问题
 
 地图绘制暂不实现；地块删除接口暂不提供，待 Production、农事和收获记录关联规则确定后再设计删除或归档策略；Species、Production 及后续生产业务按计划留待后续 Phase。
+
+## Phase 4 交付记录
+
+### 种类与种养
+
+- 新增 `species` 和 `productions` 表；Species 为系统预置数据，不提供管理接口。
+- Alembic 数据 migration 初始化 23 个种类，覆盖农业、林业、牧业和渔业。
+- Production 支持一个地块存在多条 ACTIVE 或历史记录；`Plot.type` 不与 `Species.industry` 强绑定。
+- Species 维护固定个体单位；预置蔬菜／林木为株、猪牛羊为头、鸡鸭为羽、水产为尾。Production 只保存初始数量数值，不重复保存单位。
+- 农业改为可选预计亩产（固定公斤／亩）和可选厘米株间距；林业不提供预计亩产且移栽／播种数量必填；牧业入栏日龄、入栏数量必填且无作业方式；渔业养殖数量、作业方式必填。
+- 所有 FarmMember 均可创建、编辑和删除 ACTIVE Production；跨农场访问返回 404。开始日期不得晚于当前日期；各行业的必填和不适用字段由后端校验，固定个体单位的数量必须为整数。
+
+### API 与前端
+
+- `GET /api/v1/species`
+- `GET /api/v1/plots/{plotId}/productions`
+- `POST /api/v1/plots/{plotId}/productions`
+- `GET /api/v1/productions/{productionId}`
+- `PATCH /api/v1/productions/{productionId}`
+- `DELETE /api/v1/productions/{productionId}`
+- 新增 migrations：`1bf2b6d1b674`（`create species and productions`）、`093fa42fe3ad`（`refine production industry fields`）。
+- 小程序新增独立种类搜索与行业筛选页、按行业变化的种养表单、创建／编辑／详情与删除流程；地块详情已展示当前和历史种养。创建流程先选择种类和选填品种，再进入只读展示种类的正式表单；返回时保留种类和品种、清空未提交表单。种植方式会动态切换时间与数量术语，单位自动由种类带出。
+
+### 验证结果
+
+- `uv run alembic check`：通过。
+- `uv run pytest`：通过（24 passed）。
+- `uv run ruff check .` 和 `uv run ruff format --check .`：通过。
+- `pnpm exec vue-tsc --noEmit -p tsconfig.json`：通过。
+- `pnpm run miniapp:build`：通过；仅有现有 Sass API 与 `@import` 弃用警告。
+
+### 未解决问题
+
+- Phase 4 尚无 FarmOperation、HarvestRecord 表，因此当前 ACTIVE Production 的关联记录限制将在 Phase 5、6 接入相应表后补齐：存在关联农事或收获时，不允许修改 `plotId`、`speciesId`、`startedOn` 或删除。
+- 结束种养属于 Phase 7，当前不提供结束操作；历史列表已为该状态预留展示。
 
 ## 前端规划记录
 

@@ -19,7 +19,7 @@
           <text class="plot-heading__name">{{ plot.name }}</text>
           <text class="plot-heading__meta">{{ plotTypeLabel(plot.type) }} · {{ areaLabel(plot) }}</text>
         </view>
-        <text v-if="canEdit" class="plot-heading__action" @tap="openEdit">编辑</text>
+        <text v-if="canEdit" class="plot-heading__action" @click="openEdit">编辑</text>
       </view>
 
       <view class="info-card pf-card">
@@ -36,6 +36,52 @@
           <text class="info-value">{{ formatDate(plot.createdAt) }}</text>
         </view>
       </view>
+
+      <view class="section-heading">
+        <text class="section-heading__title">种养</text>
+        <text v-if="canManageProductions" class="section-heading__action" @click="openCreateProduction">开始种养</text>
+      </view>
+
+      <view v-if="activeProductions.length" class="production-list">
+        <view
+          v-for="item in activeProductions"
+          :key="item.id"
+          class="production-card pf-card"
+          @click="openProduction(item.id)"
+        >
+          <view class="production-card__main">
+            <text class="production-card__name">{{ item.speciesName }}</text>
+            <text class="production-card__meta">{{ productionMeta(item) }}</text>
+          </view>
+          <view class="production-card__status">进行中</view>
+          <uv-icon name="arrow-right" size="17" color="#929A93" />
+        </view>
+      </view>
+      <view v-else class="production-empty pf-card">
+        <text>当前空闲</text>
+        <text v-if="canManageProductions" class="production-empty__action" @click="openCreateProduction">开始种养</text>
+      </view>
+
+      <template v-if="endedProductions.length">
+        <view class="section-heading section-heading--history">
+          <text class="section-heading__title">历史种养</text>
+        </view>
+        <view class="production-list">
+          <view
+            v-for="item in endedProductions"
+            :key="item.id"
+            class="production-card pf-card"
+            @click="openProduction(item.id)"
+          >
+            <view class="production-card__main">
+              <text class="production-card__name">{{ item.speciesName }}</text>
+              <text class="production-card__meta">{{ productionMeta(item) }}</text>
+            </view>
+            <view class="production-card__status production-card__status--ended">已结束</view>
+            <uv-icon name="arrow-right" size="17" color="#929A93" />
+          </view>
+        </view>
+      </template>
     </template>
 
     <uv-toast ref="toastRef" />
@@ -49,6 +95,8 @@ import { clearAuthToken } from "../../services/auth";
 import { getFarm, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
 import { getPlot, type Plot, type PlotType } from "../../services/plot";
+import { getPlotProductions, type Production } from "../../services/production";
+import type { Industry } from "../../services/species";
 import { formatNumber } from "../../utils/number";
 
 const plotId = ref(0);
@@ -56,8 +104,11 @@ const plot = ref<Plot | null>(null);
 const farm = ref<Farm | null>(null);
 const loading = ref(true);
 const loadError = ref("");
+const activeProductions = ref<Production[]>([]);
+const endedProductions = ref<Production[]>([]);
 const toastRef = ref<{ error: (message: string) => void } | null>(null);
 const canEdit = computed(() => farm.value?.myRole === "OWNER" || farm.value?.myRole === "ADMIN");
+const canManageProductions = computed(() => Boolean(farm.value?.myRole));
 
 const plotTypeLabels: Record<PlotType, string> = {
   FIELD: "大田",
@@ -68,6 +119,12 @@ const plotTypeLabels: Record<PlotType, string> = {
   POND: "鱼塘",
   BARN: "栏舍",
   OTHER: "其他",
+};
+const industryLabels: Record<Industry, string> = {
+  AGRICULTURE: "农业",
+  FORESTRY: "林业",
+  LIVESTOCK: "牧业",
+  FISHERY: "渔业",
 };
 
 function plotTypeLabel(type: PlotType | null): string {
@@ -86,6 +143,10 @@ function formatDate(value: string): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function productionMeta(value: Production): string {
+  return `${industryLabels[value.industry]} · ${value.startedOn}开始`;
+}
+
 function handleUnauthorized(): void {
   clearAuthToken();
   uni.reLaunch({ url: "/pages/auth/login" });
@@ -102,7 +163,14 @@ async function loadPlot(): Promise<void> {
   try {
     const result = await getPlot(plotId.value);
     plot.value = result;
-    farm.value = await getFarm(result.farmId);
+    const [farmResult, activeResult, endedResult] = await Promise.all([
+      getFarm(result.farmId),
+      getPlotProductions(result.id, "ACTIVE"),
+      getPlotProductions(result.id, "ENDED"),
+    ]);
+    farm.value = farmResult;
+    activeProductions.value = activeResult.items;
+    endedProductions.value = endedResult.items;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -116,6 +184,14 @@ async function loadPlot(): Promise<void> {
 
 function openEdit(): void {
   if (plot.value) uni.navigateTo({ url: `/pages/plots/edit?plotId=${plot.value.id}` });
+}
+
+function openCreateProduction(): void {
+  if (plot.value) uni.navigateTo({ url: `/pages/productions/create?plotId=${plot.value.id}` });
+}
+
+function openProduction(productionId: number): void {
+  uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
 }
 
 onLoad((options) => {
@@ -195,6 +271,91 @@ onShow(() => {
 
 .info-value {
   color: $pf-color-text;
+  font-size: 25rpx;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 38rpx 8rpx 14rpx;
+}
+
+.section-heading--history {
+  margin-top: 34rpx;
+}
+
+.section-heading__title {
+  color: $pf-color-text-muted;
+  font-size: 23rpx;
+  font-weight: 600;
+}
+
+.section-heading__action,
+.production-empty__action {
+  color: $pf-color-primary;
+  font-size: 24rpx;
+}
+
+.production-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.production-card {
+  display: flex;
+  min-height: 104rpx;
+  align-items: center;
+  padding: 0 22rpx;
+}
+
+.production-card__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.production-card__name,
+.production-card__meta {
+  display: block;
+}
+
+.production-card__name {
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.production-card__meta {
+  margin-top: 6rpx;
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
+}
+
+.production-card__status {
+  margin: 0 18rpx;
+  padding: 5rpx 12rpx;
+  border-radius: 999rpx;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 21rpx;
+}
+
+.production-card__status--ended {
+  background: $pf-color-surface-muted;
+  color: $pf-color-text-muted;
+}
+
+.production-empty {
+  display: flex;
+  min-height: 96rpx;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  color: $pf-color-text-secondary;
   font-size: 25rpx;
 }
 

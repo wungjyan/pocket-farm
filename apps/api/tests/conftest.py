@@ -15,6 +15,7 @@ async def remove_test_user() -> None:
     from app.db.session import async_session_factory, engine
     from app.models.farm import Farm, FarmMember
     from app.models.plot import Plot
+    from app.models.production import Production
     from app.models.user import User
 
     async with async_session_factory() as session:
@@ -35,6 +36,11 @@ async def remove_test_user() -> None:
                 )
             )
         if farm_ids:
+            plot_ids = list(
+                (await session.scalars(select(Plot.id).where(Plot.farm_id.in_(farm_ids)))).all()
+            )
+            if plot_ids:
+                await session.execute(delete(Production).where(Production.plot_id.in_(plot_ids)))
             await session.execute(delete(Plot).where(Plot.farm_id.in_(farm_ids)))
             await session.execute(delete(Farm).where(Farm.id.in_(farm_ids)))
         if user_ids:

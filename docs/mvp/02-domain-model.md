@@ -46,6 +46,7 @@ erDiagram
         bigint id PK
         varchar name
         varchar industry
+        varchar individual_unit
     }
     PRODUCTION {
         bigint id PK
@@ -214,9 +215,19 @@ OTHER        其他
 
 ---
 
-## 8. QuantityUnit
+## 8. IndividualUnit 与 QuantityUnit
 
-数量单位为固定枚举，适用于初始数量、预计总产量和收获数量。
+`IndividualUnit` 是 Species 的固定个体单位，适用于 Production 的移栽／播种、入栏和养殖数量；数量只保存数值，单位不在 Production 上重复保存。
+
+| 代码 | 含义 | 数值规则 |
+| --- | --- | --- |
+| `HEAD` | 头 | 必须为整数 |
+| `FEATHER` | 羽 | 必须为整数 |
+| `PIECE` | 只 | 必须为整数 |
+| `PLANT` | 株 | 必须为整数 |
+| `TAIL` | 尾 | 必须为整数 |
+
+`QuantityUnit` 保留给后续 HarvestRecord 等独立数量记录：
 
 | 代码 | 含义 | 数值规则 |
 | --- | --- | --- |
@@ -251,18 +262,20 @@ MVP 不做数量单位换算，不允许任意字符串单位。
 id
 name
 industry
+individual_unit
 created_at
 
 MVP 使用系统预置 Species，通过 Alembic 数据 migration 初始化；不提供管理接口，也不允许普通用户修改。
 
 首批数据以常见种养品类覆盖四个行业：
 
-| Industry | Species |
-| --- | --- |
-| AGRICULTURE | 水稻、小麦、玉米、大豆、黄瓜、番茄、辣椒、马铃薯、葡萄 |
-| FORESTRY | 杉木、松树、毛竹 |
-| LIVESTOCK | 猪、牛、羊、鸡、鸭 |
-| FISHERY | 青鱼、草鱼、鲤鱼、鲫鱼、鲈鱼、小龙虾 |
+| Industry | Species | IndividualUnit |
+| --- | --- | --- |
+| AGRICULTURE | 水稻、小麦、玉米、大豆、黄瓜、番茄、辣椒、马铃薯、葡萄 | 株 |
+| FORESTRY | 杉木、松树、毛竹 | 株 |
+| LIVESTOCK | 猪、牛、羊 | 头 |
+| LIVESTOCK | 鸡、鸭 | 羽 |
+| FISHERY | 青鱼、草鱼、鲤鱼、鲫鱼、鲈鱼、小龙虾 | 尾 |
 
 未来新增系统 Species 时，创建新的数据 migration；不修改已执行的历史 migration。
 
@@ -328,13 +341,11 @@ work_method
 
 expected_harvest_on
 
-expected_yield
-expected_yield_unit
+expected_yield_per_mu
 
 initial_quantity
-initial_quantity_unit
 
-plant_spacing
+plant_spacing_cm
 
 entry_age_days
 
@@ -349,7 +360,7 @@ updated_at
 
 行业不适用字段允许为空。
 
-`expected_yield` 表示本次 Production 的预计总产量，不表示亩产或单位面积产量。
+`expected_yield_per_mu` 仅适用于农业，表示预计亩产，固定单位为公斤／亩。`plant_spacing_cm` 仅适用于农业和林业，固定单位为厘米。两者均只保存数值。
 
 ---
 
@@ -420,9 +431,7 @@ NORMAL
 TRANSPLANT       移栽
 DIRECT_SEEDING   直播
 
-选填。
-
-不要设置默认值。
+仅适用于农业和林业，必填，前端默认 `TRANSPLANT`。
 
 ---
 
@@ -436,6 +445,8 @@ MECHANICAL   机械
 默认：
 
 MANUAL
+
+Production 中，农业、林业和渔业必须填写 `work_method`；牧业不适用，保存为 `NULL`。
 
 Production、FarmOperation、HarvestRecord：
 

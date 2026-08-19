@@ -80,6 +80,39 @@
       }
     },
     {
+      "path": "pages/species/index",
+      "style": {
+        "navigationBarTitleText": "选择种类"
+      }
+    },
+    {
+      "path": "pages/productions/create",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "开始种养"
+      }
+    },
+    {
+      "path": "pages/productions/form",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "填写种养信息"
+      }
+    },
+    {
+      "path": "pages/productions/detail",
+      "style": {
+        "navigationBarTitleText": "种养详情"
+      }
+    },
+    {
+      "path": "pages/productions/edit",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "编辑种养"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"

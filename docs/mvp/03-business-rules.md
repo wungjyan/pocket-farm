@@ -104,45 +104,32 @@ variety
 plotId *
 startedOn *
 
-一个 Production 只能关联一个 Plot。
+一个 Production 只能关联一个 Plot。地块详情进入的表单不重复显示地块选择器，但路由上下文必须带入 `plotId`，后端仍将其作为必填关联校验。
 
 后端不强制绑定 PlotType 与 Industry；前端可按行业推荐地块类型，但用户仍可选择其他地块。
+
+小程序创建流程分为两步：先选择种类并填写选填的品种，再进入正式表单填写行业字段。正式表单只读展示已选种类，不支持中途更换；未提交时返回前一页保留种类和品种，丢弃正式表单中的其他输入。
 
 ---
 
 ## 7. 农业 / 林业
 
-农业和林业表单结构基本一致。
+农业和林业均使用 Species 的固定个体单位，不提供单位选择器。种植标准默认 `NORMAL`、种植方式默认 `TRANSPLANT`、作业方式默认 `MANUAL`；三项均为必填。
 
-保留字段：
+种植方式必须在时间字段前填写，并决定前端术语：
 
-种植标准
-种植方式
-作业方式
-预计采收时间
-预计产量
-初始种植数量
-株间距
-备注
+| PlantingMethod | 时间字段 | 数量字段 |
+| --- | --- | --- |
+| `TRANSPLANT` | 移栽时间 | 移栽数量 |
+| `DIRECT_SEEDING` | 播种时间 | 播种数量 |
 
-默认：
+切换种植方式仅改变术语，不清空已填日期或数量。
 
-PlantingStandard = NORMAL
-WorkMethod = MANUAL
+农业必填：`speciesId`、`plotId`、种植标准、种植方式、移栽／播种时间、作业方式。移栽／播种数量、株间距、预计采收时间、预计亩产、品种与备注选填。预计亩产固定显示“公斤／亩”，仅保存 `expectedYieldPerMu` 数值。
 
-PlantingMethod：
+林业必填：农业必填项加移栽／播种数量。林业不提供预计亩产。
 
-选填，无默认值。
-
-其他非核心字段：
-
-选填。
-
-前端可以折叠到“更多信息”。
-
-初始种植数量：
-
-不必必填。
+株间距仅适用于农业和林业，选填，固定显示“厘米”，只保存 `plantSpacingCm` 数值。
 
 ---
 
@@ -165,16 +152,13 @@ initialQuantity *
 
 variety
 entryAgeDays
-workMethod
 remark
 
 entryAgeDays：
 
-选填。
+必填，表示入栏日龄。
 
-WorkMethod：
-
-默认 MANUAL。
+牧业不展示也不保存 `workMethod`。入栏数量必填，单位由 Species 固定单位自动带出，例如猪、牛、羊为“头”，鸡、鸭为“羽”。
 
 内部如需要生产编号：
 
@@ -189,14 +173,16 @@ WorkMethod：
 前端术语：
 
 Plot → 养殖地块
-startedOn → 投苗时间
-initialQuantity → 投苗数量
+startedOn → 养殖时间
+initialQuantity → 养殖数量
 
 核心字段：
 
 speciesId *
 plotId *
 startedOn *
+initialQuantity *
+workMethod *
 
 保留：
 
@@ -205,13 +191,7 @@ initialQuantity
 workMethod
 remark
 
-投苗数量：
-
-MVP 暂时选填。
-
-WorkMethod：
-
-默认 MANUAL。
+养殖数量必填，单位由 Species 固定单位自动带出。作业方式必填，前端默认 `MANUAL`。
 
 ---
 
