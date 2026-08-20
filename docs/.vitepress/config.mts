@@ -31,6 +31,10 @@ export default defineConfig({
           },
         ],
       },
+      {
+        text: "重构计划",
+        link: "/refactor/00-miniapp-refactor-plan",
+      },
     ],
 
     sidebar: [
@@ -53,6 +57,15 @@ export default defineConfig({
           {
             text: "小程序页面架构与视觉基线",
             link: "/mvp/07-miniapp-information-architecture",
+          },
+        ],
+      },
+      {
+        text: "重构计划",
+        items: [
+          {
+            text: "小程序重构计划",
+            link: "/refactor/00-miniapp-refactor-plan",
           },
         ],
       },

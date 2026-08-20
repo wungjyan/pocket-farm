@@ -25,6 +25,7 @@
       :initial-plot="plot"
       :show-plot-field="true"
       :plot-selectable="true"
+      :lock-species-info="lockSpeciesInfo"
       submit-label="开始种养"
       loading-text="提交中"
       :submitting="submitting"
@@ -57,6 +58,7 @@ const plotId = ref(0);
 const plot = ref<Plot | null>(null);
 const selectedSpecies = ref<Species | null>(null);
 const variety = ref("");
+const lockSpeciesInfo = ref(false);
 const loading = ref(true);
 const submitting = ref(false);
 const dirty = ref(false);
@@ -138,6 +140,7 @@ function goBack(): void {
 onLoad((options) => {
   farmId.value = Number(options?.farmId || 0);
   plotId.value = Number(options?.plotId || 0);
+  lockSpeciesInfo.value = options?.lockSelection === "1";
   const page = getCurrentInstance()?.proxy as unknown as {
     getOpenerEventChannel?: () => SetupEventChannel;
   } | null;

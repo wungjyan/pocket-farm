@@ -30,7 +30,15 @@
 
       <view class="field-group">
         <text class="field-label">品种 <text class="field-optional">选填</text></text>
-        <view class="input-shell">
+        <view v-if="lockSpeciesInfo" class="species-summary species-summary--locked">
+          <view>
+            <text class="species-summary__name" :class="{ 'species-summary__name--empty': !form.variety }">
+              {{ form.variety || "未填写品种" }}
+            </text>
+          </view>
+          <uv-icon name="checkmark-circle" size="19" color="#2F7D4A" />
+        </view>
+        <view v-else class="input-shell">
           <uv-input
             v-model="form.variety"
             maxlength="100"
@@ -218,6 +226,7 @@ const props = withDefaults(
     initialPlot?: Plot | null;
     showPlotField?: boolean;
     plotSelectable?: boolean;
+    lockSpeciesInfo?: boolean;
     submitLabel?: string;
     loadingText?: string;
     submitting?: boolean;
@@ -229,6 +238,7 @@ const props = withDefaults(
     initialPlot: null,
     showPlotField: false,
     plotSelectable: false,
+    lockSpeciesInfo: false,
     submitLabel: "保存修改",
     loadingText: "保存中",
     submitting: false,
@@ -569,6 +579,11 @@ function handleSubmit(): void {
   color: $pf-color-text;
   font-size: 26rpx;
   font-weight: 600;
+}
+
+.species-summary__name--empty {
+  color: $pf-color-text-muted;
+  font-weight: 400;
 }
 
 .species-summary__industry {

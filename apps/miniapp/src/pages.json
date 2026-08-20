@@ -60,6 +60,12 @@
       }
     },
     {
+      "path": "pages/farm-plots/index",
+      "style": {
+        "navigationBarTitleText": "地块列表"
+      }
+    },
+    {
       "path": "pages/plots/index",
       "style": {
         "navigationBarTitleText": "地块列表"
@@ -87,6 +93,12 @@
       "path": "pages/species/index",
       "style": {
         "navigationBarTitleText": "选择种类"
+      }
+    },
+    {
+      "path": "pages/productions/start",
+      "style": {
+        "navigationBarTitleText": "开始种养"
       }
     },
     {

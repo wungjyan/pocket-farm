@@ -9,33 +9,31 @@
           <text>正在汇总农场数据</text>
         </view>
         <template v-else>
-          <view class="overview-card pf-card--emphasis">
-            <view class="overview-area">
-              <text class="overview-eyebrow">农场总面积</text>
-              <view class="overview-area__value">
-                <text>{{ totalAreaLabel }}</text>
-                <text v-if="totalAreaLabel !== '–'" class="overview-area__unit">亩</text>
+          <view class="pf-section-heading overview-heading">
+            <text class="pf-section-title">农场概览</text>
+          </view>
+          <view class="overview-grid">
+            <view class="overview-card pf-tappable" @tap="openPlotList('ALL')">
+              <view class="overview-card__heading">
+                <text class="overview-card__title">全部地块</text>
+                <PfRowChevron />
               </view>
+              <view class="overview-card__value"><text>{{ plots.length }}</text><text>块</text></view>
+              <text class="overview-card__area">总面积 {{ totalAreaLabel }} 亩</text>
             </view>
-            <view class="overview-metrics">
-              <view class="overview-metric">
-                <text class="overview-metric__value">{{ plots.length }}</text>
-                <text class="overview-metric__label">全部地块</text>
+            <view class="overview-card pf-tappable" @tap="openPlotList('IDLE')">
+              <view class="overview-card__heading">
+                <text class="overview-card__title">闲置地块</text>
+                <PfRowChevron />
               </view>
-              <view class="overview-metric">
-                <text class="overview-metric__value">{{ activeProductions.length }}</text>
-                <text class="overview-metric__label">进行中种养</text>
-              </view>
-              <view class="overview-metric">
-                <text class="overview-metric__value">{{ idlePlotCount }}</text>
-                <text class="overview-metric__label">闲置地块</text>
-              </view>
+              <view class="overview-card__value"><text>{{ idlePlots.length }}</text><text>块</text></view>
+              <text class="overview-card__area">闲置总面积 {{ idleAreaLabel }} 亩</text>
             </view>
           </view>
 
           <view class="pf-section-heading">
             <text class="pf-section-title">当前种养</text>
-            <text class="pf-section-note">{{ activeProductions.length ? `共 ${activeProductions.length} 批` : "暂无种养" }}</text>
+            <text class="pf-section-note">{{ activeProductions.length ? `共 ${activeSpeciesCount} 种` : "暂无种养" }}</text>
           </view>
           <view v-if="activeProductions.length" class="production-list pf-list-card">
             <view
@@ -44,48 +42,28 @@
               class="production-row pf-tappable"
               @tap="openProduction(item.id)"
             >
-              <view class="production-icon"><uv-icon :name="industryIcon(item.industry)" size="19" color="#286B46" /></view>
               <view class="production-copy">
-                <view class="production-heading">
-                  <text class="production-name">{{ productionName(item) }}</text>
-                  <text class="production-status">进行中</text>
-                </view>
+                <text class="production-name">{{ productionName(item) }}</text>
                 <text class="production-meta">{{ item.plotName }} · {{ productionTime(item.startedOn) }}</text>
               </view>
-              <uv-icon name="arrow-right" size="16" color="#7F8B82" />
+              <PfRowChevron />
             </view>
           </view>
           <view v-else class="empty-production pf-card">
-            <view class="empty-production__icon"><uv-icon name="list" size="23" color="#286B46" /></view>
+            <view class="empty-production__icon"><uv-icon name="list" size="24" color="#286B46" /></view>
             <view class="empty-production__copy">
               <text class="empty-production__title">没有进行中的种养</text>
-              <text class="empty-production__description">从工作台开始一批新的种养。</text>
             </view>
-            <text class="empty-production__action" @tap="openHome">去开始</text>
+            <text class="empty-production__action" @tap="openStartProduction">去开始</text>
           </view>
 
-          <view class="pf-section-heading">
-            <text class="pf-section-title">农场管理</text>
-            <text class="pf-section-note">资料与生产现场</text>
-          </view>
-          <view class="manage-list pf-list-card">
-            <view class="manage-row pf-tappable" @tap="openPlotList">
-              <view class="manage-icon"><uv-icon name="grid" size="20" color="#286B46" /></view>
-              <view class="manage-copy">
-                <text class="manage-title">地块列表</text>
-                <text class="manage-description">查看、创建和维护全部地块</text>
-              </view>
-              <uv-icon name="arrow-right" size="17" color="#7F8B82" />
+          <view class="records-entry pf-tappable" @tap="showRecordsPending">
+            <view class="records-entry__icon"><uv-icon name="clock" size="24" color="#286B46" /></view>
+            <view class="records-entry__copy">
+              <text class="records-entry__title">生产记录</text>
+              <text class="records-entry__description">查看种养/农事/收获</text>
             </view>
-            <view class="manage-divider" />
-            <view class="manage-row pf-tappable" @tap="openFarmSettings">
-              <view class="manage-icon manage-icon--neutral"><uv-icon name="setting" size="20" color="#536158" /></view>
-              <view class="manage-copy">
-                <text class="manage-title">农场设置</text>
-                <text class="manage-description">农场资料、成员与权限</text>
-              </view>
-              <uv-icon name="arrow-right" size="17" color="#7F8B82" />
-            </view>
+            <PfRowChevron />
           </view>
         </template>
       </template>
@@ -106,12 +84,12 @@
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import PfPageHeader from "../../components/PfPageHeader.vue";
+import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { useFarmContext } from "../../services/farm-context";
 import { getFarmPlots, type Plot } from "../../services/plot";
 import { getPlotProductions, type Production } from "../../services/production";
-import type { Industry } from "../../services/species";
 import { formatNumber } from "../../utils/number";
 
 interface FarmProduction extends Production {
@@ -125,19 +103,22 @@ const activeProductions = ref<FarmProduction[]>([]);
 const loading = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 
-const idlePlotCount = computed(() => {
+const idlePlots = computed(() => {
   const activePlotIds = new Set(activeProductions.value.map((item) => item.plotId));
-  return plots.value.filter((plot) => !activePlotIds.has(plot.id)).length;
+  return plots.value.filter((plot) => !activePlotIds.has(plot.id));
 });
-const totalAreaLabel = computed(() => {
-  const areaValues = plots.value
-    .filter((plot) => plot.areaM2 !== null && plot.areaM2 !== undefined && plot.areaM2 !== "")
-    .map((plot) => Number(plot.areaM2))
-    .filter((area) => Number.isFinite(area) && area >= 0);
-  if (!areaValues.length) return "–";
-  const totalMu = areaValues.reduce((total, area) => total + area, 0) / 666.6666667;
+const activeSpeciesCount = computed(() => new Set(activeProductions.value.map((item) => item.speciesId)).size);
+const totalAreaLabel = computed(() => areaInMu(plots.value));
+const idleAreaLabel = computed(() => areaInMu(idlePlots.value));
+
+function areaInMu(items: Plot[]): string {
+  const totalM2 = items.reduce((total, plot) => {
+    const area = Number(plot.areaM2 ?? 0);
+    return total + (Number.isFinite(area) && area >= 0 ? area : 0);
+  }, 0);
+  const totalMu = totalM2 / 666.6666667;
   return formatNumber(Math.round(totalMu * 100) / 100);
-});
+}
 
 function productionName(production: FarmProduction): string {
   return `${production.speciesName}${production.variety ? ` · ${production.variety}` : ""}`;
@@ -148,13 +129,6 @@ function productionTime(startedOn: string): string {
   if (Number.isNaN(started.getTime())) return startedOn;
   const days = Math.max(0, Math.floor((Date.now() - started.getTime()) / 86_400_000));
   return `${started.getMonth() + 1}月${started.getDate()}日开始 · ${days}天`;
-}
-
-function industryIcon(industry: Industry): string {
-  if (industry === "FISHERY") return "order";
-  if (industry === "LIVESTOCK") return "home";
-  if (industry === "FORESTRY") return "map";
-  return "grid";
 }
 
 async function loadOverview(): Promise<void> {
@@ -194,20 +168,20 @@ function openCreateFarm(): void {
   uni.navigateTo({ url: "/pages/farms/create" });
 }
 
-function openPlotList(): void {
-  if (currentFarm.value) uni.navigateTo({ url: `/pages/plots/index?farmId=${currentFarm.value.id}` });
-}
-
-function openFarmSettings(): void {
-  if (currentFarm.value) uni.navigateTo({ url: `/pages/farms/detail?farmId=${currentFarm.value.id}` });
+function openPlotList(filter: "ALL" | "IDLE"): void {
+  if (currentFarm.value) uni.navigateTo({ url: `/pages/farm-plots/index?farmId=${currentFarm.value.id}&filter=${filter}` });
 }
 
 function openProduction(productionId: number): void {
   uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
 }
 
-function openHome(): void {
-  uni.switchTab({ url: "/pages/home/index" });
+function showRecordsPending(): void {
+  toastRef.value?.show({ type: "default", message: "生产记录待完成" });
+}
+
+function openStartProduction(): void {
+  if (currentFarm.value) uni.navigateTo({ url: `/pages/productions/start?farmId=${currentFarm.value.id}` });
 }
 
 onShow(async () => {
@@ -228,40 +202,32 @@ onShow(async () => {
 
 .overview-loading { display: flex; min-height: 220rpx; flex-direction: column; align-items: center; justify-content: center; margin-top: 24rpx; color: $pf-color-text-secondary; font-size: 23rpx; }
 .overview-loading text { margin-top: 14rpx; }
-.overview-card { margin-top: 24rpx; padding: 30rpx 28rpx 26rpx; }
-.overview-eyebrow, .overview-metric__value, .overview-metric__label, .production-name, .production-meta, .empty-production__title, .empty-production__description, .manage-title, .manage-description, .empty-state__title, .empty-state__description { display: block; }
-.overview-eyebrow { color: $pf-color-primary; font-size: 22rpx; font-weight: 600; }
-.overview-area__value { display: flex; align-items: baseline; margin-top: 6rpx; color: $pf-color-text; }
-.overview-area__value > text:first-child { font-size: 58rpx; font-weight: 750; letter-spacing: -2rpx; }
-.overview-area__unit { margin-left: 9rpx; font-size: 24rpx; font-weight: 550; }
-.overview-metrics { display: flex; margin-top: 28rpx; padding-top: 24rpx; border-top: 1rpx solid rgba(40, 107, 70, 0.12); }
-.overview-metric { flex: 1; }
-.overview-metric + .overview-metric { padding-left: 22rpx; border-left: 1rpx solid rgba(40, 107, 70, 0.12); }
-.overview-metric__value { color: $pf-color-text; font-size: 32rpx; font-weight: 700; }
-.overview-metric__label { margin-top: 5rpx; color: $pf-color-text-secondary; font-size: 20rpx; }
-.production-list { padding: 6rpx 0; }
+.overview-heading { margin-top: 8rpx; }
+.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16rpx; }
+.overview-card { min-width: 0; padding: 22rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
+.overview-card__heading { display: flex; align-items: center; justify-content: space-between; }
+.overview-card__title, .overview-card__area, .production-name, .production-meta, .empty-production__title, .empty-state__title, .empty-state__description, .records-entry__title, .records-entry__description { display: block; }
+.overview-card__title { color: $pf-color-text-secondary; font-size: 22rpx; font-weight: 600; }
+.overview-card__value { display: flex; align-items: baseline; margin-top: 14rpx; color: $pf-color-text; }
+.overview-card__value > text:first-child { font-size: 46rpx; font-weight: 750; letter-spacing: -1rpx; }
+.overview-card__value > text:last-child { margin-left: 6rpx; font-size: 22rpx; font-weight: 550; }
+.overview-card__area { margin-top: 7rpx; color: $pf-color-text-muted; font-size: 20rpx; }
+.production-list { padding: 0; border: none; border-radius: 20rpx; box-shadow: $pf-shadow-card; }
 .production-row { display: flex; min-height: 112rpx; align-items: center; padding: 0 22rpx; }
 .production-row + .production-row { border-top: 1rpx solid $pf-color-divider; }
-.production-icon { display: flex; width: 54rpx; height: 54rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 17rpx; background: $pf-color-primary-soft; }
-.production-copy { min-width: 0; flex: 1; margin: 0 16rpx; }
-.production-heading { display: flex; align-items: center; }
+.production-copy { min-width: 0; flex: 1; margin-right: 16rpx; }
 .production-name { min-width: 0; overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.production-status { flex-shrink: 0; margin-left: 10rpx; padding: 4rpx 10rpx; border-radius: 999rpx; background: $pf-color-primary-soft; color: $pf-color-primary; font-size: 18rpx; }
 .production-meta { margin-top: 7rpx; overflow: hidden; color: $pf-color-text-muted; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
-.empty-production { display: flex; min-height: 126rpx; align-items: center; padding: 24rpx; }
-.empty-production__icon { display: flex; width: 54rpx; height: 54rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 17rpx; background: $pf-color-primary-soft; }
+.empty-production { display: flex; min-height: 112rpx; align-items: center; padding: 0 24rpx; border: none; }
+.empty-production__icon { display: flex; width: 56rpx; height: 56rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }
 .empty-production__copy { min-width: 0; flex: 1; margin-left: 16rpx; }
 .empty-production__title { color: $pf-color-text; font-size: 25rpx; font-weight: 600; }
-.empty-production__description { margin-top: 6rpx; color: $pf-color-text-muted; font-size: 21rpx; }
 .empty-production__action { color: $pf-color-primary; font-size: 23rpx; font-weight: 600; }
-.manage-list { overflow: hidden; }
-.manage-row { display: flex; min-height: 112rpx; align-items: center; padding: 0 22rpx; }
-.manage-divider { height: 1rpx; margin-left: 92rpx; background: $pf-color-divider; }
-.manage-icon { display: flex; width: 54rpx; height: 54rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 17rpx; background: $pf-color-primary-soft; }
-.manage-icon--neutral { background: $pf-color-surface-muted; }
-.manage-copy { min-width: 0; flex: 1; margin: 0 16rpx; }
-.manage-title { color: $pf-color-text; font-size: 27rpx; font-weight: 600; }
-.manage-description { margin-top: 6rpx; color: $pf-color-text-muted; font-size: 21rpx; }
+.records-entry { display: flex; min-height: 104rpx; align-items: center; margin-top: 32rpx; padding: 0 22rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
+.records-entry__icon { display: flex; width: 56rpx; height: 56rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }
+.records-entry__copy { min-width: 0; flex: 1; margin: 0 16rpx; }
+.records-entry__title { color: $pf-color-text; font-size: 27rpx; font-weight: 600; }
+.records-entry__description { margin-top: 6rpx; color: $pf-color-text-muted; font-size: 21rpx; }
 .empty-state { margin-top: 32rpx; padding: 40rpx 28rpx 30rpx; text-align: center; }
 .empty-state__icon { display: flex; width: 72rpx; height: 72rpx; align-items: center; justify-content: center; margin: 0 auto; border-radius: 22rpx; background: $pf-color-primary-soft; }
 .empty-state__title { margin-top: 24rpx; color: $pf-color-text; font-size: 31rpx; font-weight: 650; }

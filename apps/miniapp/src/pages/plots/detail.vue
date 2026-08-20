@@ -289,7 +289,7 @@ function openEdit(): void {
 function openCreateProduction(): void {
   if (plot.value) {
     uni.navigateTo({
-      url: `/pages/species/index?purpose=production&farmId=${plot.value.farmId}&plotId=${plot.value.id}`,
+      url: `/pages/productions/start?farmId=${plot.value.farmId}&plotId=${plot.value.id}`,
     });
   }
 }
