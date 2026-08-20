@@ -16,6 +16,7 @@
 - 不擅自增加需求中不存在的功能。
 - 不引入微服务、Redis、MQ、Celery、Elasticsearch 等当前不需要的基础设施。
 - 不建立 GenericRepository、BaseService 等无实际价值的通用抽象。
+- 前端展示业务数值时统一复用 `apps/miniapp/src/utils/number.ts` 的 `formatNumber`：整数不显示小数部分，小数去除末尾无意义的 0；不得直接拼接接口返回的数值。
 - 数据库结构变化必须使用 Alembic migration。
 - 不修改已经执行过的历史 migration。
 - 所有农场数据访问必须检查当前用户的 FarmMember 权限。

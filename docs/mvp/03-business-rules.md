@@ -252,7 +252,7 @@ FarmOperation 首先属于 Plot。
 
 MVP 农事表单统一为：
 
-operationType *
+operationTypeId *
 plotId *
 
 workMethod
@@ -304,15 +304,16 @@ MVP 只记录：
 
 ## 14. FarmOperation 自动关联 Production
 
-创建农事的 `productionId` 必传但允许为 `null`；字段缺失时返回 `422`，后端不根据缺失字段猜测业务含义。
+创建农事的 `productionId` 必传但允许为 `null`；字段缺失时返回 `422`，后端不根据缺失字段猜测业务含义。关联具体种养是选填的追溯能力，默认记录整个地块。
 
 | 地块当前状态 | 前端行为 | 请求中的 `productionId` |
 | --- | --- | --- |
-| 没有 ACTIVE Production | 自动选择整个地块 | `null` |
-| 只有一条 ACTIVE Production | 自动填入该 Production | 该 Production 的 ID |
-| 有多条 ACTIVE Production | 用户选择某次种养或整个地块 | 对应 ID 或 `null` |
+| 没有 ACTIVE Production | 记录整个地块 | `null` |
+| 有一条或多条 ACTIVE Production | 默认记录整个地块；用户可按带开始日期、品种和初始数量的批次卡片选择具体种养 | 对应 ID 或 `null` |
 
 后端必须校验非空 `productionId` 确实属于当前 Plot。
+
+农事类型由系统 `OperationType` 数据表维护。创建或改选时只能使用 `ACTIVE` 类型；下架后不影响既有农事记录的展示和编辑（编辑时可保留原类型，但不可切换到其他下架类型）。
 
 ---
 

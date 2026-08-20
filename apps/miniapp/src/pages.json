@@ -113,6 +113,37 @@
       }
     },
     {
+      "path": "pages/operations/index",
+      "style": {
+        "navigationBarTitleText": "农事记录"
+      }
+    },
+    {
+      "path": "pages/operations/form",
+      "style": {
+        "navigationBarTitleText": "记录农事"
+      }
+    },
+    {
+      "path": "pages/operations/productions",
+      "style": {
+        "navigationBarTitleText": "关联种养"
+      }
+    },
+    {
+      "path": "pages/operation-types/index",
+      "style": {
+        "navigationBarTitleText": "选择农事类型"
+      }
+    },
+    {
+      "path": "pages/plots/select",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "选择地块"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"

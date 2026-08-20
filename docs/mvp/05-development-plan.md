@@ -257,7 +257,7 @@ farm_operations
 
 实现：
 
-OperationType
+operation_types（系统农事类型数据，支持 `ACTIVE` / `DISABLED` 下架状态）
 
 `FarmOperation.operator_id` 表示实际操作人，默认当前用户但允许选择当前 Farm 的其他有效成员；`created_by` 由后端根据 JWT 自动写入，客户端不可传入或修改。
 
@@ -271,6 +271,8 @@ OperationType
 plotId 必填。
 
 productionId 必传但可为 null。
+
+operationTypeId 必传，且必须为 ACTIVE 的系统农事类型。
 
 Operator 默认当前用户。
 

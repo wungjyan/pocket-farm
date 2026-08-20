@@ -14,6 +14,7 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-only-secret-at-least-32-bytes")
 async def remove_test_user() -> None:
     from app.db.session import async_session_factory, engine
     from app.models.farm import Farm, FarmMember
+    from app.models.operation import FarmOperation
     from app.models.plot import Plot
     from app.models.production import Production
     from app.models.user import User
@@ -40,6 +41,9 @@ async def remove_test_user() -> None:
                 (await session.scalars(select(Plot.id).where(Plot.farm_id.in_(farm_ids)))).all()
             )
             if plot_ids:
+                await session.execute(
+                    delete(FarmOperation).where(FarmOperation.plot_id.in_(plot_ids))
+                )
                 await session.execute(delete(Production).where(Production.plot_id.in_(plot_ids)))
             await session.execute(delete(Plot).where(Plot.farm_id.in_(farm_ids)))
             await session.execute(delete(Farm).where(Farm.id.in_(farm_ids)))

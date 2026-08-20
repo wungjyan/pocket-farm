@@ -60,6 +60,7 @@ erDiagram
         bigint id PK
         bigint plot_id FK
         bigint production_id FK
+        bigint operation_type_id FK
         bigint operator_id FK
         bigint created_by FK
         datetime operated_at
@@ -466,7 +467,7 @@ id
 plot_id
 production_id
 
-operation_type
+operation_type_id
 
 work_method
 operated_at
@@ -498,7 +499,9 @@ production_id：
 
 ## 19. OperationType
 
-MVP 使用系统预置代码。
+使用系统预置数据表维护农事类型，字段包括 `id`、`code`、`name`、`status`、`sort_order`、`created_at` 和 `updated_at`。`code` 全局唯一，`status` 为 `ACTIVE` 或 `DISABLED`；下架类型不出现在新建农事的选择列表中，也不能用于新建或改选农事，历史记录仍保留其名称。
+
+MVP 预置：
 
 例如：
 

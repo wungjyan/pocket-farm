@@ -11,9 +11,9 @@
 
 ## 当前阶段
 
-**Phase 4：Species + Production 已完成。**
+**Phase 5：FarmOperation 已完成。**
 
-下一阶段为 **Phase 5：FarmOperation**。尚未开始。
+下一阶段为 **Phase 6：HarvestRecord**。尚未开始。
 
 ## 阶段状态
 
@@ -24,7 +24,7 @@
 | 2 | Farm + FarmMember | 已完成 | 2026-08-18 |
 | 3 | Plot | 已完成 | 2026-08-18 |
 | 4 | Species + Production | 已完成 | 2026-08-19 |
-| 5 | FarmOperation | 未开始 | - |
+| 5 | FarmOperation | 已完成 | 2026-08-19 |
 | 6 | HarvestRecord | 未开始 | - |
 | 7 | 结束种养 | 未开始 | - |
 | 8 | 地块完整详情 | 未开始 | - |
@@ -213,6 +213,47 @@
 
 - Phase 4 尚无 FarmOperation、HarvestRecord 表，因此当前 ACTIVE Production 的关联记录限制将在 Phase 5、6 接入相应表后补齐：存在关联农事或收获时，不允许修改 `plotId`、`speciesId`、`startedOn` 或删除。
 - 结束种养属于 Phase 7，当前不提供结束操作；历史列表已为该状态预留展示。
+
+## Phase 5 交付记录
+
+### 农事
+
+- 新增 `farm_operations` 与 `operation_types` 表：预置施肥、翻耕、起垄、用药、灌溉、除草、修剪、喂料、消毒、清粪、配种、投料、换水、清塘和测水温等 MVP 基础农事类型；类型以数据表维护，`ACTIVE` / `DISABLED` 状态支持下架，历史记录仍保留关联类型。
+- FarmOperation 归属于 Plot，`production_id` 在创建请求中必传但允许为 `null`；非空时后端校验 Production 属于同一 Plot 且仍为 ACTIVE。
+- `operator_id` 默认当前用户，也可指定同一 Farm 的其他有效成员；`created_by` 始终由 JWT 当前用户写入，编辑不会修改记录人或创建时间。
+- `operated_at` 接受带时区 ISO 8601 时间，转换为 UTC 保存；关联 Production 的农事不得早于其开始日期，所有农事均不得晚于当前时间。
+- 已接入 Production 与农事的关联限制：存在关联农事后，不允许修改 Production 的 `plotId`、`speciesId`、`startedOn` 或删除。HarvestRecord 的对应限制留待 Phase 6 接入。
+
+### API 与 Migration
+
+- `GET /api/v1/plots/{plotId}/operations`
+- `POST /api/v1/plots/{plotId}/operations`
+- `PATCH /api/v1/operations/{operationId}`
+- `DELETE /api/v1/operations/{operationId}`
+- `GET /api/v1/operation-types`
+- 新增 migration：`2c972e3fc98e`（`create farm operations`）及 `54698bd6b5f1`（`manage operation types`）。
+
+### 小程序
+
+- 新增 FarmOperation API Service、农事记录列表页和创建／编辑表单页；地块详情提供“记农事”和“查看记录”入口，首页“记农事”直接进入同一表单。
+- 农事类型改为独立平铺选择页，只显示后端返回的 ACTIVE 类型；表单默认人工、当前时间和当前用户，操作人可选择当前 Farm 成员。
+- 创建农事时，地块是表单首个必填项：首页进入时先在表单内选择；从地块详情或农事列表进入时自动带入，但仍可重选当前农场内的地块。编辑既有农事时地块保持锁定。
+- 种养关联默认整个地块，改用批次卡片选择；卡片展示种类、品种、开始日期和初始数量，避免同种类批次难以分辨。请求始终提交 `productionId`，包括显式 `null`。
+- 已支持编辑、删除 ACTIVE Production 关联的农事；关联已结束种养的记录展示锁定状态，前端不提供编辑和删除入口。
+- 农事列表保持为独立页面，未提前实现 Phase 8 的地块详情三栏聚合布局。
+- 首页已接入当前农场的地块数、进行中种养和最近农事；全部通过现有按地块接口聚合，不新增收获、结束种养或新的后端 API。快捷入口支持先选地块后开始种养，并直接进入农事表单选择地块；收获入口明确提示等待 Phase 6。
+
+### 验证结果
+
+- `uv run alembic check`：通过。
+- `uv run pytest`：通过（29 passed）。
+- `uv run ruff check .`：通过。
+- `pnpm exec vue-tsc --noEmit -p apps/miniapp/tsconfig.json`：通过。
+- `pnpm run miniapp:build`：通过；仅有现有 Sass API 与 `@import` 弃用警告。
+
+### 未解决问题
+
+- HarvestRecord 与结束种养仍未开始，按 Phase 6、7 顺序推进。
 
 ## 前端规划记录
 

@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
 from app.models.farm import FarmMember
+from app.models.operation import FarmOperation
 from app.models.plot import Plot
 from app.models.production import (
     PlantingMethod,
@@ -240,6 +241,19 @@ async def update_production(
     if ProductionStatus(production.status) != ProductionStatus.ACTIVE:
         raise _conflict("An ended production cannot be edited.")
 
+    core_fields = {"plot_id", "species_id", "started_on"}
+    if core_fields & fields_set:
+        operation_count = await session.scalar(
+            select(func.count())
+            .select_from(FarmOperation)
+            .where(FarmOperation.production_id == production.id)
+        )
+        if operation_count:
+            raise _conflict(
+                "Production plotId, speciesId, and startedOn cannot be changed "
+                "after operations exist."
+            )
+
     target_plot = current_plot
     if "plot_id" in fields_set:
         target_plot, _ = await get_plot_with_member(session, plot_id=plot_id, user_id=user_id)  # type: ignore[arg-type]
@@ -351,7 +365,14 @@ async def delete_production(
     if ProductionStatus(production.status) != ProductionStatus.ACTIVE:
         raise _conflict("An ended production cannot be deleted.")
 
-    # Phase 4 has no FarmOperation or HarvestRecord tables yet, so every Production has no
-    # related records. Phase 5 and Phase 6 extend this branch before allowing a deletion.
+    operation_count = await session.scalar(
+        select(func.count())
+        .select_from(FarmOperation)
+        .where(FarmOperation.production_id == production.id)
+    )
+    if operation_count:
+        raise _conflict("A production with farm operations cannot be deleted.")
+
+    # Phase 6 adds the equivalent HarvestRecord check before allowing a deletion.
     await session.delete(production)
     await session.commit()

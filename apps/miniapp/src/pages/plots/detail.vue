@@ -82,6 +82,21 @@
           </view>
         </view>
       </template>
+
+      <view class="section-heading">
+        <text class="section-heading__title">农事</text>
+        <view class="section-heading__actions">
+          <text class="section-heading__action section-heading__action--secondary" @click="openOperations">查看记录</text>
+          <text v-if="canManageOperations" class="section-heading__action" @click="openCreateOperation">记农事</text>
+        </view>
+      </view>
+      <view class="operation-entry pf-card" @click="openOperations">
+        <view>
+          <text class="operation-entry__title">查看地块农事</text>
+          <text class="operation-entry__meta">翻耕、施肥、灌溉等现场记录</text>
+        </view>
+        <uv-icon name="arrow-right" size="17" color="#929A93" />
+      </view>
     </template>
 
     <uv-toast ref="toastRef" />
@@ -109,6 +124,7 @@ const endedProductions = ref<Production[]>([]);
 const toastRef = ref<{ error: (message: string) => void } | null>(null);
 const canEdit = computed(() => farm.value?.myRole === "OWNER" || farm.value?.myRole === "ADMIN");
 const canManageProductions = computed(() => Boolean(farm.value?.myRole));
+const canManageOperations = computed(() => Boolean(farm.value?.myRole));
 
 const plotTypeLabels: Record<PlotType, string> = {
   FIELD: "大田",
@@ -192,6 +208,14 @@ function openCreateProduction(): void {
 
 function openProduction(productionId: number): void {
   uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
+}
+
+function openOperations(): void {
+  if (plot.value) uni.navigateTo({ url: `/pages/operations/index?plotId=${plot.value.id}` });
+}
+
+function openCreateOperation(): void {
+  if (plot.value) uni.navigateTo({ url: `/pages/operations/form?plotId=${plot.value.id}&plotLocked=1` });
 }
 
 onLoad((options) => {
@@ -297,6 +321,16 @@ onShow(() => {
   font-size: 24rpx;
 }
 
+.section-heading__actions {
+  display: flex;
+  align-items: center;
+}
+
+.section-heading__action--secondary {
+  margin-right: 22rpx;
+  color: $pf-color-text-secondary;
+}
+
 .production-list {
   display: flex;
   flex-direction: column;
@@ -357,6 +391,31 @@ onShow(() => {
   padding: 0 24rpx;
   color: $pf-color-text-secondary;
   font-size: 25rpx;
+}
+
+.operation-entry {
+  display: flex;
+  min-height: 100rpx;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22rpx;
+}
+
+.operation-entry__title,
+.operation-entry__meta {
+  display: block;
+}
+
+.operation-entry__title {
+  color: $pf-color-text;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.operation-entry__meta {
+  margin-top: 6rpx;
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
 }
 
 .state-card {
