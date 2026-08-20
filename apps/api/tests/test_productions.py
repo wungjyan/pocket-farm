@@ -140,7 +140,7 @@ def test_species_search_and_agriculture_production_fields() -> None:
     all_species_response = call(owner_token, "/api/v1/species?pageSize=100")
     agriculture_response = call(owner_token, "/api/v1/species?industry=AGRICULTURE&keyword=黄")
     assert all_species_response.status_code == 200
-    assert all_species_response.json()["data"]["total"] == 23
+    assert all_species_response.json()["data"]["total"] == 24
     assert agriculture_response.status_code == 200
     assert agriculture_response.json()["data"]["items"][0]["name"] == "黄瓜"
     assert agriculture_response.json()["data"]["items"][0]["individualUnit"] == "PLANT"

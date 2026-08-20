@@ -11,9 +11,9 @@
 
 ## 当前阶段
 
-**Phase 8：地块完整详情已完成。**
+**Phase 9：小程序完整联调已完成。**
 
-下一阶段为 **Phase 9：小程序完整联调**。尚未开始。
+MVP 计划内 Phase 0 至 Phase 9 均已完成。
 
 ## 阶段状态
 
@@ -28,7 +28,7 @@
 | 6 | HarvestRecord | 已完成 | 2026-08-20 |
 | 7 | 结束种养 | 已完成 | 2026-08-20 |
 | 8 | 地块完整详情 | 已完成 | 2026-08-20 |
-| 9 | 小程序完整联调 | 未开始 | - |
+| 9 | 小程序完整联调 | 已完成 | 2026-08-20 |
 
 ## Phase 0 交付记录
 
@@ -349,6 +349,29 @@ Phase 8 已在后续阶段完成，详见下一节。
 ### 未解决问题
 
 无阻塞问题；Phase 9 按计划等待确认后开始。
+
+## Phase 9 交付记录
+
+### 完整流程联调
+
+- 新增 6 组端到端 API 工作流测试，分别覆盖农业、渔业、牧业、空闲地块、多轮种植和同地块多种并行。
+- 每组流程均从创建 Farm、Plot、Production 开始，验证农事、收获、结束种养和地块聚合详情的最终历史数据；空闲地块农事明确提交 `productionId: null`。
+- 多轮种植验证同种类的已结束与进行中种养数据完全独立；同时多种验证可分别关联两条 ACTIVE Production，或记录到整个地块。
+- 发现计划中的“黄瓜 + 生菜”验收场景缺少预置生菜，新增只追加数据的 migration `c4d7e2f9a561`，以农业种类和 `PLANT` 个体单位写入生菜；未修改任何历史 migration 或既有 API。
+
+### 小程序与验证
+
+- 小程序 API Service 与页面调用通过 TypeScript 类型检查和微信小程序构建验证；本仓库未配置微信开发者工具自动化，因此业务闭环以同一 HTTP 接口和实际请求负载的端到端测试固化。
+- `uv run alembic current`：通过，当前为 `c4d7e2f9a561 (head)`。
+- `uv run alembic check`：通过，无待生成 migration。
+- `uv run pytest`：通过（42 passed）。
+- `uv run ruff check .` 与 `uv run ruff format --check .`：通过。
+- `pnpm --dir apps/miniapp exec vue-tsc --noEmit -p tsconfig.json`：通过。
+- `pnpm --dir apps/miniapp run build:mp-weixin`：通过；仅有现有 Sass API 与 `@import` 弃用警告。
+
+### 未解决问题
+
+无阻塞问题。
 
 ## 前端规划记录
 

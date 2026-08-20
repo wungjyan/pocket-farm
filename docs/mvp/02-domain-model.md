@@ -272,7 +272,7 @@ MVP 使用系统预置 Species，通过 Alembic 数据 migration 初始化；不
 
 | Industry | Species | IndividualUnit |
 | --- | --- | --- |
-| AGRICULTURE | 水稻、小麦、玉米、大豆、黄瓜、番茄、辣椒、马铃薯、葡萄 | 株 |
+| AGRICULTURE | 水稻、小麦、玉米、大豆、黄瓜、生菜、番茄、辣椒、马铃薯、葡萄 | 株 |
 | FORESTRY | 杉木、松树、毛竹 | 株 |
 | LIVESTOCK | 猪、牛、羊 | 头 |
 | LIVESTOCK | 鸡、鸭 | 羽 |
