@@ -1,7 +1,7 @@
 <template>
   <view class="pf-page harvest-form-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#D79532" />
+      <uv-loading-icon mode="circle" color="#286B46" />
       <text>正在加载收获表单</text>
     </view>
     <view v-else-if="loadError" class="state-card pf-card">

@@ -1,7 +1,7 @@
 <template>
   <view class="pf-page harvests-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#D79532" />
+      <uv-loading-icon mode="circle" color="#286B46" />
       <text>正在加载收获记录</text>
     </view>
     <view v-else-if="loadError" class="state-card pf-card">
@@ -26,7 +26,7 @@
           :class="{ 'harvest-card--locked': isLocked(harvest) }"
           @click="openEdit(harvest)"
         >
-          <view class="harvest-icon"><uv-icon name="order" size="21" color="#D79532" /></view>
+          <view class="harvest-icon"><uv-icon name="order" size="21" color="#286B46" /></view>
           <view class="harvest-copy">
             <view class="harvest-title-line">
               <text class="harvest-name">{{ harvest.productName || productionFor(harvest)?.speciesName || "收获" }}</text>
@@ -43,7 +43,7 @@
         </view>
       </view>
       <view v-else class="empty-card pf-card">
-        <uv-icon name="order" size="30" color="#D79532" />
+        <uv-icon name="order" size="30" color="#286B46" />
         <text class="empty-card__title">还没有收获记录</text>
         <text class="empty-card__description">每次采收、捕捞或出栏都可以单独记录。</text>
         <uv-button v-if="canCreate" type="primary" size="small" shape="square" custom-style="margin-top: 24rpx; border-radius: 12rpx;" @click="openCreate">记录收获</uv-button>

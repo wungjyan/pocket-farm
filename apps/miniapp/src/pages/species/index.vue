@@ -1,7 +1,5 @@
 <template>
   <view class="pf-page species-page">
-    <PfPageHeader title="选择种类" :show-back="true" />
-
     <view class="pf-page-content">
       <view class="search-shell">
         <uv-icon name="search" size="18" color="#929A93" />
@@ -66,13 +64,16 @@
 <script setup lang="ts">
 import { getCurrentInstance, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
-import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getSpecies, type Industry, type Species } from "../../services/species";
 
 interface OpenerEventChannel {
   emit: (eventName: string, data: Species) => void;
+}
+
+interface ProductionSetupEventChannel {
+  emit: (eventName: string, data: { species: Species; variety: string }) => void;
 }
 
 const industries: Array<{ label: string; value: Industry | null }> = [
@@ -95,6 +96,9 @@ const species = ref<Species[]>([]);
 const loading = ref(false);
 const loadError = ref("");
 let openerEventChannel: OpenerEventChannel | null = null;
+const purpose = ref("");
+const farmId = ref(0);
+const plotId = ref(0);
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -128,11 +132,25 @@ function selectIndustry(industry: Industry | null): void {
 }
 
 function chooseSpecies(item: Species): void {
+  if (purpose.value === "production" && farmId.value) {
+    const plotParameter = plotId.value ? `&plotId=${plotId.value}` : "";
+    uni.navigateTo({
+      url: `/pages/productions/form?farmId=${farmId.value}${plotParameter}`,
+      success: (result) => {
+        const eventChannel = result.eventChannel as unknown as ProductionSetupEventChannel;
+        eventChannel.emit("setup", { species: item, variety: "" });
+      },
+    });
+    return;
+  }
   openerEventChannel?.emit("selected", item);
   uni.navigateBack();
 }
 
-onLoad(() => {
+onLoad((options) => {
+  purpose.value = String(options?.purpose || "");
+  farmId.value = Number(options?.farmId || 0);
+  plotId.value = Number(options?.plotId || 0);
   const page = getCurrentInstance()?.proxy as unknown as {
     getOpenerEventChannel?: () => OpenerEventChannel;
   } | null;

@@ -1,6 +1,5 @@
 <template>
   <view class="pf-page production-select-page">
-    <PfPageHeader title="关联种养" :show-back="true" />
     <view class="pf-page-content">
       <text class="page-hint">默认记录整个地块；选择批次后可用于追溯。</text>
       <view class="production-list">
@@ -16,7 +15,6 @@
 <script setup lang="ts">
 import { getCurrentInstance, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
-import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getPlotProductions, type Production } from "../../services/production";

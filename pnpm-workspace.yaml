@@ -1,3 +1,6 @@
 packages:
   - "packages/*"
   - "apps/miniapp"
+allowBuilds:
+  '@parcel/watcher': true
+  puppeteer: true

@@ -1,7 +1,5 @@
 <template>
   <view class="pf-page production-form-page">
-    <PfPageHeader title="编辑种养" :show-back="true" :back-handler="handleBack" />
-
     <view v-if="loading" class="state-card pf-card">
       <uv-loading-icon mode="circle" color="#2F7D4A" />
       <text>正在加载种养信息</text>
@@ -34,8 +32,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
-import PfPageHeader from "../../components/PfPageHeader.vue";
 import ProductionForm from "../../components/ProductionForm.vue";
+import { useUnsavedChangesGuard } from "../../composables/useUnsavedChangesGuard";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import {
@@ -52,6 +50,7 @@ const saving = ref(false);
 const dirty = ref(false);
 const loadError = ref("");
 const toastRef = ref<{ error: (message: string) => void; success: (message: string) => void } | null>(null);
+useUnsavedChangesGuard(dirty);
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -97,21 +96,6 @@ async function saveProduction(input: ProductionInput): Promise<void> {
   } finally {
     saving.value = false;
   }
-}
-
-function handleBack(): void {
-  if (!dirty.value) {
-    uni.navigateBack();
-    return;
-  }
-  uni.showModal({
-    title: "放弃修改？",
-    content: "当前内容尚未保存，确定要离开吗？",
-    confirmColor: "#C96A45",
-    success: (result) => {
-      if (result.confirm) uni.navigateBack();
-    },
-  });
 }
 
 onLoad((options) => {

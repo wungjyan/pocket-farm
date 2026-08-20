@@ -1,6 +1,22 @@
 <template>
   <view class="form-card pf-card">
     <template v-if="species">
+      <view v-if="showPlotField" class="field-group">
+        <text class="field-label">地块 <text class="field-required">*</text></text>
+        <view
+          class="select-shell plot-select"
+          :class="{ 'plot-select--disabled': !plotSelectable }"
+          @tap="handlePlotSelect"
+        >
+          <view v-if="initialPlot" class="plot-select__copy">
+            <text class="plot-select__name">{{ initialPlot.name }}</text>
+            <text class="plot-select__meta">{{ plotMeta(initialPlot) }}</text>
+          </view>
+          <text v-else class="select-placeholder">请选择地块</text>
+          <uv-icon v-if="plotSelectable" name="arrow-right" size="17" color="#7F8B82" />
+        </view>
+      </view>
+
       <view class="field-group">
         <text class="field-label">种类</text>
         <view class="species-summary">
@@ -9,6 +25,22 @@
             <text class="species-summary__industry">{{ industryLabel(species.industry) }}</text>
           </view>
           <uv-icon name="checkmark-circle" size="19" color="#2F7D4A" />
+        </view>
+      </view>
+
+      <view class="field-group">
+        <text class="field-label">品种 <text class="field-optional">选填</text></text>
+        <view class="input-shell">
+          <uv-input
+            v-model="form.variety"
+            maxlength="100"
+            clearable
+            border="none"
+            placeholder="例如：水果黄瓜"
+            placeholder-style="color: #7F8B82;"
+            color="#17231B"
+            @input="notifyChange"
+          />
         </view>
       </view>
 
@@ -154,6 +186,7 @@ import type {
   ProductionInput,
   WorkMethod,
 } from "../services/production";
+import type { Plot, PlotType } from "../services/plot";
 import type { IndividualUnit, Industry, Species } from "../services/species";
 import { formatNumber } from "../utils/number";
 
@@ -182,6 +215,9 @@ const props = withDefaults(
     initialProduction?: Production | null;
     initialSpecies?: Species | null;
     initialVariety?: string;
+    initialPlot?: Plot | null;
+    showPlotField?: boolean;
+    plotSelectable?: boolean;
     submitLabel?: string;
     loadingText?: string;
     submitting?: boolean;
@@ -190,6 +226,9 @@ const props = withDefaults(
     initialProduction: null,
     initialSpecies: null,
     initialVariety: "",
+    initialPlot: null,
+    showPlotField: false,
+    plotSelectable: false,
     submitLabel: "保存修改",
     loadingText: "保存中",
     submitting: false,
@@ -199,6 +238,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   submit: [input: ProductionInput];
   change: [];
+  "select-plot": [];
 }>();
 
 const species = ref<Species | null>(null);
@@ -273,6 +313,28 @@ function industryLabel(industry: Industry): string {
   return industryLabels[industry];
 }
 
+const plotTypeLabels: Record<PlotType, string> = {
+  FIELD: "大田",
+  PADDY: "水田",
+  GREENHOUSE: "大棚",
+  ORCHARD: "果园",
+  FOREST: "林地",
+  POND: "鱼塘",
+  BARN: "栏舍",
+  OTHER: "其他",
+};
+
+function plotMeta(plot: Plot): string {
+  const type = plot.type ? plotTypeLabels[plot.type] : "未分类";
+  if (plot.areaValue === null || plot.areaValue === undefined || !plot.areaUnit) return type;
+  const units: Record<string, string> = { MU: "亩", SQUARE_METER: "平方米", HECTARE: "公顷" };
+  return `${type} · ${formatNumber(plot.areaValue)}${units[plot.areaUnit] || ""}`;
+}
+
+function handlePlotSelect(): void {
+  if (props.plotSelectable) emit("select-plot");
+}
+
 function individualUnitLabel(unit: IndividualUnit): string {
   return individualUnitLabels[unit];
 }
@@ -344,6 +406,10 @@ function parseEntryAge(value: string): number | null {
 }
 
 function handleSubmit(): void {
+  if (props.showPlotField && !props.initialPlot) {
+    uni.showToast({ title: "请选择地块", icon: "none" });
+    return;
+  }
   if (!species.value) {
     uni.showToast({ title: "请选择种类", icon: "none" });
     return;
@@ -397,6 +463,7 @@ function handleSubmit(): void {
 @import "../styles/design-tokens.scss";
 
 .form-card {
+  margin: 24rpx $pf-space-page-x 0;
   padding: 28rpx 24rpx;
 }
 
@@ -425,6 +492,7 @@ function handleSubmit(): void {
 }
 
 .select-shell,
+.input-shell,
 .textarea-shell {
   display: flex;
   min-height: 88rpx;
@@ -440,6 +508,40 @@ function handleSubmit(): void {
   padding: 0 20rpx;
   color: $pf-color-text;
   font-size: 25rpx;
+}
+
+.input-shell {
+  padding: 0 20rpx;
+}
+
+.input-shell :deep(.uv-input) {
+  width: 100%;
+}
+
+.plot-select {
+  min-height: 100rpx;
+}
+
+.plot-select--disabled {
+  background: $pf-color-surface-muted;
+}
+
+.plot-select__copy,
+.plot-select__name,
+.plot-select__meta {
+  display: block;
+}
+
+.plot-select__name {
+  color: $pf-color-text;
+  font-size: 26rpx;
+  font-weight: 650;
+}
+
+.plot-select__meta {
+  margin-top: 5rpx;
+  color: $pf-color-text-muted;
+  font-size: 21rpx;
 }
 
 .select-placeholder {

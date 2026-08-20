@@ -1,7 +1,5 @@
 <template>
   <view class="pf-page edit-plot-page">
-    <PfPageHeader title="编辑地块" :show-back="true" :back-handler="handleBack" />
-
     <view v-if="loading" class="state-card pf-card">
       <uv-loading-icon mode="circle" color="#2F7D4A" />
       <text>正在加载地块</text>
@@ -34,7 +32,7 @@
 import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import PlotForm from "../../components/PlotForm.vue";
-import PfPageHeader from "../../components/PfPageHeader.vue";
+import { useUnsavedChangesGuard } from "../../composables/useUnsavedChangesGuard";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getPlot, updatePlot, type AreaUnit, type Plot, type PlotType } from "../../services/plot";
@@ -46,6 +44,7 @@ const saving = ref(false);
 const dirty = ref(false);
 const loadError = ref("");
 const toastRef = ref<{ error: (message: string) => void; success: (message: string) => void } | null>(null);
+useUnsavedChangesGuard(dirty);
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -98,21 +97,6 @@ async function savePlot(input: { name: string; type: PlotType | null; areaValue:
   } finally {
     saving.value = false;
   }
-}
-
-function handleBack(): void {
-  if (!dirty.value) {
-    uni.navigateBack();
-    return;
-  }
-  uni.showModal({
-    title: "放弃修改？",
-    content: "当前内容尚未保存，确定要离开吗？",
-    confirmColor: "#C96A45",
-    success: (result) => {
-      if (result.confirm) uni.navigateBack();
-    },
-  });
 }
 
 onLoad((options) => {

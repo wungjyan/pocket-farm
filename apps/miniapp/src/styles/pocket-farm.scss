@@ -1,6 +1,5 @@
 @import "./design-tokens.scss";
 
-/* 页面基础层 */
 .pf-page {
   min-height: 100vh;
   box-sizing: border-box;
@@ -8,26 +7,27 @@
 }
 
 .pf-page-content {
-  padding: 8rpx $pf-space-page-x $pf-space-page-bottom;
+  padding: $pf-space-2 $pf-space-page-x $pf-space-page-bottom;
 }
 
-/* 区块标题只负责层级，不额外包裹卡片。 */
 .pf-section-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin: $pf-space-section 4rpx 16rpx;
+  margin: $pf-space-section 4rpx $pf-space-2;
 }
 
 .pf-section-title {
   color: $pf-color-text;
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 650;
+  line-height: 1.3;
 }
 
 .pf-section-note,
 .pf-section-action {
   font-size: 23rpx;
+  line-height: 1.4;
 }
 
 .pf-section-note {
@@ -36,17 +36,42 @@
 
 .pf-section-action {
   color: $pf-color-primary;
+  font-weight: 550;
 }
 
-/* 普通白色承载面，控制圆角和边界感。 */
 .pf-card {
   border: 1rpx solid $pf-color-border;
-  border-radius: $pf-radius-list;
+  border-radius: $pf-radius-card;
   background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
 }
 
 .pf-card--emphasis {
-  border: 0;
-  border-radius: $pf-radius-card;
+  border-color: transparent;
+  border-radius: $pf-radius-card-lg;
   background: $pf-color-primary-soft;
+  box-shadow: none;
+}
+
+.pf-tappable {
+  transition: opacity $pf-duration-fast ease, transform $pf-duration-fast ease;
+}
+
+.pf-tappable:active {
+  opacity: 0.72;
+  transform: scale(0.99);
+}
+
+.pf-list-card {
+  overflow: hidden;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
+}
+
+.pf-list-divider {
+  height: 1rpx;
+  margin-left: 96rpx;
+  background: $pf-color-divider;
 }

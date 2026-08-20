@@ -18,59 +18,59 @@
 /* 掌上农场主题 */
 
 /* uv-ui 文字、背景和边框 */
-$uv-main-color: #202821;
-$uv-content-color: #667068;
-$uv-tips-color: #929a93;
-$uv-light-color: #f3f5f1;
-$uv-border-color: #e2e6e0;
-$uv-bg-color: #f7f8f3;
-$uv-disabled-color: #c8cec8;
+$uv-main-color: $pf-color-text;
+$uv-content-color: $pf-color-text-secondary;
+$uv-tips-color: $pf-color-text-muted;
+$uv-light-color: $pf-color-surface-muted;
+$uv-border-color: $pf-color-border;
+$uv-bg-color: $pf-color-page;
+$uv-disabled-color: $pf-neutral-300;
 
 /* uv-ui 语义色 */
-$uv-primary: #2f7d4a;
-$uv-primary-dark: #276a3e;
+$uv-primary: $pf-color-primary;
+$uv-primary-dark: $pf-color-primary-pressed;
 $uv-primary-disabled: #a6c9b0;
-$uv-primary-light: #eaf4ec;
-$uv-success: #2f7d4a;
-$uv-success-dark: #276a3e;
+$uv-primary-light: $pf-color-primary-soft;
+$uv-success: $pf-color-primary;
+$uv-success-dark: $pf-color-primary-pressed;
 $uv-success-disabled: #a6c9b0;
-$uv-success-light: #eaf4ec;
-$uv-warning: #c7862b;
-$uv-warning-dark: #a96b1e;
+$uv-success-light: $pf-color-primary-soft;
+$uv-warning: $pf-color-warning;
+$uv-warning-dark: $pf-color-warning;
 $uv-warning-disabled: #e3c28e;
-$uv-warning-light: #fbf3e4;
-$uv-error: #c95d52;
-$uv-error-dark: #b24e46;
+$uv-warning-light: $pf-color-warning-soft;
+$uv-error: $pf-color-danger;
+$uv-error-dark: $pf-color-danger;
 $uv-error-disabled: #e0aaa5;
-$uv-error-light: #fbefee;
-$uv-info: #4c91a0;
-$uv-info-dark: #39727f;
+$uv-error-light: $pf-color-danger-soft;
+$uv-info: $pf-color-info;
+$uv-info-dark: $pf-color-info;
 $uv-info-disabled: #a9c8ce;
-$uv-info-light: #eaf4f5;
+$uv-info-light: $pf-color-info-soft;
 
 /* uni-app 基础变量 */
 
 /* 行为相关颜色 */
-$uni-color-primary: #2f7d4a;
-$uni-color-success: #2f7d4a;
-$uni-color-warning: #c7862b;
-$uni-color-error: #c95d52;
+$uni-color-primary: $pf-color-primary;
+$uni-color-success: $pf-color-primary;
+$uni-color-warning: $pf-color-warning;
+$uni-color-error: $pf-color-danger;
 
 /* 文字基本颜色 */
-$uni-text-color: #202821; // 基本色
+$uni-text-color: $pf-color-text; // 基本色
 $uni-text-color-inverse: #fff; // 反色
-$uni-text-color-grey: #667068; // 辅助灰色，如加载更多的提示信息
-$uni-text-color-placeholder: #929a93;
+$uni-text-color-grey: $pf-color-text-secondary; // 辅助灰色，如加载更多的提示信息
+$uni-text-color-placeholder: $pf-color-text-muted;
 $uni-text-color-disable: #c8cec8;
 
 /* 背景颜色 */
-$uni-bg-color: #fff;
-$uni-bg-color-grey: #f7f8f3;
-$uni-bg-color-hover: #eaf4ec; // 点击状态颜色
+$uni-bg-color: $pf-color-surface;
+$uni-bg-color-grey: $pf-color-page;
+$uni-bg-color-hover: $pf-color-primary-soft; // 点击状态颜色
 $uni-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩颜色
 
 /* 边框颜色 */
-$uni-border-color: #e2e6e0;
+$uni-border-color: $pf-color-border;
 
 /* 尺寸变量 */
 

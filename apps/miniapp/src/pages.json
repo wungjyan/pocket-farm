@@ -4,7 +4,7 @@
       "path": "pages/auth/login",
       "style": {
         "navigationBarTitleText": "登录",
-        "navigationBarBackgroundColor": "#F7F8F3",
+        "navigationBarBackgroundColor": "#F6F8F5",
         "navigationBarTextStyle": "black"
       }
     },
@@ -50,7 +50,6 @@
     {
       "path": "pages/farms/edit",
       "style": {
-        "navigationStyle": "custom",
         "navigationBarTitleText": "编辑农场信息"
       }
     },
@@ -58,6 +57,12 @@
       "path": "pages/farms/members",
       "style": {
         "navigationBarTitleText": "成员管理"
+      }
+    },
+    {
+      "path": "pages/plots/index",
+      "style": {
+        "navigationBarTitleText": "地块列表"
       }
     },
     {
@@ -75,7 +80,6 @@
     {
       "path": "pages/plots/edit",
       "style": {
-        "navigationStyle": "custom",
         "navigationBarTitleText": "编辑地块"
       }
     },
@@ -86,16 +90,8 @@
       }
     },
     {
-      "path": "pages/productions/create",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "开始种养"
-      }
-    },
-    {
       "path": "pages/productions/form",
       "style": {
-        "navigationStyle": "custom",
         "navigationBarTitleText": "填写种养信息"
       }
     },
@@ -108,7 +104,6 @@
     {
       "path": "pages/productions/edit",
       "style": {
-        "navigationStyle": "custom",
         "navigationBarTitleText": "编辑种养"
       }
     },
@@ -155,24 +150,23 @@
       }
     },
     {
-      "path": "pages/plots/select",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "选择地块"
-      }
-    },
-    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"
+      }
+    },
+    {
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置"
       }
     }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "掌上农场",
-    "navigationBarBackgroundColor": "#F7F8F3",
-    "backgroundColor": "#F7F8F3",
+    "navigationBarBackgroundColor": "#F6F8F5",
+    "backgroundColor": "#F6F8F5",
     "backgroundTextStyle": "light"
   },
   "tabBar": {

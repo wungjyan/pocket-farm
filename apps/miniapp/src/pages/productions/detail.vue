@@ -82,7 +82,7 @@
         <text v-if="production.status === 'ACTIVE'" class="section-action" @click="openCreateHarvest">记录{{ harvestActionLabel }}</text>
       </view>
       <view class="harvest-entry pf-card" @click="openHarvests">
-        <view class="harvest-icon"><uv-icon name="order" size="20" color="#D79532" /></view>
+        <view class="harvest-icon"><uv-icon name="order" size="20" color="#286B46" /></view>
         <view class="harvest-copy">
           <text class="harvest-title">查看{{ harvestActionLabel }}记录</text>
           <text class="harvest-meta">支持同一次种养多次{{ harvestActionLabel }}</text>

@@ -1,122 +1,164 @@
 <template>
   <view class="pf-page plot-detail-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#2F7D4A" />
+      <uv-loading-icon mode="circle" color="#286B46" />
       <text>正在加载地块</text>
     </view>
 
     <view v-else-if="loadError" class="state-card pf-card">
-      <uv-icon name="warning" size="28" color="#C96A45" />
+      <uv-icon name="warning" size="28" color="#A9433B" />
       <text>{{ loadError }}</text>
-      <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 22rpx; border-radius: 12rpx;" @click="loadPlot">
-        重试
-      </uv-button>
+      <uv-button
+        type="primary"
+        size="small"
+        shape="square"
+        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+        @click="loadPlot"
+      >重试</uv-button>
     </view>
 
-    <template v-else-if="plot">
-      <view class="plot-heading">
-        <view class="plot-heading__main">
-          <text class="plot-heading__name">{{ plot.name }}</text>
-          <text class="plot-heading__meta">{{ plotTypeLabel(plot.type) }} · {{ areaLabel(plot) }}</text>
+    <view v-else-if="plot" class="pf-page-content">
+      <view class="plot-overview">
+        <view class="plot-overview__top">
+          <view class="plot-overview__icon">
+            <uv-icon :name="plotIcon(plot.type)" size="25" color="#286B46" />
+          </view>
+          <view class="plot-overview__copy">
+            <text class="plot-overview__eyebrow">{{ plotTypeLabel(plot.type) }}</text>
+            <text class="plot-overview__name">{{ plot.name }}</text>
+          </view>
+          <view v-if="canEdit" class="plot-overview__edit pf-tappable" @tap="openEdit">
+            <uv-icon name="edit-pen" size="15" color="#286B46" />
+            <text>编辑</text>
+          </view>
         </view>
-        <text v-if="canEdit" class="plot-heading__action" @click="openEdit">编辑</text>
+
+        <view class="plot-overview__metrics">
+          <view class="overview-metric">
+            <text class="overview-metric__value">{{ areaLabel(plot) }}</text>
+            <text class="overview-metric__label">地块面积</text>
+          </view>
+          <view class="overview-metric">
+            <text class="overview-metric__value">{{ activeProductions.length }}</text>
+            <text class="overview-metric__label">当前种养</text>
+          </view>
+          <view class="overview-metric">
+            <text class="overview-metric__value overview-metric__value--date">{{ formatDate(plot.createdAt) }}</text>
+            <text class="overview-metric__label">创建日期</text>
+          </view>
+        </view>
       </view>
 
-      <view class="info-card pf-card">
-        <view class="info-row">
-          <text class="info-label">地块类型</text>
-          <text class="info-value">{{ plotTypeLabel(plot.type) }}</text>
+      <view class="quick-actions">
+        <view v-if="canManageProductions" class="quick-action pf-tappable" @tap="openCreateProduction">
+          <view class="quick-action__icon"><uv-icon name="plus" size="21" color="#286B46" /></view>
+          <text class="quick-action__title">开始种养</text>
         </view>
-        <view class="info-row">
-          <text class="info-label">面积</text>
-          <text class="info-value">{{ areaLabel(plot) }}</text>
+        <view v-if="canManageOperations" class="quick-action pf-tappable" @tap="openCreateOperation">
+          <view class="quick-action__icon"><uv-icon name="edit-pen" size="20" color="#286B46" /></view>
+          <text class="quick-action__title">记农事</text>
         </view>
-        <view class="info-row">
-          <text class="info-label">创建时间</text>
-          <text class="info-value">{{ formatDate(plot.createdAt) }}</text>
+        <view
+          v-if="canManageHarvests"
+          class="quick-action pf-tappable"
+          :class="{ 'quick-action--disabled': !activeProductions.length }"
+          @tap="openCreateHarvest"
+        >
+          <view class="quick-action__icon"><uv-icon name="order" size="20" color="#286B46" /></view>
+          <text class="quick-action__title">记收获</text>
         </view>
       </view>
 
-      <view class="section-heading">
-        <text class="section-heading__title">种养</text>
-        <text v-if="canManageProductions" class="section-heading__action" @click="openCreateProduction">开始种养</text>
+      <view class="pf-section-heading">
+        <text class="pf-section-title">当前种养</text>
+        <text class="pf-section-note">{{ activeProductions.length ? `进行中 ${activeProductions.length} 项` : "地块空闲" }}</text>
       </view>
 
-      <view v-if="activeProductions.length" class="production-list">
+      <view v-if="activeProductions.length" class="production-list pf-list-card">
         <view
           v-for="item in activeProductions"
           :key="item.id"
-          class="production-card pf-card"
-          @click="openProduction(item.id)"
+          class="production-row pf-tappable"
+          @tap="openProduction(item.id)"
         >
-          <view class="production-card__main">
-            <text class="production-card__name">{{ item.speciesName }}</text>
-            <text class="production-card__meta">{{ productionMeta(item) }}</text>
+          <view class="production-row__icon">
+            <uv-icon :name="industryIcon(item.industry)" size="20" color="#286B46" />
           </view>
-          <text class="production-card__harvest" @click.stop="openCreateHarvestFor(item.id)">{{ harvestActionLabel(item.industry) }}</text>
-          <view class="production-card__status">进行中</view>
-          <uv-icon name="arrow-right" size="17" color="#929A93" />
+          <view class="production-row__copy">
+            <view class="production-row__heading">
+              <text class="production-row__name">{{ item.speciesName }}</text>
+              <text v-if="item.variety" class="production-row__variety">{{ item.variety }}</text>
+            </view>
+            <text class="production-row__meta">{{ productionMeta(item) }}</text>
+          </view>
+          <view class="production-row__tail">
+            <text class="status-chip">进行中</text>
+            <uv-icon name="arrow-right" size="16" color="#7F8B82" />
+          </view>
         </view>
       </view>
-      <view v-else class="production-empty pf-card">
-        <text>当前空闲</text>
-        <text v-if="canManageProductions" class="production-empty__action" @click="openCreateProduction">开始种养</text>
+      <view v-else class="production-empty pf-card pf-tappable" @tap="openCreateProduction">
+        <view class="production-empty__icon"><uv-icon name="plus" size="20" color="#286B46" /></view>
+        <view class="production-empty__copy">
+          <text class="production-empty__title">这个地块目前空闲</text>
+          <text class="production-empty__meta">开始种养后，会在这里展示当前批次。</text>
+        </view>
+        <uv-icon name="arrow-right" size="16" color="#7F8B82" />
       </view>
 
       <template v-if="endedProductions.length">
-        <view class="section-heading section-heading--history">
-          <text class="section-heading__title">历史种养</text>
+        <view class="pf-section-heading history-heading">
+          <text class="pf-section-title">历史种养</text>
+          <text class="pf-section-note">共 {{ endedProductions.length }} 项</text>
         </view>
-        <view class="production-list">
+        <view class="production-list pf-list-card">
           <view
             v-for="item in endedProductions"
             :key="item.id"
-            class="production-card pf-card"
-            @click="openProduction(item.id)"
+            class="production-row pf-tappable"
+            @tap="openProduction(item.id)"
           >
-            <view class="production-card__main">
-              <text class="production-card__name">{{ item.speciesName }}</text>
-              <text class="production-card__meta">{{ productionMeta(item) }}</text>
+            <view class="production-row__icon production-row__icon--muted">
+              <uv-icon :name="industryIcon(item.industry)" size="20" color="#536158" />
             </view>
-            <view class="production-card__status production-card__status--ended">已结束</view>
-            <uv-icon name="arrow-right" size="17" color="#929A93" />
+            <view class="production-row__copy">
+              <view class="production-row__heading">
+                <text class="production-row__name">{{ item.speciesName }}</text>
+                <text v-if="item.variety" class="production-row__variety production-row__variety--muted">{{ item.variety }}</text>
+              </view>
+              <text class="production-row__meta">{{ productionMeta(item) }}</text>
+            </view>
+            <view class="production-row__tail">
+              <text class="status-chip status-chip--ended">已结束</text>
+              <uv-icon name="arrow-right" size="16" color="#7F8B82" />
+            </view>
           </view>
         </view>
       </template>
 
-      <view class="section-heading">
-        <text class="section-heading__title">农事</text>
-        <view class="section-heading__actions">
-          <text class="section-heading__action section-heading__action--secondary" @click="openOperations">查看记录</text>
-          <text v-if="canManageOperations" class="section-heading__action" @click="openCreateOperation">记农事</text>
+      <view class="pf-section-heading">
+        <text class="pf-section-title">生产记录</text>
+        <text class="pf-section-note">按记录类型查看</text>
+      </view>
+      <view class="record-list pf-list-card">
+        <view class="record-row pf-tappable" @tap="openOperations">
+          <view class="record-row__icon"><uv-icon name="calendar" size="20" color="#286B46" /></view>
+          <view class="record-row__copy">
+            <text class="record-row__title">农事记录</text>
+            <text class="record-row__meta">翻耕、施肥、灌溉等现场作业</text>
+          </view>
+          <uv-icon name="arrow-right" size="16" color="#7F8B82" />
+        </view>
+        <view class="record-row pf-tappable" @tap="openHarvests">
+          <view class="record-row__icon"><uv-icon name="order" size="20" color="#286B46" /></view>
+          <view class="record-row__copy">
+            <text class="record-row__title">收获记录</text>
+            <text class="record-row__meta">查看采收、捕捞和出栏记录</text>
+          </view>
+          <uv-icon name="arrow-right" size="16" color="#7F8B82" />
         </view>
       </view>
-      <view class="operation-entry pf-card" @click="openOperations">
-        <view>
-          <text class="operation-entry__title">查看地块农事</text>
-          <text class="operation-entry__meta">翻耕、施肥、灌溉等现场记录</text>
-        </view>
-        <uv-icon name="arrow-right" size="17" color="#929A93" />
-      </view>
-
-      <view class="section-heading">
-        <text class="section-heading__title">收获</text>
-        <view class="section-heading__actions">
-          <text class="section-heading__action section-heading__action--secondary" @click="openHarvests">查看记录</text>
-          <text v-if="canManageHarvests && activeProductions.length" class="section-heading__action section-heading__action--harvest" @click="openCreateHarvest">记录收获</text>
-        </view>
-      </view>
-      <view class="harvest-entry pf-card" @click="openHarvests">
-        <view class="harvest-entry__icon"><uv-icon name="order" size="20" color="#D79532" /></view>
-        <view class="harvest-entry__copy">
-          <text class="harvest-entry__title">查看地块收获</text>
-          <text class="harvest-entry__meta">汇总该地块下的采收、捕捞和出栏记录</text>
-        </view>
-        <uv-icon name="arrow-right" size="17" color="#929A93" />
-      </view>
-    </template>
-
-    <uv-toast ref="toastRef" />
+    </view>
   </view>
 </template>
 
@@ -128,7 +170,7 @@ import { getFarm, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
 import { getPlot, type Plot, type PlotType } from "../../services/plot";
 import { getPlotProductions, type Production } from "../../services/production";
-import type { Industry } from "../../services/species";
+import type { IndividualUnit, Industry } from "../../services/species";
 import { formatNumber } from "../../utils/number";
 
 const plotId = ref(0);
@@ -138,7 +180,6 @@ const loading = ref(true);
 const loadError = ref("");
 const activeProductions = ref<Production[]>([]);
 const endedProductions = ref<Production[]>([]);
-const toastRef = ref<{ error: (message: string) => void } | null>(null);
 const canEdit = computed(() => farm.value?.myRole === "OWNER" || farm.value?.myRole === "ADMIN");
 const canManageProductions = computed(() => Boolean(farm.value?.myRole));
 const canManageOperations = computed(() => Boolean(farm.value?.myRole));
@@ -160,9 +201,30 @@ const industryLabels: Record<Industry, string> = {
   LIVESTOCK: "牧业",
   FISHERY: "渔业",
 };
+const individualUnitLabels: Record<IndividualUnit, string> = {
+  HEAD: "头",
+  FEATHER: "羽",
+  PIECE: "个",
+  PLANT: "株",
+  TAIL: "尾",
+};
 
 function plotTypeLabel(type: PlotType | null): string {
   return type ? plotTypeLabels[type] : "未分类";
+}
+
+function plotIcon(type: PlotType | null): string {
+  if (type === "POND") return "order";
+  if (type === "BARN") return "home";
+  if (type === "ORCHARD" || type === "FOREST") return "map";
+  return "grid";
+}
+
+function industryIcon(industry: Industry): string {
+  if (industry === "FISHERY") return "order";
+  if (industry === "LIVESTOCK") return "home";
+  if (industry === "FORESTRY") return "map";
+  return "grid";
 }
 
 function areaLabel(value: Plot): string {
@@ -178,13 +240,11 @@ function formatDate(value: string): string {
 }
 
 function productionMeta(value: Production): string {
-  return `${industryLabels[value.industry]} · ${value.startedOn}开始`;
-}
-
-function harvestActionLabel(industry: Industry): string {
-  if (industry === "LIVESTOCK") return "出栏";
-  if (industry === "FISHERY") return "捕捞";
-  return "采收";
+  const details = [industryLabels[value.industry], `${value.startedOn}开始`];
+  if (value.initialQuantity !== null && value.initialQuantity !== undefined) {
+    details.push(`初始 ${formatNumber(value.initialQuantity)}${individualUnitLabels[value.individualUnit]}`);
+  }
+  return details.join(" · ");
 }
 
 function handleUnauthorized(): void {
@@ -227,7 +287,11 @@ function openEdit(): void {
 }
 
 function openCreateProduction(): void {
-  if (plot.value) uni.navigateTo({ url: `/pages/productions/create?plotId=${plot.value.id}` });
+  if (plot.value) {
+    uni.navigateTo({
+      url: `/pages/species/index?purpose=production&farmId=${plot.value.farmId}&plotId=${plot.value.id}`,
+    });
+  }
 }
 
 function openProduction(productionId: number): void {
@@ -247,13 +311,12 @@ function openHarvests(): void {
 }
 
 function openCreateHarvest(): void {
-  if (plot.value && activeProductions.value.length) {
-    uni.navigateTo({ url: `/pages/harvests/form?farmId=${plot.value.farmId}&plotId=${plot.value.id}` });
+  if (!plot.value) return;
+  if (!activeProductions.value.length) {
+    uni.showToast({ title: "暂无进行中的种养", icon: "none" });
+    return;
   }
-}
-
-function openCreateHarvestFor(productionId: number): void {
-  uni.navigateTo({ url: `/pages/harvests/form?productionId=${productionId}` });
+  uni.navigateTo({ url: `/pages/harvests/form?farmId=${plot.value.farmId}&plotId=${plot.value.id}` });
 }
 
 onLoad((options) => {
@@ -269,244 +332,330 @@ onShow(() => {
 @import "../../styles/design-tokens.scss";
 
 .plot-detail-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
+  padding-bottom: $pf-space-page-bottom;
 }
 
-.plot-heading {
+.plot-detail-page .pf-page-content {
+  padding-top: $pf-space-3;
+}
+
+.plot-overview {
+  overflow: hidden;
+  border-radius: $pf-radius-card-lg;
+  background: $pf-color-primary-soft;
+}
+
+.plot-overview__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12rpx 4rpx 28rpx;
+  padding: 30rpx 28rpx 26rpx;
 }
 
-.plot-heading__main,
-.plot-heading__name,
-.plot-heading__meta {
+.plot-overview__icon {
+  display: flex;
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.plot-overview__copy {
+  min-width: 0;
+  flex: 1;
+  margin-left: 20rpx;
+}
+
+.plot-overview__eyebrow,
+.plot-overview__name,
+.overview-metric__value,
+.overview-metric__label,
+.production-row__meta,
+.production-empty__title,
+.production-empty__meta,
+.record-row__title,
+.record-row__meta {
   display: block;
 }
 
-.plot-heading__main {
-  min-width: 0;
+.plot-overview__eyebrow {
+  color: $pf-color-primary;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
-.plot-heading__name {
+.plot-overview__name {
   overflow: hidden;
+  margin-top: 5rpx;
   color: $pf-color-text;
-  font-size: 38rpx;
+  font-size: 36rpx;
   font-weight: 700;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.plot-heading__meta {
-  margin-top: 10rpx;
-  color: $pf-color-text-secondary;
+.plot-overview__edit {
+  display: flex;
+  min-height: 64rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-items: center;
+  margin-left: 18rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid rgba(40, 107, 70, 0.18);
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.66);
+  color: $pf-color-primary;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.plot-overview__edit text {
+  margin-left: 7rpx;
+}
+
+.plot-overview__metrics {
+  display: flex;
+  padding: 24rpx 12rpx 26rpx;
+  border-top: 1rpx solid rgba(40, 107, 70, 0.1);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.overview-metric {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  padding: 0 12rpx;
+  text-align: center;
+}
+
+.overview-metric + .overview-metric::before {
+  position: absolute;
+  top: 5rpx;
+  bottom: 5rpx;
+  left: 0;
+  width: 1rpx;
+  background: rgba(40, 107, 70, 0.12);
+  content: "";
+}
+
+.overview-metric__value {
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: 28rpx;
+  font-weight: 680;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-metric__value--date {
   font-size: 24rpx;
 }
 
-.plot-heading__action {
-  flex-shrink: 0;
-  margin-left: 24rpx;
-  color: $pf-color-primary;
-  font-size: 25rpx;
-}
-
-.info-card {
-  padding: 8rpx 24rpx;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 92rpx;
-}
-
-.info-row + .info-row {
-  border-top: 1rpx solid $pf-color-divider;
-}
-
-.info-label {
+.overview-metric__label {
+  margin-top: 7rpx;
   color: $pf-color-text-secondary;
-  font-size: 25rpx;
+  font-size: 20rpx;
 }
 
-.info-value {
-  color: $pf-color-text;
-  font-size: 25rpx;
-}
-
-.section-heading {
+.quick-actions {
   display: flex;
+  gap: 14rpx;
+  margin-top: $pf-space-3;
+}
+
+.quick-action {
+  display: flex;
+  min-width: 0;
+  min-height: 118rpx;
+  flex: 1;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  margin: 38rpx 8rpx 14rpx;
+  justify-content: center;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
 }
 
-.section-heading--history {
-  margin-top: 34rpx;
+.quick-action--disabled {
+  opacity: 0.48;
 }
 
-.section-heading__title {
-  color: $pf-color-text-muted;
+.quick-action__icon {
+  display: flex;
+  width: 50rpx;
+  height: 50rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: $pf-color-primary-soft;
+}
+
+.quick-action__title {
+  margin-top: 10rpx;
+  color: $pf-color-text;
   font-size: 23rpx;
   font-weight: 600;
 }
 
-.section-heading__action,
-.production-empty__action {
-  color: $pf-color-primary;
-  font-size: 24rpx;
-}
-
-.section-heading__actions {
-  display: flex;
-  align-items: center;
-}
-
-.section-heading__action--secondary {
-  margin-right: 22rpx;
-  color: $pf-color-text-secondary;
-}
-
 .production-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
+  padding: 4rpx 0;
 }
 
-.production-card {
+.production-row {
   display: flex;
-  min-height: 104rpx;
+  min-height: 120rpx;
   align-items: center;
   padding: 0 22rpx;
 }
 
-.production-card__main {
+.production-row + .production-row,
+.record-row + .record-row {
+  border-top: 1rpx solid $pf-color-divider;
+}
+
+.production-row__icon,
+.record-row__icon,
+.production-empty__icon {
+  display: flex;
+  width: 56rpx;
+  height: 56rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18rpx;
+  background: $pf-color-primary-soft;
+}
+
+.production-row__icon--muted {
+  background: $pf-color-surface-muted;
+}
+
+.production-row__copy {
   min-width: 0;
   flex: 1;
+  margin: 0 16rpx;
 }
 
-.production-card__name,
-.production-card__meta {
-  display: block;
+.production-row__heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
 }
 
-.production-card__name {
+.production-row__name {
   overflow: hidden;
   color: $pf-color-text;
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.production-card__meta {
-  margin-top: 6rpx;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
-}
-
-.production-card__status {
-  margin: 0 18rpx;
-  padding: 5rpx 12rpx;
+.production-row__variety {
+  overflow: hidden;
+  max-width: 180rpx;
+  flex-shrink: 1;
+  margin-left: 12rpx;
+  padding: 4rpx 10rpx;
   border-radius: 999rpx;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 21rpx;
+  font-size: 19rpx;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.production-card__harvest {
+.production-row__variety--muted {
+  background: $pf-color-surface-muted;
+  color: $pf-color-text-secondary;
+}
+
+.production-row__meta {
+  overflow: hidden;
+  margin-top: 7rpx;
+  color: $pf-color-text-muted;
+  font-size: 20rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.production-row__tail {
+  display: flex;
   flex-shrink: 0;
-  margin-left: 12rpx;
-  color: $pf-color-harvest;
-  font-size: 22rpx;
+  align-items: center;
+  gap: 12rpx;
 }
 
-.production-card__status--ended {
+.status-chip {
+  padding: 5rpx 10rpx;
+  border-radius: 999rpx;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 19rpx;
+  line-height: 1.3;
+}
+
+.status-chip--ended {
   background: $pf-color-surface-muted;
   color: $pf-color-text-muted;
 }
 
 .production-empty {
   display: flex;
-  min-height: 96rpx;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24rpx;
-  color: $pf-color-text-secondary;
-  font-size: 25rpx;
-}
-
-.operation-entry {
-  display: flex;
-  min-height: 100rpx;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 22rpx;
-}
-
-.operation-entry__title,
-.operation-entry__meta {
-  display: block;
-}
-
-.section-heading__action--harvest {
-  color: $pf-color-harvest;
-}
-
-.harvest-entry {
-  display: flex;
-  min-height: 100rpx;
+  min-height: 116rpx;
   align-items: center;
   padding: 0 22rpx;
-  border-left: 5rpx solid $pf-color-harvest;
 }
 
-.harvest-entry__icon {
-  display: flex;
-  width: 52rpx;
-  height: 52rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  background: $pf-color-harvest-soft;
-}
-
-.harvest-entry__copy {
+.production-empty__copy {
   min-width: 0;
   flex: 1;
   margin: 0 16rpx;
 }
 
-.harvest-entry__title,
-.harvest-entry__meta {
-  display: block;
-}
-
-.harvest-entry__title {
+.production-empty__title,
+.record-row__title {
   color: $pf-color-text;
   font-size: 26rpx;
-  font-weight: 600;
+  font-weight: 620;
 }
 
-.harvest-entry__meta {
-  margin-top: 6rpx;
+.production-empty__meta,
+.record-row__meta {
+  overflow: hidden;
+  margin-top: 7rpx;
   color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: 21rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.operation-entry__title {
-  color: $pf-color-text;
-  font-size: 26rpx;
-  font-weight: 600;
+.history-heading {
+  margin-top: $pf-space-5;
 }
 
-.operation-entry__meta {
-  margin-top: 6rpx;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
+.record-list {
+  padding: 4rpx 0;
+}
+
+.record-row {
+  display: flex;
+  min-height: 112rpx;
+  align-items: center;
+  padding: 0 22rpx;
+}
+
+.record-row__copy {
+  min-width: 0;
+  flex: 1;
+  margin: 0 16rpx;
 }
 
 .state-card {
@@ -516,6 +665,7 @@ onShow(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margin: $pf-space-3 $pf-space-page-x 0;
   color: $pf-color-text-secondary;
   font-size: 24rpx;
 }

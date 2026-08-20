@@ -1,24 +1,73 @@
-/* 掌上农场公共视觉 token。页面样式优先引用这些变量，避免各页重新定义颜色和圆角。 */
-$pf-color-page: #f7f8f3;
-$pf-color-surface: #ffffff;
-$pf-color-surface-muted: #f3f5f1;
-$pf-color-primary: #2f7d4a;
-$pf-color-primary-pressed: #276a3e;
-$pf-color-primary-soft: #eaf4ec;
-$pf-color-text: #202821;
-$pf-color-text-secondary: #667068;
-$pf-color-text-muted: #929a93;
-$pf-color-border: #e2e6e0;
-$pf-color-divider: #ecefeb;
-$pf-color-harvest: #d79532;
-$pf-color-harvest-soft: #fbf3e5;
-$pf-color-water: #4c91a0;
-$pf-color-water-soft: #eaf4f5;
+/*
+ * 掌上农场视觉 token。
+ * 原始色阶 -> 语义色 -> 组件尺寸，页面不直接使用原始色值。
+ */
 
+/* Primitive */
+$pf-green-800: #1f5638;
+$pf-green-700: #286b46;
+$pf-green-100: #e8f2eb;
+$pf-green-50: #f2f7f3;
+
+$pf-neutral-950: #17231b;
+$pf-neutral-700: #536158;
+$pf-neutral-500: #7f8b82;
+$pf-neutral-300: #dce3dc;
+$pf-neutral-200: #e8ede8;
+$pf-neutral-100: #f0f3ef;
+$pf-neutral-50: #f6f8f5;
+$pf-white: #ffffff;
+
+$pf-red-700: #a9433b;
+$pf-red-100: #f8eae8;
+$pf-amber-700: #8b5a16;
+$pf-amber-100: #f8f0df;
+$pf-blue-700: #3e6872;
+$pf-blue-100: #e7f0f1;
+
+/* Semantic */
+$pf-color-page: $pf-neutral-50;
+$pf-color-surface: $pf-white;
+$pf-color-surface-muted: $pf-neutral-100;
+$pf-color-surface-accent: $pf-green-50;
+$pf-color-primary: $pf-green-700;
+$pf-color-primary-pressed: $pf-green-800;
+$pf-color-primary-soft: $pf-green-100;
+$pf-color-text: $pf-neutral-950;
+$pf-color-text-secondary: $pf-neutral-700;
+$pf-color-text-muted: $pf-neutral-500;
+$pf-color-border: $pf-neutral-300;
+$pf-color-divider: $pf-neutral-200;
+$pf-color-danger: $pf-red-700;
+$pf-color-danger-soft: $pf-red-100;
+$pf-color-warning: $pf-amber-700;
+$pf-color-warning-soft: $pf-amber-100;
+$pf-color-info: $pf-blue-700;
+$pf-color-info-soft: $pf-blue-100;
+
+/* 兼容旧页面：收获与农事都是主流程，交互态统一使用品牌绿。 */
+$pf-color-harvest: $pf-color-primary;
+$pf-color-harvest-soft: $pf-color-primary-soft;
+$pf-color-water: $pf-color-info;
+$pf-color-water-soft: $pf-color-info-soft;
+
+/* Spacing */
+$pf-space-1: 8rpx;
+$pf-space-2: 16rpx;
+$pf-space-3: 24rpx;
+$pf-space-4: 32rpx;
+$pf-space-5: 40rpx;
+$pf-space-6: 48rpx;
+$pf-space-8: 64rpx;
+$pf-space-page-x: $pf-space-4;
+$pf-space-page-bottom: 80rpx;
+$pf-space-section: $pf-space-6;
+
+/* Shape & motion */
 $pf-radius-control: 16rpx;
-$pf-radius-card: 32rpx;
 $pf-radius-list: 24rpx;
-
-$pf-space-page-x: 32rpx;
-$pf-space-page-bottom: 64rpx;
-$pf-space-section: 40rpx;
+$pf-radius-card: 24rpx;
+$pf-radius-card-lg: 32rpx;
+$pf-shadow-card: 0 8rpx 28rpx rgba(23, 35, 27, 0.045);
+$pf-shadow-raised: 0 14rpx 38rpx rgba(23, 35, 27, 0.08);
+$pf-duration-fast: 160ms;

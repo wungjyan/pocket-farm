@@ -1,7 +1,5 @@
 <template>
   <view class="pf-page operation-types-page">
-    <PfPageHeader title="选择农事类型" :show-back="true" />
-
     <view class="pf-page-content">
       <view v-if="loading" class="state-card pf-card">
         <uv-loading-icon mode="circle" color="#2F7D4A" />
@@ -29,7 +27,6 @@
 <script setup lang="ts">
 import { getCurrentInstance, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
-import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getOperationTypes, type OperationType } from "../../services/operation";

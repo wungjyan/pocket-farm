@@ -1,7 +1,5 @@
 <template>
   <view class="pf-page edit-farm-page">
-    <PfPageHeader title="编辑农场信息" :show-back="true" :back-handler="handleBack" />
-
     <view v-if="loading" class="state-card pf-card">
       <uv-loading-icon mode="circle" color="#2F7D4A" />
       <text>正在加载农场信息</text>
@@ -41,7 +39,7 @@
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import FarmForm from "../../components/FarmForm.vue";
-import PfPageHeader from "../../components/PfPageHeader.vue";
+import { useUnsavedChangesGuard } from "../../composables/useUnsavedChangesGuard";
 import { clearAuthToken } from "../../services/auth";
 import { getFarm, updateFarm, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
@@ -57,6 +55,7 @@ const toastRef = ref<{
   success: (message: string) => void;
 } | null>(null);
 const { currentFarm, selectFarm } = useFarmContext();
+useUnsavedChangesGuard(dirty);
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -115,21 +114,6 @@ async function saveFarm(input: { name: string; region: string | null }): Promise
   } finally {
     saving.value = false;
   }
-}
-
-function handleBack(): void {
-  if (!dirty.value) {
-    uni.navigateBack();
-    return;
-  }
-  uni.showModal({
-    title: "放弃修改？",
-    content: "当前内容尚未保存，确定要离开吗？",
-    confirmColor: "#C96A45",
-    success: (result) => {
-      if (result.confirm) uni.navigateBack();
-    },
-  });
 }
 
 onShow(() => {

@@ -43,14 +43,26 @@ interface RequestOptions {
   data?: object;
 }
 
-export function request<T>({ url, method = "GET", data }: RequestOptions): Promise<T> {
+export function request<T>({
+  url,
+  method = "GET",
+  data,
+}: RequestOptions): Promise<T> {
   return new Promise((resolve, reject) => {
     const token = getAuthToken();
 
     uni.request({
       url: `${API_BASE_URL}${url}`,
       // uni-app 类型声明遗漏了 PATCH，但微信小程序运行时支持该方法。
-      method: method as unknown as "GET" | "POST" | "PUT" | "DELETE" | "OPTIONS" | "HEAD" | "TRACE" | "CONNECT",
+      method: method as unknown as
+        | "GET"
+        | "POST"
+        | "PUT"
+        | "DELETE"
+        | "OPTIONS"
+        | "HEAD"
+        | "TRACE"
+        | "CONNECT",
       data: data as Record<string, unknown> | undefined,
       header: token ? { Authorization: `Bearer ${token}` } : {},
       success: (response) => {
