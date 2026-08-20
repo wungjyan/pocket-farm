@@ -33,8 +33,8 @@ class WorkMethod(StrEnum):
 
 class QuantityUnit(StrEnum):
     KG = "KG"
-    TON = "TON"
     HEAD = "HEAD"
+    FEATHER = "FEATHER"
     PIECE = "PIECE"
     PLANT = "PLANT"
     TAIL = "TAIL"

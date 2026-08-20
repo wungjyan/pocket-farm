@@ -137,6 +137,24 @@
       }
     },
     {
+      "path": "pages/harvests/index",
+      "style": {
+        "navigationBarTitleText": "收获记录"
+      }
+    },
+    {
+      "path": "pages/harvests/form",
+      "style": {
+        "navigationBarTitleText": "记录收获"
+      }
+    },
+    {
+      "path": "pages/harvests/productions",
+      "style": {
+        "navigationBarTitleText": "选择种养"
+      }
+    },
+    {
       "path": "pages/plots/select",
       "style": {
         "navigationStyle": "custom",

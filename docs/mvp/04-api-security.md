@@ -276,6 +276,8 @@ GET /api/v1/plots/{plotId}/harvests
 
 FarmOperation 与 HarvestRecord 的创建请求可以传入 `operatorId`；未传入时由后端默认使用当前登录用户。传入后必须验证该用户属于资源所属 Farm 的有效 FarmMember。
 
+HarvestRecord 的创建和编辑请求均不接受 `unit`。服务端根据 Production 对应 Species 派生单位：农业、渔业使用 `KG`，林业、牧业使用 Species.`individual_unit`；创建后单位作为历史快照，不允许通过 PATCH 修改。
+
 FarmOperation 的创建请求必须传入 `operationTypeId`；该 ID 必须指向状态为 `ACTIVE` 的系统农事类型。农事类型列表仅返回 `ACTIVE` 记录，且不包含农场私有数据。
 
 编辑请求仅在需要变更实际执行人时传入 `operatorId`，同样执行 FarmMember 校验。

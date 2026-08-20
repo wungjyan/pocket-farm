@@ -228,18 +228,18 @@ OTHER        其他
 | `PLANT` | 株 | 必须为整数 |
 | `TAIL` | 尾 | 必须为整数 |
 
-`QuantityUnit` 保留给后续 HarvestRecord 等独立数量记录：
+`QuantityUnit` 用于 HarvestRecord 等独立数量记录：
 
 | 代码 | 含义 | 数值规则 |
 | --- | --- | --- |
 | `KG` | 公斤 | 允许小数 |
-| `TON` | 吨 | 允许小数 |
 | `HEAD` | 头 | 必须为整数 |
+| `FEATHER` | 羽 | 必须为整数 |
 | `PIECE` | 只／个 | 必须为整数 |
 | `PLANT` | 株 | 必须为整数 |
 | `TAIL` | 尾 | 必须为整数 |
 
-MVP 不做数量单位换算，不允许任意字符串单位。
+HarvestRecord 的 `unit` 由后端派生：农业、渔业固定为 `KG`；林业、牧业使用 Species 的 `individual_unit`。客户端不能传入或修改 `unit`，创建时保存的值作为历史快照。MVP 不做数量单位换算，不允许任意字符串单位。
 
 ---
 
@@ -560,6 +560,8 @@ HarvestRecord 必须属于 Production。
 production_id = NULL
 
 `operator_id` 与 `created_by` 均为必填 User 外键。前者表示实际执行收获的成员，后者表示在系统中创建记录的成员。
+
+`unit` 是创建时由行业和 Species 派生的历史快照：农业、渔业保存 `KG`；林业、牧业保存当时 Species 的 `individual_unit`。编辑 HarvestRecord 时只允许修改数量，不允许修改单位。
 
 ---
 

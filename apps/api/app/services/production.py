@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
 from app.models.farm import FarmMember
+from app.models.harvest import HarvestRecord
 from app.models.operation import FarmOperation
 from app.models.plot import Plot
 from app.models.production import (
@@ -253,6 +254,16 @@ async def update_production(
                 "Production plotId, speciesId, and startedOn cannot be changed "
                 "after operations exist."
             )
+        harvest_count = await session.scalar(
+            select(func.count())
+            .select_from(HarvestRecord)
+            .where(HarvestRecord.production_id == production.id)
+        )
+        if harvest_count:
+            raise _conflict(
+                "Production plotId, speciesId, and startedOn cannot be changed "
+                "after harvest records exist."
+            )
 
     target_plot = current_plot
     if "plot_id" in fields_set:
@@ -373,6 +384,13 @@ async def delete_production(
     if operation_count:
         raise _conflict("A production with farm operations cannot be deleted.")
 
-    # Phase 6 adds the equivalent HarvestRecord check before allowing a deletion.
+    harvest_count = await session.scalar(
+        select(func.count())
+        .select_from(HarvestRecord)
+        .where(HarvestRecord.production_id == production.id)
+    )
+    if harvest_count:
+        raise _conflict("A production with harvest records cannot be deleted.")
+
     await session.delete(production)
     await session.commit()

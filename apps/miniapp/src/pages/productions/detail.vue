@@ -77,6 +77,19 @@
         </view>
       </view>
 
+      <view class="section-heading">
+        <text class="section-label section-label--inline">{{ harvestActionLabel }}记录</text>
+        <text v-if="production.status === 'ACTIVE'" class="section-action" @click="openCreateHarvest">记录{{ harvestActionLabel }}</text>
+      </view>
+      <view class="harvest-entry pf-card" @click="openHarvests">
+        <view class="harvest-icon"><uv-icon name="order" size="20" color="#D79532" /></view>
+        <view class="harvest-copy">
+          <text class="harvest-title">查看{{ harvestActionLabel }}记录</text>
+          <text class="harvest-meta">支持同一次种养多次{{ harvestActionLabel }}</text>
+        </view>
+        <uv-icon name="arrow-right" size="17" color="#929A93" />
+      </view>
+
       <view v-if="production.status === 'ACTIVE'" class="danger-section">
         <view class="section-label">危险操作</view>
         <view class="danger-card pf-card" @click="confirmDelete">
@@ -164,6 +177,11 @@ const initialQuantityLabel = computed(() => {
   }
   return value?.industry === "LIVESTOCK" ? "入栏数量" : "养殖数量";
 });
+const harvestActionLabel = computed(() => {
+  if (production.value?.industry === "LIVESTOCK") return "出栏";
+  if (production.value?.industry === "FISHERY") return "捕捞";
+  return "采收";
+});
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -217,6 +235,18 @@ async function loadProduction(): Promise<void> {
 
 function openEdit(): void {
   if (production.value) uni.navigateTo({ url: `/pages/productions/edit?productionId=${production.value.id}` });
+}
+
+function openHarvests(): void {
+  if (production.value) {
+    uni.navigateTo({ url: `/pages/harvests/index?productionId=${production.value.id}` });
+  }
+}
+
+function openCreateHarvest(): void {
+  if (production.value?.status === "ACTIVE") {
+    uni.navigateTo({ url: `/pages/harvests/form?productionId=${production.value.id}` });
+  }
 }
 
 function confirmDelete(): void {
@@ -297,6 +327,64 @@ onShow(() => {
   color: $pf-color-text-muted;
   font-size: 23rpx;
   font-weight: 600;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 38rpx 8rpx 14rpx;
+}
+
+.section-label--inline {
+  margin: 0;
+}
+
+.section-action {
+  color: $pf-color-harvest;
+  font-size: 24rpx;
+}
+
+.harvest-entry {
+  display: flex;
+  min-height: 100rpx;
+  align-items: center;
+  padding: 0 22rpx;
+  border-left: 5rpx solid $pf-color-harvest;
+}
+
+.harvest-icon {
+  display: flex;
+  width: 52rpx;
+  height: 52rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: $pf-color-harvest-soft;
+}
+
+.harvest-copy {
+  min-width: 0;
+  flex: 1;
+  margin: 0 16rpx;
+}
+
+.harvest-title,
+.harvest-meta {
+  display: block;
+}
+
+.harvest-title {
+  color: $pf-color-text;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.harvest-meta {
+  margin-top: 5rpx;
+  color: $pf-color-text-muted;
+  font-size: 21rpx;
 }
 
 .info-card {

@@ -324,6 +324,8 @@ Plot Harvest List
 
 `HarvestRecord.operator_id` 表示实际采收、捕捞或出栏人员，默认当前用户但允许选择当前 Farm 的其他有效成员；`created_by` 由后端根据 JWT 自动写入，客户端不可传入或修改。
 
+HarvestRecord 的单位不由客户端选择：农业、渔业固定为公斤；林业、牧业使用 Species 的个体单位。后端在创建时派生并保存单位快照，编辑时单位不可变更。
+
 测试：
 
 一个 Production 可以创建多条 HarvestRecord。

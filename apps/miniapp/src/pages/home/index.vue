@@ -6,7 +6,7 @@
       <view class="welcome-panel">
         <text class="eyebrow">今日工作台</text>
         <text class="welcome-title">{{ greeting }}，{{ displayName }}</text>
-        <text class="welcome-description">记录今天的种养和农事，让生产过程清清楚楚。</text>
+        <text class="welcome-description">记录今天的种养、农事和收获，让生产过程清清楚楚。</text>
       </view>
 
       <template v-if="hasFarm">
@@ -72,37 +72,39 @@
             <uv-icon name="edit-pen" size="20" color="#2F7D4A" />
             <text>记农事</text>
           </view>
-          <view class="quick-action" @tap="showHarvestComingSoon">
-            <uv-icon name="order" size="20" color="#2F7D4A" />
+          <view class="quick-action" @tap="openCreateHarvest">
+            <uv-icon name="order" size="20" color="#D79532" />
             <text>收获</text>
           </view>
         </view>
 
         <view class="pf-section-heading">
           <text class="pf-section-title">最近动态</text>
-          <text class="pf-section-note">{{ recentOperations.length ? "最新农事记录" : "暂无记录" }}</text>
+          <text class="pf-section-note">{{ recentActivities.length ? "最新生产记录" : "暂无记录" }}</text>
         </view>
         <view v-if="loadingDashboard" class="state-card state-card--compact pf-card">
           <uv-loading-icon mode="circle" color="#2F7D4A" />
         </view>
-        <view v-else-if="!dashboardError && recentOperations.length" class="operation-list pf-card">
+        <view v-else-if="!dashboardError && recentActivities.length" class="operation-list pf-card">
           <view
-            v-for="item in recentOperations"
-            :key="item.operation.id"
+            v-for="item in recentActivities"
+            :key="`${item.type}-${item.id}`"
             class="operation-row"
-            @tap="openPlotOperations(item.plot.id)"
+            @tap="openActivity(item)"
           >
-            <view class="operation-icon"><uv-icon name="calendar" size="19" color="#2F7D4A" /></view>
+            <view class="operation-icon" :class="{ 'operation-icon--harvest': item.type === 'harvest' }">
+              <uv-icon :name="item.type === 'harvest' ? 'order' : 'calendar'" size="19" :color="item.type === 'harvest' ? '#D79532' : '#2F7D4A'" />
+            </view>
             <view class="operation-copy">
-              <text class="operation-title">{{ item.operation.operationType.name }} · {{ item.plot.name }}</text>
-              <text class="operation-meta">{{ formatOperationTime(item.operation.operatedAt) }} · {{ memberName(item.operation.operatorId) }}</text>
+              <text class="operation-title">{{ activityTitle(item) }}</text>
+              <text class="operation-meta">{{ formatActivityTime(item.timestamp) }} · {{ memberName(item.operatorId) }}</text>
             </view>
             <uv-icon name="arrow-right" size="16" color="#929A93" />
           </view>
         </view>
         <view v-else-if="!dashboardError" class="empty-card empty-card--plain pf-card">
           <uv-icon name="clock" size="23" color="#929A93" />
-          <text class="empty-card__description">完成第一条农事记录后，动态会显示在这里。</text>
+          <text class="empty-card__description">完成第一条农事或收获记录后，动态会显示在这里。</text>
         </view>
       </template>
 
@@ -125,19 +127,43 @@ import PfPageHeader from "../../components/PfPageHeader.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
 import { useFarmContext } from "../../services/farm-context";
+import { getPlotHarvests, type HarvestRecord, type QuantityUnit } from "../../services/harvest";
 import { ApiRequestError } from "../../services/http";
 import { getPlotOperations, type FarmOperation } from "../../services/operation";
 import { getFarmPlots, type Plot } from "../../services/plot";
 import { getPlotProductions, type Production } from "../../services/production";
 import { getCurrentUser, type User } from "../../services/user";
+import { formatNumber } from "../../utils/number";
+import type { Industry } from "../../services/species";
 
 interface HomeProduction extends Production {
   plotName: string;
 }
 
-interface HomeOperation {
-  operation: FarmOperation;
+type HomeActivity =
+  | {
+      type: "operation";
+      id: number;
+      timestamp: string;
+      operatorId: number;
+      plot: Plot;
+      operation: FarmOperation;
+    }
+  | {
+      type: "harvest";
+      id: number;
+      timestamp: string;
+      operatorId: number;
+      plot: Plot;
+      harvest: HarvestRecord;
+      production: Production | null;
+    };
+
+interface PlotDashboardData {
   plot: Plot;
+  productions: Production[];
+  operations: FarmOperation[];
+  harvests: HarvestRecord[];
 }
 
 const user = ref<User | null>(null);
@@ -145,7 +171,7 @@ const { currentFarm, currentFarmName, hasCurrentFarm, refreshFromApi } = useFarm
 const hasFarm = hasCurrentFarm;
 const plots = ref<Plot[]>([]);
 const activeProductions = ref<HomeProduction[]>([]);
-const recentOperations = ref<HomeOperation[]>([]);
+const recentActivities = ref<HomeActivity[]>([]);
 const members = ref<FarmMember[]>([]);
 const activeProductionCount = ref(0);
 const loadingDashboard = ref(false);
@@ -180,7 +206,7 @@ function formatMonthDay(value: string): string {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
-function formatOperationTime(value: string): string {
+function formatActivityTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "未知时间";
   const today = new Date();
@@ -203,7 +229,7 @@ async function loadDashboard(): Promise<void> {
   if (!farm) {
     plots.value = [];
     activeProductions.value = [];
-    recentOperations.value = [];
+    recentActivities.value = [];
     activeProductionCount.value = 0;
     return;
   }
@@ -214,26 +240,55 @@ async function loadDashboard(): Promise<void> {
       getFarmPlots(farm.id),
       getFarmMembers(farm.id),
     ]);
-    const plotData = await Promise.all(
+    const plotData: PlotDashboardData[] = await Promise.all(
       plotPage.items.map(async (plot) => {
-        const [productionPage, operationPage] = await Promise.all([
-          getPlotProductions(plot.id, "ACTIVE", 1, 5),
+        const [productionPage, operationPage, harvestPage] = await Promise.all([
+          getPlotProductions(plot.id, undefined, 1, 100),
           getPlotOperations(plot.id, 1, 5),
+          getPlotHarvests(plot.id, 1, 5),
         ]);
-        return { plot, productionPage, operationPage };
+        return {
+          plot,
+          productions: productionPage.items,
+          operations: operationPage.items,
+          harvests: harvestPage.items,
+        };
       }),
     );
     if (currentFarm.value?.id !== farm.id) return;
     plots.value = plotPage.items;
     members.value = memberPage.items;
-    activeProductionCount.value = plotData.reduce((total, item) => total + item.productionPage.total, 0);
+    activeProductionCount.value = plotData.reduce(
+      (total, item) => total + item.productions.filter((production) => production.status === "ACTIVE").length,
+      0,
+    );
     activeProductions.value = plotData
-      .flatMap(({ plot, productionPage }) => productionPage.items.map((item) => ({ ...item, plotName: plot.name })))
+      .flatMap(({ plot, productions }) => productions
+        .filter((item) => item.status === "ACTIVE")
+        .map((item) => ({ ...item, plotName: plot.name })))
       .sort((left, right) => right.startedOn.localeCompare(left.startedOn))
       .slice(0, 5);
-    recentOperations.value = plotData
-      .flatMap(({ plot, operationPage }) => operationPage.items.map((operation) => ({ operation, plot })))
-      .sort((left, right) => new Date(right.operation.operatedAt).getTime() - new Date(left.operation.operatedAt).getTime())
+    recentActivities.value = plotData
+      .flatMap(({ plot, productions, operations, harvests }): HomeActivity[] => [
+        ...operations.map((operation) => ({
+          type: "operation" as const,
+          id: operation.id,
+          timestamp: operation.operatedAt,
+          operatorId: operation.operatorId,
+          plot,
+          operation,
+        })),
+        ...harvests.map((harvest) => ({
+          type: "harvest" as const,
+          id: harvest.id,
+          timestamp: harvest.harvestedAt,
+          operatorId: harvest.operatorId,
+          plot,
+          harvest,
+          production: productions.find((production) => production.id === harvest.productionId) || null,
+        })),
+      ])
+      .sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime())
       .slice(0, 5);
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
@@ -268,6 +323,11 @@ function openCreateOperation(): void {
   if (farm) uni.navigateTo({ url: `/pages/operations/form?farmId=${farm.id}` });
 }
 
+function openCreateHarvest(): void {
+  const farm = currentFarm.value;
+  if (farm) uni.navigateTo({ url: `/pages/harvests/form?farmId=${farm.id}` });
+}
+
 function openFarm(): void {
   uni.switchTab({ url: "/pages/farm/index" });
 }
@@ -280,8 +340,37 @@ function openPlotOperations(plotId: number): void {
   uni.navigateTo({ url: `/pages/operations/index?plotId=${plotId}` });
 }
 
-function showHarvestComingSoon(): void {
-  toastRef.value?.show({ type: "default", message: "收获将在 Phase 6 开放" });
+function harvestActionLabel(industry?: Industry): string {
+  if (industry === "LIVESTOCK") return "出栏";
+  if (industry === "FISHERY") return "捕捞";
+  return "采收";
+}
+
+function quantityUnitLabel(unit: QuantityUnit): string {
+  const labels: Record<QuantityUnit, string> = {
+    KG: "公斤",
+    HEAD: "头",
+    FEATHER: "羽",
+    PIECE: "只/个",
+    PLANT: "株",
+    TAIL: "尾",
+  };
+  return labels[unit];
+}
+
+function activityTitle(activity: HomeActivity): string {
+  if (activity.type === "operation") {
+    return `${activity.operation.operationType.name} · ${activity.plot.name}`;
+  }
+  return `${harvestActionLabel(activity.production?.industry)} ${formatNumber(activity.harvest.quantity)} ${quantityUnitLabel(activity.harvest.unit)} · ${activity.plot.name}`;
+}
+
+function openActivity(activity: HomeActivity): void {
+  if (activity.type === "operation") {
+    openPlotOperations(activity.plot.id);
+    return;
+  }
+  uni.navigateTo({ url: `/pages/harvests/index?productionId=${activity.harvest.productionId}` });
 }
 
 onShow(async () => {
@@ -309,7 +398,7 @@ onShow(async () => {
 .production-list { display: flex; flex-direction: column; gap: 14rpx; }.production-card { display: flex; min-height: 108rpx; align-items: center; justify-content: space-between; padding: 18rpx 24rpx; }.production-card__copy { min-width: 0; }.production-card__name { overflow: hidden; color: $pf-color-text; font-size: 28rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.production-card__plot { margin-top: 5rpx; color: $pf-color-primary; font-size: 22rpx; }.production-card__meta { margin-top: 5rpx; color: $pf-color-text-muted; font-size: 21rpx; }
 .quick-actions { display: flex; }.quick-action { display: flex; min-height: 84rpx; flex: 1; align-items: center; padding: 0 16rpx; border: 1rpx solid $pf-color-border; border-radius: $pf-radius-list; background: $pf-color-surface; color: $pf-color-text; font-size: 24rpx; }.quick-action + .quick-action { margin-left: 12rpx; }.quick-action text { margin-left: 8rpx; }
 .empty-card { display: flex; min-height: 100rpx; align-items: center; padding: 20rpx 24rpx; }.empty-card > view { flex: 1; margin-left: 16rpx; }.empty-card--plain { justify-content: flex-start; color: $pf-color-text-muted; }.empty-card--plain .empty-card__description { margin-left: 14rpx; }.empty-card__title { color: $pf-color-text; font-size: 26rpx; font-weight: 600; }.empty-card__description { margin-top: 5rpx; color: $pf-color-text-muted; font-size: 21rpx; line-height: 1.45; }.empty-card__action { margin-left: 16rpx; flex-shrink: 0; color: $pf-color-primary; font-size: 24rpx; }
-.operation-list { overflow: hidden; }.operation-row { display: flex; min-height: 100rpx; align-items: center; padding: 0 22rpx; }.operation-row + .operation-row { border-top: 1rpx solid $pf-color-divider; }.operation-icon { display: flex; width: 52rpx; height: 52rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }.operation-copy { min-width: 0; flex: 1; margin: 0 14rpx; }.operation-title { overflow: hidden; color: $pf-color-text; font-size: 26rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.operation-meta { margin-top: 6rpx; overflow: hidden; color: $pf-color-text-muted; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
+.operation-list { overflow: hidden; }.operation-row { display: flex; min-height: 100rpx; align-items: center; padding: 0 22rpx; }.operation-row + .operation-row { border-top: 1rpx solid $pf-color-divider; }.operation-icon { display: flex; width: 52rpx; height: 52rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }.operation-icon--harvest { background: $pf-color-harvest-soft; }.operation-copy { min-width: 0; flex: 1; margin: 0 14rpx; }.operation-title { overflow: hidden; color: $pf-color-text; font-size: 26rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.operation-meta { margin-top: 6rpx; overflow: hidden; color: $pf-color-text-muted; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
 .state-card { display: flex; min-height: 180rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 26rpx; color: $pf-color-text-secondary; font-size: 23rpx; }.state-card text { margin-top: 14rpx; }.state-card--compact { min-height: 100rpx; }.retry-action { color: $pf-color-primary; }
 .empty-state { margin-top: 32rpx; padding: 32rpx 28rpx 28rpx; text-align: center; }.empty-state__icon { display: flex; width: 68rpx; height: 68rpx; align-items: center; justify-content: center; margin: 0 auto; border-radius: 18rpx; background: $pf-color-primary-soft; }.empty-state__title, .empty-state__description { display: block; }.empty-state__title { margin-top: 22rpx; color: $pf-color-text; font-size: 30rpx; font-weight: 600; }.empty-state__description { margin-top: 8rpx; color: $pf-color-text-secondary; font-size: 24rpx; line-height: 1.5; }
 </style>

@@ -508,9 +508,9 @@ area_m2：
 
 不要存三份不同单位的面积。
 
-数量单位固定为 `KG`、`TON`、`HEAD`、`PIECE`、`PLANT`、`TAIL`，不接受任意字符串。`HEAD`、`PIECE`、`PLANT` 与 `TAIL` 必须是整数；`KG` 与 `TON` 可以为小数。MVP 不提供 `KG` 与 `TON` 的自动换算。
+HarvestRecord 的数量单位由后端根据 Production 对应 Species 自动确定，不接受客户端传入或修改：农业、渔业固定为 `KG`；林业、牧业使用 Species 的 `individual_unit`。可用代码为 `KG`、`HEAD`、`FEATHER`、`PIECE`、`PLANT`、`TAIL`，其中个体单位必须为整数，`KG` 可以为小数。创建记录时把派生单位保存为历史快照，后续编辑数量时不重新选择单位。
 
-预计产量仅表示总产量，沿用上述数量单位；不实现 `KG_PER_MU`、`TON_PER_MU` 等单位面积产量单位。
+农业预计亩产固定使用“公斤／亩”，不实现其他单位面积产量单位。
 
 API 返回时不要人为补大量尾随 0。
 

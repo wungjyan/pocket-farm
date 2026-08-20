@@ -12,6 +12,7 @@ from app.models import (  # noqa: F401
     Farm,
     FarmMember,
     FarmOperation,
+    HarvestRecord,
     Industry,
     OperationType,
     PlantingMethod,

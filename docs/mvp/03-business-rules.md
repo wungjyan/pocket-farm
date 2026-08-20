@@ -359,7 +359,6 @@ LIVESTOCK：
 
 productionId *
 quantity *
-unit *
 
 默认：
 
@@ -383,7 +382,16 @@ grade：
 
 不能自动默认“特等品”等业务事实。
 
-数量单位固定为 `KG`、`TON`、`HEAD`、`PIECE`、`PLANT`、`TAIL`。`HEAD`、`PIECE`、`PLANT`、`TAIL` 必须为整数；`KG` 与 `TON` 可以为小数。MVP 不做单位换算。
+数量字段和单位按行业固定：
+
+| 行业 | 前端字段名 | 保存单位 | 数值规则 |
+| --- | --- | --- | --- |
+| 农业 | 采收重量 | `KG` | 允许小数 |
+| 渔业 | 捕捞重量 | `KG` | 允许小数 |
+| 林业 | 采收数量 | Species.`individual_unit` | 必须为整数 |
+| 牧业 | 出栏数量 | Species.`individual_unit` | 必须为整数 |
+
+`unit` 由后端根据 Production 对应的 Species 自动派生，客户端不能在创建或编辑请求中传入。创建时保存为 HarvestRecord 的历史快照，之后允许修改 `quantity`，但不允许修改 `unit`。可保存的单位代码为 `KG`、`HEAD`、`FEATHER`、`PIECE`、`PLANT`、`TAIL`；MVP 不做单位换算。
 
 ---
 
@@ -597,4 +605,4 @@ MVP 支持有限纠错，不做审计日志、软删除或历史版本。
 | FarmOperation | 可编辑、删除；关联 ENDED Production 时锁定 |
 | HarvestRecord | 在 Production ACTIVE 时可编辑、删除；Production ENDED 后锁定 |
 
-编辑 FarmOperation 和 HarvestRecord 不修改其原始 `created_at` 与 `operator_id`，只更新 `updated_at`。
+编辑 FarmOperation 和 HarvestRecord 不修改其原始 `created_at`；允许修改 `operator_id`，但必须重新校验新操作人属于资源所属 Farm。审计时间字段只更新 `updated_at`。

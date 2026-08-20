@@ -53,6 +53,7 @@
             <text class="production-card__name">{{ item.speciesName }}</text>
             <text class="production-card__meta">{{ productionMeta(item) }}</text>
           </view>
+          <text class="production-card__harvest" @click.stop="openCreateHarvestFor(item.id)">{{ harvestActionLabel(item.industry) }}</text>
           <view class="production-card__status">进行中</view>
           <uv-icon name="arrow-right" size="17" color="#929A93" />
         </view>
@@ -97,6 +98,22 @@
         </view>
         <uv-icon name="arrow-right" size="17" color="#929A93" />
       </view>
+
+      <view class="section-heading">
+        <text class="section-heading__title">收获</text>
+        <view class="section-heading__actions">
+          <text class="section-heading__action section-heading__action--secondary" @click="openHarvests">查看记录</text>
+          <text v-if="canManageHarvests && activeProductions.length" class="section-heading__action section-heading__action--harvest" @click="openCreateHarvest">记录收获</text>
+        </view>
+      </view>
+      <view class="harvest-entry pf-card" @click="openHarvests">
+        <view class="harvest-entry__icon"><uv-icon name="order" size="20" color="#D79532" /></view>
+        <view class="harvest-entry__copy">
+          <text class="harvest-entry__title">查看地块收获</text>
+          <text class="harvest-entry__meta">汇总该地块下的采收、捕捞和出栏记录</text>
+        </view>
+        <uv-icon name="arrow-right" size="17" color="#929A93" />
+      </view>
     </template>
 
     <uv-toast ref="toastRef" />
@@ -125,6 +142,7 @@ const toastRef = ref<{ error: (message: string) => void } | null>(null);
 const canEdit = computed(() => farm.value?.myRole === "OWNER" || farm.value?.myRole === "ADMIN");
 const canManageProductions = computed(() => Boolean(farm.value?.myRole));
 const canManageOperations = computed(() => Boolean(farm.value?.myRole));
+const canManageHarvests = computed(() => Boolean(farm.value?.myRole));
 
 const plotTypeLabels: Record<PlotType, string> = {
   FIELD: "大田",
@@ -161,6 +179,12 @@ function formatDate(value: string): string {
 
 function productionMeta(value: Production): string {
   return `${industryLabels[value.industry]} · ${value.startedOn}开始`;
+}
+
+function harvestActionLabel(industry: Industry): string {
+  if (industry === "LIVESTOCK") return "出栏";
+  if (industry === "FISHERY") return "捕捞";
+  return "采收";
 }
 
 function handleUnauthorized(): void {
@@ -216,6 +240,20 @@ function openOperations(): void {
 
 function openCreateOperation(): void {
   if (plot.value) uni.navigateTo({ url: `/pages/operations/form?plotId=${plot.value.id}&plotLocked=1` });
+}
+
+function openHarvests(): void {
+  if (plot.value) uni.navigateTo({ url: `/pages/harvests/index?plotId=${plot.value.id}` });
+}
+
+function openCreateHarvest(): void {
+  if (plot.value && activeProductions.value.length) {
+    uni.navigateTo({ url: `/pages/harvests/form?farmId=${plot.value.farmId}&plotId=${plot.value.id}` });
+  }
+}
+
+function openCreateHarvestFor(productionId: number): void {
+  uni.navigateTo({ url: `/pages/harvests/form?productionId=${productionId}` });
 }
 
 onLoad((options) => {
@@ -378,6 +416,13 @@ onShow(() => {
   font-size: 21rpx;
 }
 
+.production-card__harvest {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  color: $pf-color-harvest;
+  font-size: 22rpx;
+}
+
 .production-card__status--ended {
   background: $pf-color-surface-muted;
   color: $pf-color-text-muted;
@@ -404,6 +449,52 @@ onShow(() => {
 .operation-entry__title,
 .operation-entry__meta {
   display: block;
+}
+
+.section-heading__action--harvest {
+  color: $pf-color-harvest;
+}
+
+.harvest-entry {
+  display: flex;
+  min-height: 100rpx;
+  align-items: center;
+  padding: 0 22rpx;
+  border-left: 5rpx solid $pf-color-harvest;
+}
+
+.harvest-entry__icon {
+  display: flex;
+  width: 52rpx;
+  height: 52rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: $pf-color-harvest-soft;
+}
+
+.harvest-entry__copy {
+  min-width: 0;
+  flex: 1;
+  margin: 0 16rpx;
+}
+
+.harvest-entry__title,
+.harvest-entry__meta {
+  display: block;
+}
+
+.harvest-entry__title {
+  color: $pf-color-text;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.harvest-entry__meta {
+  margin-top: 6rpx;
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
 }
 
 .operation-entry__title {

@@ -11,9 +11,9 @@
 
 ## 当前阶段
 
-**Phase 5：FarmOperation 已完成。**
+**Phase 6：HarvestRecord 已完成。**
 
-下一阶段为 **Phase 6：HarvestRecord**。尚未开始。
+下一阶段为 **Phase 7：结束种养**。尚未开始。
 
 ## 阶段状态
 
@@ -25,7 +25,7 @@
 | 3 | Plot | 已完成 | 2026-08-18 |
 | 4 | Species + Production | 已完成 | 2026-08-19 |
 | 5 | FarmOperation | 已完成 | 2026-08-19 |
-| 6 | HarvestRecord | 未开始 | - |
+| 6 | HarvestRecord | 已完成 | 2026-08-20 |
 | 7 | 结束种养 | 未开始 | - |
 | 8 | 地块完整详情 | 未开始 | - |
 | 9 | 小程序完整联调 | 未开始 | - |
@@ -254,6 +254,47 @@
 ### 未解决问题
 
 - HarvestRecord 与结束种养仍未开始，按 Phase 6、7 顺序推进。
+
+## Phase 6 交付记录
+
+### 收获记录
+
+- 新增 `harvest_records` 表；每条记录必须关联具体 Production，不重复保存 `plot_id`。一次 Production 可以存在多条收获记录，创建收获不会改变 Production 状态。
+- 支持农业／林业采收、渔业捕捞和牧业出栏的统一数据模型；单位由后端根据行业和 Species 自动派生，农业、渔业固定为 `KG`，林业、牧业使用 Species 个体单位。单位创建后作为历史快照且不可编辑；个体单位必须为整数，公斤允许小数。
+- `operator_id` 默认当前用户，也可指定或改选同一 Farm 的其他有效成员；`created_by` 始终由 JWT 当前用户写入，编辑保持原始记录人和创建时间。
+- `harvested_at` 接受带时区 ISO 8601 时间并转换为 UTC 保存，不得早于 Production 开始日期或晚于当前时间；未传时默认当前时间。
+- 仅 ACTIVE Production 允许新增、编辑和删除收获记录；ENDED Production 的既有记录仍可查看，但不可变更。
+- 已补齐 Production 纠错限制：存在收获记录后，不允许修改 `plotId`、`speciesId`、`startedOn`，也不允许删除该 Production。
+
+### API 与 Migration
+
+- `GET /api/v1/productions/{productionId}/harvests`
+- `POST /api/v1/productions/{productionId}/harvests`
+- `GET /api/v1/plots/{plotId}/harvests`
+- `PATCH /api/v1/harvests/{harvestId}`
+- `DELETE /api/v1/harvests/{harvestId}`
+- 新增 migration：`b8e4d2a1c673`（`create harvest records`）。
+
+### 小程序
+
+- 新增 HarvestRecord API Service、完整收获表单、种养选择页，以及按 Production 和按 Plot 查看收获记录的列表页；ACTIVE Production 的记录支持编辑和删除，ENDED Production 的历史记录展示锁定状态。
+- 页面按行业使用自然术语和数量字段：农业为“采收重量”、渔业为“捕捞重量”、林业为“采收数量”、牧业为“出栏数量”。表单不提供单位选择器，只展示自动确定的固定单位；个体单位在提交前校验整数，所有数量展示统一去除无意义的尾随 0。
+- 首页和地块入口直接进入完整表单，种养是表单首个必填项；选择页以地块、种类、品种、开始日期和初始数量区分具体种养。从种养详情进入时自动带入该次种养，编辑既有记录时种养归属锁定。
+- 种养详情新增行业化的记录与查看入口；地块详情新增收获汇总入口，并在每条 ACTIVE 种养卡片上提供对应的“采收／捕捞／出栏”操作。
+- 首页“收获”快捷入口已开放，最近动态统一聚合农事和收获记录，收获动态点击后进入对应 Production 的收获列表。
+- 收获表单默认当前时间、人工、当前用户和种类名称；允许选择当前 Farm 其他成员作为操作人，产品名称、等级和备注选填。
+
+### 验证结果
+
+- `uv run alembic check`：通过。
+- `uv run pytest`：通过（34 passed）。
+- `uv run ruff check .` 和 `uv run ruff format --check .`：通过。
+- `pnpm exec vue-tsc --noEmit -p apps/miniapp/tsconfig.json`：通过。
+- `pnpm run miniapp:build`：通过；仅有现有 Sass API 与 `@import` 弃用警告。
+
+### 未解决问题
+
+- Phase 7 结束种养尚未开始。
 
 ## 前端规划记录
 
