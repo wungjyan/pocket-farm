@@ -108,6 +108,12 @@
       }
     },
     {
+      "path": "pages/productions/end",
+      "style": {
+        "navigationBarTitleText": "结束种养"
+      }
+    },
+    {
       "path": "pages/operations/index",
       "style": {
         "navigationBarTitleText": "农事记录"

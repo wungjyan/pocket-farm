@@ -11,9 +11,9 @@
 
 ## 当前阶段
 
-**Phase 6：HarvestRecord 已完成。**
+**Phase 7：结束种养已完成。**
 
-下一阶段为 **Phase 7：结束种养**。尚未开始。
+下一阶段为 **Phase 8：地块完整详情**。尚未开始。
 
 ## 阶段状态
 
@@ -26,7 +26,7 @@
 | 4 | Species + Production | 已完成 | 2026-08-19 |
 | 5 | FarmOperation | 已完成 | 2026-08-19 |
 | 6 | HarvestRecord | 已完成 | 2026-08-20 |
-| 7 | 结束种养 | 未开始 | - |
+| 7 | 结束种养 | 已完成 | 2026-08-20 |
 | 8 | 地块完整详情 | 未开始 | - |
 | 9 | 小程序完整联调 | 未开始 | - |
 
@@ -294,7 +294,35 @@
 
 ### 未解决问题
 
-- Phase 7 结束种养尚未开始。
+- Phase 7 结束种养已在后续阶段完成，详见下一节。
+
+## Phase 7 交付记录
+
+### 结束种养
+
+- 新增 `POST /api/v1/productions/{productionId}/end`，请求可传 `endedOn`，省略时默认业务时区 `Asia/Shanghai` 的当天。
+- 仅 ACTIVE 种养可结束；重复结束返回 `409 BUSINESS_CONFLICT`，无成员权限的资源访问继续返回 `404`。
+- `endedOn` 不得晚于当天、早于开始日期，或早于关联农事、收获记录的业务日期；结束时更新既有 Production 的 `status = ENDED` 与 `ended_on`，不新增 EndRecord 表或 migration。
+- 结束后的 Production 不可编辑或删除；其关联 FarmOperation、HarvestRecord 保持可查但均不可新建、编辑或删除。关联种养的农事创建、编辑与结束操作使用同一 Production 行锁，避免结束与记录变更交错提交。
+
+### 小程序
+
+- 种养详情的 ACTIVE 状态新增“结束种植／结束养殖”入口；已结束状态不展示该入口，原有编辑、记录收获与删除入口继续遵循锁定规则。
+- 新增独立的“结束种养”页面，使用原生导航栏，展示种类、地块和结束日期；日期默认当天，并限制在开始日期至当天之间。用户二次确认后提交，返回详情时刷新为已结束状态。
+- 页面延用品牌绿、现有 Token、轻量信息卡和克制阴影，不新增说明性内容或额外表单字段。
+
+### 验证结果
+
+- `uv run alembic current`：通过，当前为 `b8e4d2a1c673 (head)`。
+- `uv run alembic check`：通过，无待生成 migration。
+- `uv run pytest`：通过（35 passed）。
+- `uv run ruff check .` 与 `uv run ruff format --check .`：通过。
+- `pnpm --dir apps/miniapp exec vue-tsc --noEmit -p tsconfig.json`：通过。
+- `pnpm --dir apps/miniapp run build:mp-weixin`：通过；仅有现有 Sass API 与 `@import` 弃用警告。
+
+### 未解决问题
+
+无阻塞问题；Phase 8 按计划等待确认后开始。
 
 ## 前端规划记录
 
@@ -311,7 +339,7 @@
 - 已确认地块详情是核心业务页面，成员管理从“我的 → 我的农场”进入。
 - 删除农场、加入农场流程暂不属于 MVP 页面和接口范围。
 - 已完成首批小程序基础壳层、登录、三 Tab 页面壳层、我的页面和昵称编辑页面；Phase 2 已接入 Farm 管理，Phase 3 已接入 Plot 列表和地块管理。
-- 三个 Tab 与首批核心二级页已统一到同一套 Token、导航和页面层级；后续新页面继续沿用该基线。Phase 7 业务功能仍未开始。
+- 三个 Tab 与首批核心二级页已统一到同一套 Token、导航和页面层级；Phase 7 的结束种养页已沿用该基线，后续新页面继续沿用。
 
 ## 小程序首批实现记录
 

@@ -71,6 +71,7 @@ async def _get_production_for_plot(
         session,
         production_id=production_id,
         user_id=user_id,
+        lock=True,
     )
     if production.plot_id != plot_id:
         raise _validation_error("productionId must belong to the plot.")
@@ -209,7 +210,7 @@ async def _ensure_operation_is_editable(
     if operation.production_id is None:
         return None
     production = await session.scalar(
-        select(Production).where(Production.id == operation.production_id)
+        select(Production).where(Production.id == operation.production_id).with_for_update()
     )
     if production is None:
         raise _not_found("Production not found.")

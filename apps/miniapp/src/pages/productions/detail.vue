@@ -90,6 +90,15 @@
         <uv-icon name="arrow-right" size="17" color="#929A93" />
       </view>
 
+      <view v-if="production.status === 'ACTIVE'" class="end-section">
+        <view class="section-label">结束种养</view>
+        <view class="end-card pf-card pf-tappable" @click="openEndProduction">
+          <view class="end-icon"><uv-icon name="checkmark-circle" size="20" color="#286B46" /></view>
+          <text class="end-title">{{ endActionLabel }}</text>
+          <uv-icon name="arrow-right" size="17" color="#286B46" />
+        </view>
+      </view>
+
       <view v-if="production.status === 'ACTIVE'" class="danger-section">
         <view class="section-label">危险操作</view>
         <view class="danger-card pf-card" @click="confirmDelete">
@@ -182,6 +191,12 @@ const harvestActionLabel = computed(() => {
   if (production.value?.industry === "FISHERY") return "捕捞";
   return "采收";
 });
+const endActionLabel = computed(() => {
+  if (production.value?.industry === "AGRICULTURE" || production.value?.industry === "FORESTRY") {
+    return "结束种植";
+  }
+  return "结束养殖";
+});
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -246,6 +261,12 @@ function openHarvests(): void {
 function openCreateHarvest(): void {
   if (production.value?.status === "ACTIVE") {
     uni.navigateTo({ url: `/pages/harvests/form?productionId=${production.value.id}` });
+  }
+}
+
+function openEndProduction(): void {
+  if (production.value?.status === "ACTIVE") {
+    uni.navigateTo({ url: `/pages/productions/end?productionId=${production.value.id}` });
   }
 }
 
@@ -421,6 +442,38 @@ onShow(() => {
 
 .danger-section {
   margin-top: 6rpx;
+}
+
+.end-section {
+  margin-top: 6rpx;
+}
+
+.end-card {
+  display: flex;
+  min-height: 96rpx;
+  align-items: center;
+  padding: 0 22rpx;
+  border-color: rgba(40, 107, 70, 0.2);
+  background: $pf-color-primary-soft;
+  box-shadow: none;
+}
+
+.end-icon {
+  display: flex;
+  width: 48rpx;
+  height: 48rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.end-title {
+  flex: 1;
+  margin-left: 16rpx;
+  color: $pf-color-primary;
+  font-size: 26rpx;
+  font-weight: 600;
 }
 
 .danger-card {

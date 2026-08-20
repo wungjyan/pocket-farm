@@ -46,6 +46,10 @@ def _validate_started_on(started_on: date) -> None:
         raise _validation_error("startedOn cannot be later than today.")
 
 
+def _business_date(value: datetime) -> date:
+    return value.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo(settings.app_timezone)).date()
+
+
 def _require(value: object | None, field_name: str) -> None:
     if value is None:
         raise _validation_error(f"{field_name} is required for this industry.")
@@ -394,3 +398,48 @@ async def delete_production(
 
     await session.delete(production)
     await session.commit()
+
+
+async def end_production(
+    session: AsyncSession,
+    *,
+    production_id: int,
+    user_id: int,
+    ended_on: date | None,
+) -> tuple[Production, Species]:
+    production, _, _, species = await get_production_with_member(
+        session,
+        production_id=production_id,
+        user_id=user_id,
+        lock=True,
+    )
+    if ProductionStatus(production.status) != ProductionStatus.ACTIVE:
+        raise _conflict("This production has already ended.")
+
+    actual_ended_on = ended_on or _today()
+    if actual_ended_on > _today():
+        raise _validation_error("endedOn cannot be later than today.")
+    if actual_ended_on < production.started_on:
+        raise _validation_error("endedOn cannot be earlier than production.startedOn.")
+
+    latest_operation_at = await session.scalar(
+        select(func.max(FarmOperation.operated_at)).where(
+            FarmOperation.production_id == production.id
+        )
+    )
+    if latest_operation_at is not None and actual_ended_on < _business_date(latest_operation_at):
+        raise _validation_error("endedOn cannot be earlier than an associated farm operation.")
+
+    latest_harvested_at = await session.scalar(
+        select(func.max(HarvestRecord.harvested_at)).where(
+            HarvestRecord.production_id == production.id
+        )
+    )
+    if latest_harvested_at is not None and actual_ended_on < _business_date(latest_harvested_at):
+        raise _validation_error("endedOn cannot be earlier than an associated harvest record.")
+
+    production.status = ProductionStatus.ENDED
+    production.ended_on = actual_ended_on
+    await session.commit()
+    await session.refresh(production)
+    return production, species

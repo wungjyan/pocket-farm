@@ -341,7 +341,20 @@ def test_operation_can_be_edited_or_deleted_when_active_but_locks_when_ended() -
     )
     assert edit_response.status_code == 200, edit_response.json()
     assert edit_response.json()["data"]["operationType"]["code"] == "IRRIGATE"
-    asyncio.run(mark_production_ended(production["id"]))
+    premature_end = call(
+        owner_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={"endedOn": (date.today() - timedelta(days=1)).isoformat()},
+    )
+    end_response = call(
+        owner_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={},
+    )
+    assert premature_end.status_code == 422
+    assert end_response.status_code == 200
 
     ended_create = create_operation(
         owner_token,

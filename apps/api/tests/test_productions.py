@@ -356,3 +356,56 @@ def test_production_validates_integer_quantity_dates_and_ended_state() -> None:
     ended_delete = call(owner_token, f"/api/v1/productions/{production['id']}", method="delete")
     assert ended_edit.status_code == 409
     assert ended_delete.status_code == 409
+
+
+def test_production_can_end_once_with_valid_business_dates() -> None:
+    owner_token = login(OWNER_PHONE)
+    outsider_token = login(OUTSIDER_PHONE)
+    farm = create_farm(owner_token)
+    plot = create_plot(owner_token, farm["id"], "结束测试地块")
+    cucumber = species_by_name(owner_token, "黄瓜")
+    production = start_production(
+        owner_token,
+        plot["id"],
+        cucumber["id"],
+        startedOn=(date.today() - timedelta(days=2)).isoformat(),
+    )
+
+    outsider_end = call(
+        outsider_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={},
+    )
+    before_start = call(
+        owner_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={"endedOn": (date.today() - timedelta(days=3)).isoformat()},
+    )
+    future_end = call(
+        owner_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={"endedOn": (date.today() + timedelta(days=1)).isoformat()},
+    )
+    ended = call(
+        owner_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={},
+    )
+    repeated_end = call(
+        owner_token,
+        f"/api/v1/productions/{production['id']}/end",
+        method="post",
+        json={},
+    )
+
+    assert outsider_end.status_code == 404
+    assert before_start.status_code == 422
+    assert future_end.status_code == 422
+    assert ended.status_code == 200
+    assert ended.json()["data"]["status"] == "ENDED"
+    assert ended.json()["data"]["endedOn"] == date.today().isoformat()
+    assert repeated_end.status_code == 409

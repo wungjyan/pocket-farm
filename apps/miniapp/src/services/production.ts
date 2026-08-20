@@ -56,6 +56,10 @@ export interface ProductionUpdateInput extends Partial<ProductionInput> {
   plotId?: number;
 }
 
+export interface EndProductionInput {
+  endedOn?: string;
+}
+
 export function getPlotProductions(
   plotId: number,
   status?: ProductionStatus,
@@ -92,6 +96,17 @@ export function updateProduction(
 
 export function deleteProduction(productionId: number): Promise<void> {
   return request<void>({ url: `/productions/${productionId}`, method: "DELETE" });
+}
+
+export function endProduction(
+  productionId: number,
+  input: EndProductionInput = {},
+): Promise<Production> {
+  return request<Production>({
+    url: `/productions/${productionId}/end`,
+    method: "POST",
+    data: input,
+  });
 }
 
 export function toSpecies(production: Production): Species {

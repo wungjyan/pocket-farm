@@ -143,6 +143,14 @@ class UpdateProductionRequest(BaseModel):
         return self
 
 
+class EndProductionRequest(BaseModel):
+    ended_on: date | None = Field(
+        default=None,
+        validation_alias=AliasChoices("endedOn", "ended_on"),
+        serialization_alias="endedOn",
+    )
+
+
 class ProductionResponse(BaseModel):
     id: int
     plot_id: int = Field(serialization_alias="plotId")

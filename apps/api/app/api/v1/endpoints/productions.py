@@ -14,6 +14,7 @@ from app.models.species import IndividualUnit, Industry
 from app.models.user import User
 from app.schemas.production import (
     CreateProductionRequest,
+    EndProductionRequest,
     ProductionPage,
     ProductionResponse,
     UpdateProductionRequest,
@@ -22,6 +23,7 @@ from app.schemas.response import ApiResponse
 from app.services.production import (
     create_production,
     delete_production,
+    end_production,
     get_production_with_member,
     list_plot_productions,
     update_production,
@@ -165,6 +167,22 @@ async def edit_production(
         entry_age_days=request.entry_age_days,
         remark=request.remark,
         fields_set=request.model_fields_set,
+    )
+    return ApiResponse.success_response(data=_production_response(production, species))
+
+
+@router.post("/productions/{production_id}/end", response_model=ApiResponse[ProductionResponse])
+async def end_current_production(
+    production_id: int,
+    request: EndProductionRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[ProductionResponse]:
+    production, species = await end_production(
+        session,
+        production_id=production_id,
+        user_id=current_user.id,
+        ended_on=request.ended_on,
     )
     return ApiResponse.success_response(data=_production_response(production, species))
 
