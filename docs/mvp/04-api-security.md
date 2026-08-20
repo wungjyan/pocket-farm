@@ -219,6 +219,7 @@ GET  /api/v1/farms/{farmId}/plots
 POST /api/v1/farms/{farmId}/plots
 
 GET   /api/v1/plots/{plotId}
+GET   /api/v1/plots/{plotId}/detail
 PATCH /api/v1/plots/{plotId}
 
 ---

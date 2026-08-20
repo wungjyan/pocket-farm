@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Mapping
+from datetime import date, timedelta
 from typing import Any
 
 import httpx
@@ -68,6 +69,29 @@ def add_member(token: str, farm_id: int, phone: str, role: str) -> dict[str, Any
         f"/api/v1/farms/{farm_id}/members",
         method="post",
         json={"phoneNumber": phone, "role": role},
+    )
+    assert response.status_code == 201
+    return response.json()["data"]
+
+
+def species_by_name(token: str, name: str) -> dict[str, Any]:
+    response = call(token, f"/api/v1/species?keyword={name}&pageSize=100")
+    assert response.status_code == 200
+    return next(item for item in response.json()["data"]["items"] if item["name"] == name)
+
+
+def start_agriculture_production(token: str, plot_id: int, species_id: int) -> dict[str, Any]:
+    response = call(
+        token,
+        f"/api/v1/plots/{plot_id}/productions",
+        method="post",
+        json={
+            "speciesId": species_id,
+            "startedOn": (date.today() - timedelta(days=2)).isoformat(),
+            "plantingStandard": "NORMAL",
+            "plantingMethod": "TRANSPLANT",
+            "workMethod": "MANUAL",
+        },
     )
     assert response.status_code == 201
     return response.json()["data"]
@@ -179,3 +203,62 @@ def test_plot_area_and_boundary_validation() -> None:
     )
     assert missing_unit.status_code == 422
     assert invalid_boundary.status_code == 422
+
+
+def test_plot_detail_aggregates_productions_operations_and_harvests() -> None:
+    owner_token = login(OWNER_PHONE)
+    outsider_token = login(OUTSIDER_PHONE)
+    farm = create_farm(owner_token)
+    create_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plots",
+        method="post",
+        json={"name": "聚合详情地块"},
+    )
+    assert create_response.status_code == 201
+    plot = create_response.json()["data"]
+    cucumber = species_by_name(owner_token, "黄瓜")
+    ended_production = start_agriculture_production(owner_token, plot["id"], cucumber["id"])
+
+    operation_types = call(owner_token, "/api/v1/operation-types?pageSize=100")
+    assert operation_types.status_code == 200
+    plow_id = next(
+        item["id"] for item in operation_types.json()["data"]["items"] if item["code"] == "PLOW"
+    )
+    operation_response = call(
+        owner_token,
+        f"/api/v1/plots/{plot['id']}/operations",
+        method="post",
+        json={"operationTypeId": plow_id, "productionId": ended_production["id"]},
+    )
+    harvest_response = call(
+        owner_token,
+        f"/api/v1/productions/{ended_production['id']}/harvests",
+        method="post",
+        json={"quantity": 12.5},
+    )
+    assert operation_response.status_code == 201
+    assert harvest_response.status_code == 201
+
+    end_response = call(
+        owner_token,
+        f"/api/v1/productions/{ended_production['id']}/end",
+        method="post",
+        json={},
+    )
+    assert end_response.status_code == 200
+    active_production = start_agriculture_production(owner_token, plot["id"], cucumber["id"])
+
+    detail_response = call(owner_token, f"/api/v1/plots/{plot['id']}/detail")
+    outsider_response = call(outsider_token, f"/api/v1/plots/{plot['id']}/detail")
+
+    assert detail_response.status_code == 200
+    detail = detail_response.json()["data"]
+    assert detail["plot"]["id"] == plot["id"]
+    assert [item["id"] for item in detail["activeProductions"]] == [active_production["id"]]
+    assert [item["id"] for item in detail["endedProductions"]] == [ended_production["id"]]
+    assert detail["operationTotal"] == 1
+    assert detail["operations"][0]["id"] == operation_response.json()["data"]["id"]
+    assert detail["harvestTotal"] == 1
+    assert detail["harvests"][0]["id"] == harvest_response.json()["data"]["id"]
+    assert outsider_response.status_code == 404

@@ -1,4 +1,7 @@
 import { request } from "./http";
+import type { HarvestRecord } from "./harvest";
+import type { FarmOperation } from "./operation";
+import type { Production } from "./production";
 
 export type PlotType =
   | "FIELD"
@@ -32,6 +35,16 @@ export interface PlotPage {
   total: number;
 }
 
+export interface PlotDetail {
+  plot: Plot;
+  activeProductions: Production[];
+  endedProductions: Production[];
+  operations: FarmOperation[];
+  operationTotal: number;
+  harvests: HarvestRecord[];
+  harvestTotal: number;
+}
+
 export interface PlotInput {
   name: string;
   type?: PlotType | null;
@@ -56,6 +69,10 @@ export function createPlot(farmId: number, input: PlotInput): Promise<Plot> {
 
 export function getPlot(plotId: number): Promise<Plot> {
   return request<Plot>({ url: `/plots/${plotId}` });
+}
+
+export function getPlotDetail(plotId: number): Promise<PlotDetail> {
+  return request<PlotDetail>({ url: `/plots/${plotId}/detail` });
 }
 
 export function updatePlot(plotId: number, input: PlotInput): Promise<Plot> {

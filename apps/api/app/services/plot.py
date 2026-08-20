@@ -1,17 +1,34 @@
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
 from app.models.farm import FarmMember, FarmMemberRole
+from app.models.harvest import HarvestRecord
+from app.models.operation import FarmOperation, OperationType
 from app.models.plot import AreaUnit, Plot, PlotType
+from app.models.production import Production, ProductionStatus
+from app.models.species import Species
 from app.services.farm import get_farm_with_member
 
 MU_TO_M2 = Decimal("666.6666666667")
 HECTARE_TO_M2 = Decimal("10000")
+DETAIL_RECORD_LIMIT = 100
+
+
+@dataclass
+class PlotDetailData:
+    plot: Plot
+    active_productions: list[tuple[Production, Species]]
+    ended_productions: list[tuple[Production, Species]]
+    operations: list[tuple[FarmOperation, OperationType]]
+    operation_total: int
+    harvests: list[HarvestRecord]
+    harvest_total: int
 
 
 def _not_found(message: str) -> AppException:
@@ -102,6 +119,68 @@ async def get_plot_with_member(
     if plot_and_member is None:
         raise _not_found("Plot not found.")
     return plot_and_member
+
+
+async def get_plot_detail(
+    session: AsyncSession,
+    *,
+    plot_id: int,
+    user_id: int,
+) -> PlotDetailData:
+    plot, _ = await get_plot_with_member(session, plot_id=plot_id, user_id=user_id)
+
+    production_result = await session.execute(
+        select(Production, Species)
+        .join(Species, Species.id == Production.species_id)
+        .where(Production.plot_id == plot.id)
+        .order_by(
+            case((Production.status == ProductionStatus.ACTIVE, 0), else_=1),
+            Production.started_on.desc(),
+            Production.id.desc(),
+        )
+    )
+    active_productions: list[tuple[Production, Species]] = []
+    ended_productions: list[tuple[Production, Species]] = []
+    for production, species in production_result.all():
+        if ProductionStatus(production.status) == ProductionStatus.ACTIVE:
+            active_productions.append((production, species))
+        else:
+            ended_productions.append((production, species))
+
+    operation_total = await session.scalar(
+        select(func.count()).select_from(FarmOperation).where(FarmOperation.plot_id == plot.id)
+    )
+    operation_result = await session.execute(
+        select(FarmOperation, OperationType)
+        .join(OperationType, OperationType.id == FarmOperation.operation_type_id)
+        .where(FarmOperation.plot_id == plot.id)
+        .order_by(FarmOperation.operated_at.desc(), FarmOperation.id.desc())
+        .limit(DETAIL_RECORD_LIMIT)
+    )
+
+    harvest_total = await session.scalar(
+        select(func.count())
+        .select_from(HarvestRecord)
+        .join(Production, Production.id == HarvestRecord.production_id)
+        .where(Production.plot_id == plot.id)
+    )
+    harvest_result = await session.execute(
+        select(HarvestRecord)
+        .join(Production, Production.id == HarvestRecord.production_id)
+        .where(Production.plot_id == plot.id)
+        .order_by(HarvestRecord.harvested_at.desc(), HarvestRecord.id.desc())
+        .limit(DETAIL_RECORD_LIMIT)
+    )
+
+    return PlotDetailData(
+        plot=plot,
+        active_productions=active_productions,
+        ended_productions=ended_productions,
+        operations=list(operation_result.all()),
+        operation_total=int(operation_total or 0),
+        harvests=list(harvest_result.scalars()),
+        harvest_total=int(harvest_total or 0),
+    )
 
 
 async def update_plot(

@@ -145,7 +145,7 @@
           <view class="record-row__icon"><uv-icon name="calendar" size="20" color="#286B46" /></view>
           <view class="record-row__copy">
             <text class="record-row__title">农事记录</text>
-            <text class="record-row__meta">翻耕、施肥、灌溉等现场作业</text>
+            <text class="record-row__meta">共 {{ operationTotal }} 条</text>
           </view>
           <uv-icon name="arrow-right" size="16" color="#7F8B82" />
         </view>
@@ -153,7 +153,7 @@
           <view class="record-row__icon"><uv-icon name="order" size="20" color="#286B46" /></view>
           <view class="record-row__copy">
             <text class="record-row__title">收获记录</text>
-            <text class="record-row__meta">查看采收、捕捞和出栏记录</text>
+            <text class="record-row__meta">共 {{ harvestTotal }} 条</text>
           </view>
           <uv-icon name="arrow-right" size="16" color="#7F8B82" />
         </view>
@@ -168,8 +168,8 @@ import { onLoad, onShow } from "@dcloudio/uni-app";
 import { clearAuthToken } from "../../services/auth";
 import { getFarm, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
-import { getPlot, type Plot, type PlotType } from "../../services/plot";
-import { getPlotProductions, type Production } from "../../services/production";
+import { getPlotDetail, type Plot, type PlotType } from "../../services/plot";
+import type { Production } from "../../services/production";
 import type { IndividualUnit, Industry } from "../../services/species";
 import { formatNumber } from "../../utils/number";
 
@@ -180,6 +180,8 @@ const loading = ref(true);
 const loadError = ref("");
 const activeProductions = ref<Production[]>([]);
 const endedProductions = ref<Production[]>([]);
+const operationTotal = ref(0);
+const harvestTotal = ref(0);
 const canEdit = computed(() => farm.value?.myRole === "OWNER" || farm.value?.myRole === "ADMIN");
 const canManageProductions = computed(() => Boolean(farm.value?.myRole));
 const canManageOperations = computed(() => Boolean(farm.value?.myRole));
@@ -259,18 +261,16 @@ async function loadPlot(): Promise<void> {
     return;
   }
   loading.value = true;
-  loadError.value = "";
+    loadError.value = "";
   try {
-    const result = await getPlot(plotId.value);
-    plot.value = result;
-    const [farmResult, activeResult, endedResult] = await Promise.all([
-      getFarm(result.farmId),
-      getPlotProductions(result.id, "ACTIVE"),
-      getPlotProductions(result.id, "ENDED"),
-    ]);
+    const detail = await getPlotDetail(plotId.value);
+    const farmResult = await getFarm(detail.plot.farmId);
+    plot.value = detail.plot;
     farm.value = farmResult;
-    activeProductions.value = activeResult.items;
-    endedProductions.value = endedResult.items;
+    activeProductions.value = detail.activeProductions;
+    endedProductions.value = detail.endedProductions;
+    operationTotal.value = detail.operationTotal;
+    harvestTotal.value = detail.harvestTotal;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();

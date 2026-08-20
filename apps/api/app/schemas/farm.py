@@ -6,6 +6,9 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from app.models.farm import FarmMemberRole
 from app.models.plot import AreaUnit, PlotType
+from app.schemas.harvest import HarvestResponse
+from app.schemas.operation import OperationResponse
+from app.schemas.production import ProductionResponse
 
 
 class CreateFarmRequest(BaseModel):
@@ -145,6 +148,16 @@ class PlotPage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class PlotDetailResponse(BaseModel):
+    plot: PlotResponse
+    active_productions: list[ProductionResponse] = Field(serialization_alias="activeProductions")
+    ended_productions: list[ProductionResponse] = Field(serialization_alias="endedProductions")
+    operations: list[OperationResponse]
+    operation_total: int = Field(serialization_alias="operationTotal")
+    harvests: list[HarvestResponse]
+    harvest_total: int = Field(serialization_alias="harvestTotal")
 
 
 def _validate_boundary(boundary: dict[str, Any] | None) -> None:
