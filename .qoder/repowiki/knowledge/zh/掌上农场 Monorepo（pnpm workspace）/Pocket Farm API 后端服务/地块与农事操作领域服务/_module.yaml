@@ -7,6 +7,4 @@ scope:
     - apps/api/app/schemas/operation.py
 source_files: []
 depends_on: []
-related_to:
-    - path: miniapp_frontend/operations
-    - path: miniapp_frontend/plots
+related_to: []

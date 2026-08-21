@@ -7,5 +7,4 @@ scope:
     - apps/miniapp/src/services/operation.ts
 source_files: []
 depends_on: []
-related_to:
-    - path: api_backend/plot_operations_domain
+related_to: []

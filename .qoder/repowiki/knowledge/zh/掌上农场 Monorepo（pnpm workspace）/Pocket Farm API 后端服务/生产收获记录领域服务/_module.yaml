@@ -7,5 +7,4 @@ scope:
     - apps/api/app/schemas/harvest.py
 source_files: []
 depends_on: []
-related_to:
-    - path: miniapp_frontend/harvests
+related_to: []

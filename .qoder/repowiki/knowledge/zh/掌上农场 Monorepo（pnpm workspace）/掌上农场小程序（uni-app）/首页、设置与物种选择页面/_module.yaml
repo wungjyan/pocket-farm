@@ -8,6 +8,4 @@ scope:
     - apps/miniapp/src/pages/species/
 source_files: []
 depends_on: []
-related_to:
-    - path: api_backend/species_domain
-    - path: api_backend/users_auth_domain
+related_to: []

@@ -7,5 +7,4 @@ scope:
     - apps/api/app/schemas/species.py
 source_files: []
 depends_on: []
-related_to:
-    - path: miniapp_frontend/home_and_settings
+related_to: []

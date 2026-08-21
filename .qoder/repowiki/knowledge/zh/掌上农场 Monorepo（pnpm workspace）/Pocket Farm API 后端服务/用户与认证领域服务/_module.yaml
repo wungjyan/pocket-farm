@@ -7,6 +7,4 @@ scope:
     - apps/api/app/models/user.py
 source_files: []
 depends_on: []
-related_to:
-    - path: miniapp_frontend/auth_and_profile
-    - path: miniapp_frontend/home_and_settings
+related_to: []

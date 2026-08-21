@@ -9,5 +9,4 @@ scope:
     - apps/miniapp/src/services/user.ts
 source_files: []
 depends_on: []
-related_to:
-    - path: api_backend/users_auth_domain
+related_to: []

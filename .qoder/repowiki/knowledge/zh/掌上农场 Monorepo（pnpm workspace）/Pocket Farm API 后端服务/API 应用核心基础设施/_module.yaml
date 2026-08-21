@@ -7,5 +7,4 @@ scope:
     - apps/api/app/main.py
 source_files: []
 depends_on: []
-related_to:
-    - path: api_backend/api_routes
+related_to: []

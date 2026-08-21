@@ -7,6 +7,4 @@ scope:
     - apps/api/app/api/deps.py
 source_files: []
 depends_on: []
-related_to:
-    - path: api_backend/core_infrastructure
-    - path: api_backend/tests
+related_to: []

@@ -9,5 +9,4 @@ scope:
     - apps/miniapp/src/services/farm-context.ts
 source_files: []
 depends_on: []
-related_to:
-    - path: api_backend/farm_domain
+related_to: []
