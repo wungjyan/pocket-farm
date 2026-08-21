@@ -122,54 +122,41 @@
       </template>
 
       <view class="pf-section-heading">
-        <text class="pf-section-title">{{ harvestActionLabel }}记录</text>
-        <text
+        <text class="pf-section-title">操作</text>
+      </view>
+      <view class="action-grid">
+        <button
           v-if="production.status === 'ACTIVE'"
-          class="pf-section-action"
+          class="action-button action-button--primary"
+          hover-class="action-button--primary-pressed"
           @tap="openCreateHarvest"
-          >记录{{ harvestActionLabel }}</text
         >
+          记录{{ harvestActionLabel }}
+        </button>
+        <button
+          class="action-button action-button--secondary"
+          hover-class="action-button--pressed"
+          @tap="openHarvests"
+        >
+          查看{{ harvestActionLabel }}记录
+        </button>
+        <button
+          v-if="production.status === 'ACTIVE'"
+          class="action-button action-button--secondary"
+          hover-class="action-button--pressed"
+          @tap="openEndProduction"
+        >
+          {{ endActionLabel }}
+        </button>
+        <button
+          v-if="production.status === 'ACTIVE'"
+          class="action-button action-button--danger"
+          hover-class="action-button--danger-pressed"
+          @tap="confirmDelete"
+        >
+          删除种养记录
+        </button>
       </view>
-      <view class="record-list">
-        <view class="record-row pf-tappable" @tap="openHarvests">
-          <view class="record-row__icon">
-            <image
-              class="record-row__image"
-              src="/static/icons/home/harvest.png"
-              mode="aspectFit"
-            />
-          </view>
-          <text class="record-row__title"
-            >查看{{ harvestActionLabel }}记录</text
-          >
-          <PfRowChevron />
-        </view>
-      </view>
-
-      <view
-        v-if="production.status === 'ACTIVE'"
-        class="end-card pf-tappable"
-        @tap="openEndProduction"
-      >
-        <view class="end-card__icon">
-          <uv-icon name="checkmark-circle" size="18" color="#286B46" />
-        </view>
-        <text class="end-card__title">{{ endActionLabel }}</text>
-        <PfRowChevron />
-      </view>
-
-      <template v-if="production.status === 'ACTIVE'">
-        <view class="pf-section-heading">
-          <text class="pf-section-title">危险操作</text>
-        </view>
-        <view class="danger-card pf-tappable" @tap="confirmDelete">
-          <view class="danger-card__icon">
-            <uv-icon name="close-circle" size="18" color="#A9433B" />
-          </view>
-          <text class="danger-card__title">删除种养记录</text>
-          <PfRowChevron />
-        </view>
-      </template>
     </view>
 
     <uv-toast ref="toastRef" />
@@ -179,7 +166,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
-import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import {
@@ -426,10 +412,7 @@ onShow(() => {
 .production-header__name,
 .production-header__meta,
 .production-header__metric-label,
-.production-header__metric-missing,
-.record-row__title,
-.end-card__title,
-.danger-card__title {
+.production-header__metric-missing {
   display: block;
 }
 
@@ -593,105 +576,58 @@ onShow(() => {
   text-align: left;
 }
 
-/* 采收记录 */
-.record-list {
-  overflow: hidden;
-  border-radius: 20rpx;
-  background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
+/* 操作 */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
 }
 
-.record-row {
+.action-button {
   display: flex;
-  min-height: 112rpx;
-  align-items: center;
-  padding: 0 22rpx;
-}
-
-.record-row__icon {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
+  width: 100%;
+  min-height: 88rpx;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  border-radius: 16rpx;
-  background: $pf-color-primary-soft;
-}
-
-.record-row__image {
-  width: 44rpx;
-  height: 44rpx;
-}
-
-.record-row__title {
-  min-width: 0;
-  flex: 1;
-  margin-left: 16rpx;
+  padding: 0 12rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-control;
+  background: $pf-color-surface;
   color: $pf-color-text;
-  font-size: 27rpx;
+  font-size: 25rpx;
   font-weight: 600;
+  line-height: 1.25;
 }
 
-/* 结束种养 */
-.end-card {
-  display: flex;
-  min-height: 112rpx;
-  align-items: center;
-  margin-top: $pf-space-3;
-  padding: 0 22rpx;
-  border-radius: 20rpx;
-  background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
+.action-button::after {
+  border: 0;
 }
 
-.end-card__icon {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
+.action-button--primary {
+  border-color: $pf-color-primary-soft;
   background: $pf-color-primary-soft;
-}
-
-.end-card__title {
-  flex: 1;
-  margin-left: 16rpx;
   color: $pf-color-primary;
-  font-size: 27rpx;
-  font-weight: 600;
 }
 
-/* 危险操作 */
-.danger-card {
-  display: flex;
-  min-height: 112rpx;
-  align-items: center;
-  padding: 0 22rpx;
-  border-radius: 20rpx;
-  background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
+.action-button--primary-pressed {
+  border-color: $pf-color-primary-soft;
+  background: $pf-color-primary-soft;
+  opacity: 0.72;
 }
 
-.danger-card__icon {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
+.action-button--pressed {
+  background: $pf-color-surface-muted;
+}
+
+.action-button--danger {
+  border-color: transparent;
   background: $pf-color-danger-soft;
+  color: $pf-color-danger;
 }
 
-.danger-card__title {
-  flex: 1;
-  margin-left: 16rpx;
-  color: $pf-color-danger;
-  font-size: 27rpx;
-  font-weight: 600;
+.action-button--danger-pressed {
+  opacity: 0.72;
 }
 
 /* 加载 / 失败态 */
