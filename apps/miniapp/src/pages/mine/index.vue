@@ -3,33 +3,36 @@
     <PfPageHeader title="我的" variant="tab" />
 
     <view class="pf-page-content">
-      <view class="profile-bar">
-        <view class="profile-avatar"><text>{{ avatarText }}</text></view>
-        <view class="profile-copy">
-          <text class="profile-name">{{ displayName }}</text>
-          <text class="profile-phone">{{ maskedPhone }}</text>
+      <view class="profile-card pf-card pf-tappable" @tap="openSettings">
+        <view class="profile-card__avatar"
+          ><text>{{ avatarText }}</text></view
+        >
+        <view class="profile-card__copy">
+          <text class="profile-card__name">{{ displayName }}</text>
+          <text class="profile-card__phone">{{ maskedPhone }}</text>
         </view>
-        <view class="profile-settings pf-tappable" @tap="openSettings">
-          <uv-icon name="setting" size="26" color="#FFFFFF" />
-        </view>
+        <PfRowChevron />
       </view>
 
       <view class="pf-section-heading">
         <text class="pf-section-title">农场</text>
       </view>
       <view class="menu-list">
-        <view class="menu-row pf-tappable" @tap="openFarms">
-          <view class="menu-icon"><uv-icon name="grid" size="20" color="#286B46" /></view>
-          <text class="menu-title">我的农场</text>
-          <text class="menu-value">{{ currentFarmName }}</text>
-          <uv-icon name="arrow-right" size="17" color="#7F8B82" />
+        <view class="menu-row pf-card pf-tappable" @tap="openFarms">
+          <view class="menu-row__icon"
+            ><uv-icon name="grid" size="20" color="#286B46"
+          /></view>
+          <text class="menu-row__title">我的农场</text>
+          <text class="menu-row__value">{{ currentFarmName }}</text>
+          <PfRowChevron />
         </view>
-        <view class="menu-divider" />
-        <view class="menu-row pf-tappable" @tap="openFarmSettings">
-          <view class="menu-icon"><uv-icon name="setting" size="20" color="#286B46" /></view>
-          <text class="menu-title">当前农场管理</text>
-          <text class="menu-value">{{ roleLabel }}</text>
-          <uv-icon name="arrow-right" size="17" color="#7F8B82" />
+        <view class="menu-row pf-card pf-tappable" @tap="openFarmSettings">
+          <view class="menu-row__icon"
+            ><uv-icon name="setting" size="20" color="#286B46"
+          /></view>
+          <text class="menu-row__title">当前农场管理</text>
+          <text class="menu-row__value">{{ roleLabel }}</text>
+          <PfRowChevron />
         </view>
       </view>
     </view>
@@ -40,6 +43,7 @@
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import PfPageHeader from "../../components/PfPageHeader.vue";
+import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
@@ -47,7 +51,9 @@ import { getCurrentUser, type User } from "../../services/user";
 
 const user = ref<User | null>(null);
 const { currentFarm, refreshFromApi } = useFarmContext();
-const displayName = computed(() => user.value?.nickname || maskPhone(user.value?.phoneNumber || "用户"));
+const displayName = computed(
+  () => user.value?.nickname || maskPhone(user.value?.phoneNumber || "用户"),
+);
 const maskedPhone = computed(() => maskPhone(user.value?.phoneNumber || ""));
 const avatarText = computed(() => displayName.value.slice(0, 1));
 const currentFarmName = computed(() => currentFarm.value?.name || "未选择");
@@ -57,7 +63,9 @@ const roleLabel = computed(() => {
 });
 
 function maskPhone(phone: string): string {
-  return phone.length === 11 ? `${phone.slice(0, 3)}****${phone.slice(-4)}` : phone;
+  return phone.length === 11
+    ? `${phone.slice(0, 3)}****${phone.slice(-4)}`
+    : phone;
 }
 
 function openSettings(): void {
@@ -78,7 +86,10 @@ function openFarmSettings(): void {
 
 onShow(async () => {
   try {
-    const [currentUser] = await Promise.all([getCurrentUser(), refreshFromApi()]);
+    const [currentUser] = await Promise.all([
+      getCurrentUser(),
+      refreshFromApi(),
+    ]);
     user.value = currentUser;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
@@ -92,104 +103,89 @@ onShow(async () => {
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.profile-bar {
+.profile-card {
   display: flex;
-  min-height: 152rpx;
+  min-height: 132rpx;
   box-sizing: border-box;
   align-items: center;
-  margin-top: $pf-space-3;
   padding: 24rpx;
-  border-radius: 20rpx;
-  background: $pf-color-primary;
 }
 
-.profile-avatar {
+.profile-card__avatar {
   display: flex;
   width: 80rpx;
   height: 80rpx;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border: 1rpx solid rgba(255, 255, 255, 0.34);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-  color: $pf-white;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
   font-size: 30rpx;
   font-weight: 700;
 }
 
-.profile-copy {
+.profile-card__copy {
   min-width: 0;
   flex: 1;
-  margin-left: 20rpx;
+  margin: 0 18rpx;
 }
 
-.profile-name,
-.profile-phone,
-.menu-title,
-.menu-value {
+.profile-card__name,
+.profile-card__phone {
   display: block;
 }
 
-.profile-name {
+.profile-card__name {
   overflow: hidden;
-  color: $pf-white;
+  color: $pf-color-text;
   font-size: 32rpx;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.profile-phone {
+.profile-card__phone {
   margin-top: 8rpx;
-  color: rgba(255, 255, 255, 0.72);
+  color: $pf-color-text-muted;
   font-size: 22rpx;
 }
 
-.profile-settings {
-  display: flex;
-  width: 88rpx;
-  height: 88rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: flex-end;
-}
-
 .menu-list {
-  overflow: hidden;
-  border: 1rpx solid $pf-color-border;
-  border-radius: 14rpx;
-  background: $pf-color-surface;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
 }
 
 .menu-row {
   display: flex;
-  min-height: 104rpx;
+  min-height: 112rpx;
+  box-sizing: border-box;
   align-items: center;
-  padding: 0 22rpx;
+  padding: 0 24rpx;
 }
 
-.menu-icon {
+.menu-row__icon {
   display: flex;
-  width: 52rpx;
-  height: 52rpx;
+  width: 56rpx;
+  height: 56rpx;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   background: $pf-color-primary-soft;
 }
 
-.menu-title {
+.menu-row__title {
   min-width: 0;
   flex: 1;
   margin-left: 16rpx;
   color: $pf-color-text;
   font-size: 27rpx;
-  font-weight: 600;
+  font-weight: 650;
 }
 
-.menu-value {
+.menu-row__value {
   overflow: hidden;
   max-width: 220rpx;
   margin-right: 12rpx;
@@ -197,11 +193,5 @@ onShow(async () => {
   font-size: 22rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.menu-divider {
-  height: 1rpx;
-  margin-left: 90rpx;
-  background: $pf-color-divider;
 }
 </style>
