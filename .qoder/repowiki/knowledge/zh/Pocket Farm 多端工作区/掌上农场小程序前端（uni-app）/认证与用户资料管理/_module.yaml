@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: miniapp_frontend/auth_and_profile
+title: 认证与用户资料管理
+scope:
+    - apps/miniapp/src/pages/auth/
+    - apps/miniapp/src/pages/profile/
+    - apps/miniapp/src/pages/mine/
+    - apps/miniapp/src/services/auth.ts
+    - apps/miniapp/src/services/user.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/users_auth_domain

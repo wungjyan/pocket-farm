@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: api_backend/core_infrastructure
+title: API 应用核心基础设施
+scope:
+    - apps/api/app/core/
+    - apps/api/app/db/
+    - apps/api/app/main.py
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/api_routes

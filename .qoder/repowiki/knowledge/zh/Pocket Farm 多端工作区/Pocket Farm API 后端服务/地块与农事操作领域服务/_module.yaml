@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: api_backend/plot_operations_domain
+title: 地块与农事操作领域服务
+scope:
+    - apps/api/app/services/plot.py
+    - apps/api/app/models/plot.py
+    - apps/api/app/schemas/operation.py
+source_files: []
+depends_on: []
+related_to:
+    - path: miniapp_frontend/operations
+    - path: miniapp_frontend/plots

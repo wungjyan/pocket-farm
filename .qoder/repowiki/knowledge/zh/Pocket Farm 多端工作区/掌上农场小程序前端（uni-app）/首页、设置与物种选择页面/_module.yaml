@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: miniapp_frontend/home_and_settings
+title: 首页、设置与物种选择页面
+scope:
+    - apps/miniapp/src/pages/home/
+    - apps/miniapp/src/pages/index/
+    - apps/miniapp/src/pages/settings/
+    - apps/miniapp/src/pages/species/
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/species_domain
+    - path: api_backend/users_auth_domain

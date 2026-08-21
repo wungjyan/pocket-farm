@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: miniapp_frontend/operations
+title: 农事记录（Operations）前端页面与服务
+scope:
+    - apps/miniapp/src/pages/operations/
+    - apps/miniapp/src/pages/operation-types/
+    - apps/miniapp/src/services/operation.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/plot_operations_domain

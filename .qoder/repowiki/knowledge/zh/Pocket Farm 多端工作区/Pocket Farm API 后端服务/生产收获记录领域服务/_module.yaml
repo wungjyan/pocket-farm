@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: api_backend/harvests_domain
+title: 生产收获记录领域服务
+scope:
+    - apps/api/app/services/harvest.py
+    - apps/api/app/models/harvest.py
+    - apps/api/app/schemas/harvest.py
+source_files: []
+depends_on: []
+related_to:
+    - path: miniapp_frontend/harvests

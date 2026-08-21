@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: api_backend/users_auth_domain
+title: 用户与认证领域服务
+scope:
+    - apps/api/app/services/auth.py
+    - apps/api/app/services/user.py
+    - apps/api/app/models/user.py
+source_files: []
+depends_on: []
+related_to:
+    - path: miniapp_frontend/auth_and_profile
+    - path: miniapp_frontend/home_and_settings

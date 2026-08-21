@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: api_backend/species_domain
+title: 物种（Species）领域模型与查询服务
+scope:
+    - apps/api/app/services/species.py
+    - apps/api/app/models/species.py
+    - apps/api/app/schemas/species.py
+source_files: []
+depends_on: []
+related_to:
+    - path: miniapp_frontend/home_and_settings

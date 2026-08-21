@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: miniapp_frontend/harvests
+title: 收获记录管理页面
+scope:
+    - apps/miniapp/src/pages/harvests/
+    - apps/miniapp/src/services/harvest.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/harvests_domain

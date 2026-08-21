@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: api_backend/productions_domain
+title: 生产记录领域服务（Production Domain）
+scope:
+    - apps/api/app/services/production.py
+    - apps/api/app/models/production.py
+    - apps/api/app/schemas/production.py
+source_files: []
+depends_on: []
+related_to:
+    - path: miniapp_frontend/productions

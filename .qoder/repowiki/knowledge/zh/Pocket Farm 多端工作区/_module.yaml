@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: ""
+title: Pocket Farm 多端工作区
+scope:
+    - .gitignore
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - AGENTS.md
+source_files: []
+depends_on: []
+related_to: []

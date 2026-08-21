@@ -1,0 +1,262 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: main
+nodes_managed: true
+exported_at: "2026-08-21T05:58:19Z"
+modules:
+    "":
+        dir_name: Pocket Farm 多端工作区
+        title: Pocket Farm 多端工作区
+        scope:
+            - .gitignore
+            - package.json
+            - pnpm-lock.yaml
+            - pnpm-workspace.yaml
+            - AGENTS.md
+        source_files: []
+        children:
+            - api_backend
+            - docs
+            - miniapp_frontend
+        depends_on: []
+        related_to: []
+    api_backend:
+        dir_name: Pocket Farm API 后端服务
+        title: Pocket Farm API 后端服务
+        scope:
+            - apps/api/
+        source_files: []
+        children:
+            - api_backend/api_routes
+            - api_backend/core_infrastructure
+            - api_backend/farm_domain
+            - api_backend/harvests_domain
+            - api_backend/plot_operations_domain
+            - api_backend/productions_domain
+            - api_backend/species_domain
+            - api_backend/tests
+            - api_backend/users_auth_domain
+        depends_on: []
+        related_to: []
+    api_backend/api_routes:
+        dir_name: API v1 路由与端点层
+        title: API v1 路由与端点层
+        scope:
+            - apps/api/app/api/v1/endpoints/
+            - apps/api/app/api/v1/router.py
+            - apps/api/app/api/deps.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/core_infrastructure
+            - path: api_backend/tests
+    api_backend/core_infrastructure:
+        dir_name: API 应用核心基础设施
+        title: API 应用核心基础设施
+        scope:
+            - apps/api/app/core/
+            - apps/api/app/db/
+            - apps/api/app/main.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/api_routes
+    api_backend/farm_domain:
+        dir_name: 农场（Farm）领域服务与数据模型
+        title: 农场（Farm）领域服务与数据模型
+        scope:
+            - apps/api/app/services/farm.py
+            - apps/api/app/models/farm.py
+            - apps/api/app/schemas/farm.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/farms
+    api_backend/harvests_domain:
+        dir_name: 生产收获记录领域服务
+        title: 生产收获记录领域服务
+        scope:
+            - apps/api/app/services/harvest.py
+            - apps/api/app/models/harvest.py
+            - apps/api/app/schemas/harvest.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/harvests
+    api_backend/plot_operations_domain:
+        dir_name: 地块与农事操作领域服务
+        title: 地块与农事操作领域服务
+        scope:
+            - apps/api/app/services/plot.py
+            - apps/api/app/models/plot.py
+            - apps/api/app/schemas/operation.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/operations
+            - path: miniapp_frontend/plots
+    api_backend/productions_domain:
+        dir_name: 生产记录领域服务（Production Domain）
+        title: 生产记录领域服务（Production Domain）
+        scope:
+            - apps/api/app/services/production.py
+            - apps/api/app/models/production.py
+            - apps/api/app/schemas/production.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/productions
+    api_backend/species_domain:
+        dir_name: 物种（Species）领域模型与查询服务
+        title: 物种（Species）领域模型与查询服务
+        scope:
+            - apps/api/app/services/species.py
+            - apps/api/app/models/species.py
+            - apps/api/app/schemas/species.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/home_and_settings
+    api_backend/tests:
+        dir_name: API 集成测试套件
+        title: API 集成测试套件
+        scope:
+            - apps/api/tests/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/api_routes
+    api_backend/users_auth_domain:
+        dir_name: 用户与认证领域服务
+        title: 用户与认证领域服务
+        scope:
+            - apps/api/app/services/auth.py
+            - apps/api/app/services/user.py
+            - apps/api/app/models/user.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/auth_and_profile
+            - path: miniapp_frontend/home_and_settings
+    docs:
+        dir_name: 掌上农场文档站（VitePress）
+        title: 掌上农场文档站（VitePress）
+        scope:
+            - docs/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    miniapp_frontend:
+        dir_name: 掌上农场小程序前端（uni-app）
+        title: 掌上农场小程序前端（uni-app）
+        scope:
+            - apps/miniapp/
+        source_files: []
+        children:
+            - miniapp_frontend/auth_and_profile
+            - miniapp_frontend/farms
+            - miniapp_frontend/harvests
+            - miniapp_frontend/home_and_settings
+            - miniapp_frontend/operations
+            - miniapp_frontend/plots
+            - miniapp_frontend/productions
+        depends_on: []
+        related_to: []
+    miniapp_frontend/auth_and_profile:
+        dir_name: 认证与用户资料管理
+        title: 认证与用户资料管理
+        scope:
+            - apps/miniapp/src/pages/auth/
+            - apps/miniapp/src/pages/profile/
+            - apps/miniapp/src/pages/mine/
+            - apps/miniapp/src/services/auth.ts
+            - apps/miniapp/src/services/user.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/users_auth_domain
+    miniapp_frontend/farms:
+        dir_name: 农场与地块管理（Farms & Plots）
+        title: 农场与地块管理（Farms & Plots）
+        scope:
+            - apps/miniapp/src/pages/farms/
+            - apps/miniapp/src/pages/farm/
+            - apps/miniapp/src/pages/farm-plots/
+            - apps/miniapp/src/services/farm.ts
+            - apps/miniapp/src/services/farm-context.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/farm_domain
+    miniapp_frontend/harvests:
+        dir_name: 收获记录管理页面
+        title: 收获记录管理页面
+        scope:
+            - apps/miniapp/src/pages/harvests/
+            - apps/miniapp/src/services/harvest.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/harvests_domain
+    miniapp_frontend/home_and_settings:
+        dir_name: 首页、设置与物种选择页面
+        title: 首页、设置与物种选择页面
+        scope:
+            - apps/miniapp/src/pages/home/
+            - apps/miniapp/src/pages/index/
+            - apps/miniapp/src/pages/settings/
+            - apps/miniapp/src/pages/species/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/species_domain
+            - path: api_backend/users_auth_domain
+    miniapp_frontend/operations:
+        dir_name: 农事记录（Operations）前端页面与服务
+        title: 农事记录（Operations）前端页面与服务
+        scope:
+            - apps/miniapp/src/pages/operations/
+            - apps/miniapp/src/pages/operation-types/
+            - apps/miniapp/src/services/operation.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/plot_operations_domain
+    miniapp_frontend/plots:
+        dir_name: 农场地块管理页面与服务
+        title: 农场地块管理页面与服务
+        scope:
+            - apps/miniapp/src/pages/plots/
+            - apps/miniapp/src/services/plot.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/plot_operations_domain
+    miniapp_frontend/productions:
+        dir_name: 种养记录管理页面
+        title: 种养记录管理页面
+        scope:
+            - apps/miniapp/src/pages/productions/
+            - apps/miniapp/src/services/production.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: api_backend/productions_domain
