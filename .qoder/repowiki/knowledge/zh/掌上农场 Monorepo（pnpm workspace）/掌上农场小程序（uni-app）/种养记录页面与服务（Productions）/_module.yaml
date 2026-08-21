@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: miniapp_frontend/productions
-title: 种养记录管理页面
+title: 种养记录页面与服务（Productions）
 scope:
     - apps/miniapp/src/pages/productions/
     - apps/miniapp/src/services/production.ts

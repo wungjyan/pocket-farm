@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-08-21T05:58:19Z"
+exported_at: "2026-08-21T07:08:17Z"
 modules:
     "":
-        dir_name: Pocket Farm 多端工作区
-        title: Pocket Farm 多端工作区
+        dir_name: 掌上农场 Monorepo（pnpm workspace）
+        title: 掌上农场 Monorepo（pnpm workspace）
         scope:
             - .gitignore
             - package.json
@@ -149,8 +149,8 @@ modules:
             - path: miniapp_frontend/auth_and_profile
             - path: miniapp_frontend/home_and_settings
     docs:
-        dir_name: 掌上农场文档站（VitePress）
-        title: 掌上农场文档站（VitePress）
+        dir_name: 掌上农场产品与研发文档站（VitePress）
+        title: 掌上农场产品与研发文档站（VitePress）
         scope:
             - docs/
         source_files: []
@@ -158,8 +158,8 @@ modules:
         depends_on: []
         related_to: []
     miniapp_frontend:
-        dir_name: 掌上农场小程序前端（uni-app）
-        title: 掌上农场小程序前端（uni-app）
+        dir_name: 掌上农场小程序（uni-app）
+        title: 掌上农场小程序（uni-app）
         scope:
             - apps/miniapp/
         source_files: []
@@ -250,8 +250,8 @@ modules:
         related_to:
             - path: api_backend/plot_operations_domain
     miniapp_frontend/productions:
-        dir_name: 种养记录管理页面
-        title: 种养记录管理页面
+        dir_name: 种养记录页面与服务（Productions）
+        title: 种养记录页面与服务（Productions）
         scope:
             - apps/miniapp/src/pages/productions/
             - apps/miniapp/src/services/production.ts
