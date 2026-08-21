@@ -27,7 +27,6 @@
           :class="{ 'plot-row--selected': selectionMode && plot.id === selectedPlotId }"
           @tap="handlePlot(plot)"
         >
-          <view class="plot-type"><uv-icon :name="plotIcon(plot.type)" size="20" color="#286B46" /></view>
           <view class="plot-copy">
             <text class="plot-name">{{ plot.name }}</text>
             <view class="plot-meta">
@@ -90,13 +89,6 @@ const plotTypeLabels: Record<PlotType, string> = {
 
 function plotTypeLabel(type: PlotType | null): string {
   return type ? plotTypeLabels[type] : "未分类";
-}
-
-function plotIcon(type: PlotType | null): string {
-  if (type === "POND") return "order";
-  if (type === "BARN") return "home";
-  if (type === "ORCHARD" || type === "FOREST") return "map";
-  return "grid";
 }
 
 function areaLabel(plot: Plot): string {
@@ -244,25 +236,10 @@ onShow(() => loadPlots());
   background: $pf-color-primary-soft;
 }
 
-.plot-type {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18rpx;
-  background: $pf-color-primary-soft;
-}
-
-.plot-row--selected .plot-type {
-  background: rgba(255, 255, 255, 0.72);
-}
-
 .plot-copy {
   min-width: 0;
   flex: 1;
-  margin: 0 16rpx;
+  margin-right: 16rpx;
 }
 
 .plot-name {

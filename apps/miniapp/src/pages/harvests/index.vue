@@ -26,7 +26,7 @@
           :class="{ 'harvest-card--locked': isLocked(harvest) }"
           @click="openEdit(harvest)"
         >
-          <view class="harvest-icon"><uv-icon name="order" size="21" color="#286B46" /></view>
+          <PfBusinessIcon name="shopping-basket" />
           <view class="harvest-copy">
             <view class="harvest-title-line">
               <text class="harvest-name">{{ harvest.productName || productionFor(harvest)?.speciesName || "收获" }}</text>
@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
 import {
@@ -246,7 +247,6 @@ onShow(() => {
 .harvest-list { display: flex; flex-direction: column; gap: 14rpx; }
 .harvest-card { display: flex; min-height: 126rpx; align-items: center; padding: 16rpx 20rpx; border-left: 5rpx solid $pf-color-harvest; }
 .harvest-card--locked { border-left-color: $pf-color-border; background: $pf-color-surface-muted; }
-.harvest-icon { display: flex; width: 60rpx; height: 60rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 18rpx; background: $pf-color-harvest-soft; }
 .harvest-copy { min-width: 0; flex: 1; margin: 0 16rpx; }
 .harvest-title-line { display: flex; min-width: 0; align-items: center; }
 .harvest-name { overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }

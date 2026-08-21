@@ -42,9 +42,7 @@
       </view>
 
       <view v-else class="empty-state pf-card">
-        <view class="empty-state__icon">
-          <uv-icon name="grid" size="28" color="#2F7D4A" />
-        </view>
+        <PfBusinessIcon name="land-plot" size="empty" />
         <text class="empty-state__title">还没有可用农场</text>
       </view>
 
@@ -63,6 +61,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getMyFarms, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
@@ -186,20 +185,12 @@ onShow(loadFarms);
 }
 
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-top: 28rpx;
   padding: 32rpx 28rpx 28rpx;
   text-align: center;
-}
-
-.empty-state__icon {
-  display: flex;
-  width: 68rpx;
-  height: 68rpx;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  border-radius: 18rpx;
-  background: $pf-color-primary-soft;
 }
 
 .empty-state__title {

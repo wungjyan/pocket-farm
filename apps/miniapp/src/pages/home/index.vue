@@ -11,27 +11,19 @@
       <template v-if="hasFarm">
         <view class="action-grid">
           <view class="action-card pf-tappable" @tap="openCreateProduction">
-            <view class="action-icon">
-              <image class="action-icon__image action-icon__image--sprout" src="/static/icons/home/sprout.png" mode="aspectFit" />
-            </view>
+            <PfBusinessIcon name="sprout" />
             <text class="action-title">开始种养</text>
           </view>
           <view class="action-card pf-tappable" @tap="openCreateOperation">
-            <view class="action-icon">
-              <image class="action-icon__image action-icon__image--operation" src="/static/icons/home/operation.png" mode="aspectFit" />
-            </view>
+            <PfBusinessIcon name="shovel" />
             <text class="action-title">记农事</text>
           </view>
           <view class="action-card pf-tappable" @tap="openCreateHarvest">
-            <view class="action-icon">
-              <image class="action-icon__image action-icon__image--harvest" src="/static/icons/home/harvest.png" mode="aspectFit" />
-            </view>
+            <PfBusinessIcon name="shopping-basket" />
             <text class="action-title">记收获</text>
           </view>
           <view class="action-card pf-tappable" @tap="openPlotList">
-            <view class="action-icon">
-              <image class="action-icon__image action-icon__image--plot" src="/static/icons/home/plot.png" mode="aspectFit" />
-            </view>
+            <PfBusinessIcon name="land-plot" />
             <text class="action-title">地块管理</text>
           </view>
         </view>
@@ -55,16 +47,7 @@
             class="activity-row pf-tappable"
             @tap="openActivity(item)"
           >
-            <view class="activity-icon">
-              <image
-                :class="[
-                  'activity-icon__image',
-                  item.type === 'harvest' ? 'activity-icon__image--harvest' : 'activity-icon__image--operation',
-                ]"
-                :src="item.type === 'harvest' ? '/static/icons/home/harvest.png' : '/static/icons/home/operation.png'"
-                mode="aspectFit"
-              />
-            </view>
+            <PfBusinessIcon :name="item.type === 'harvest' ? 'shopping-basket' : 'shovel'" />
             <view class="activity-copy">
               <text class="activity-title">{{ activityTitle(item) }}</text>
               <text class="activity-meta">{{ formatActivityTime(item.timestamp) }} · {{ memberName(item.operatorId) }}</text>
@@ -73,13 +56,13 @@
           </view>
         </view>
         <view v-else class="empty-activity">
-          <view class="empty-activity__icon"><uv-icon name="clock" size="24" color="#286B46" /></view>
+          <PfBusinessIcon name="clock-3" />
           <text class="empty-activity__title">还没有生产动态</text>
         </view>
       </template>
 
       <view v-else class="empty-state pf-card">
-        <view class="empty-state__icon"><uv-icon name="map" size="27" color="#286B46" /></view>
+        <PfBusinessIcon name="map" size="empty" />
         <text class="empty-state__title">先创建一个农场</text>
         <uv-button type="primary" shape="square" custom-style="width: 100%; height: 88rpx; margin-top: 32rpx; border-radius: 16rpx;" @click="openCreateFarm">创建农场</uv-button>
       </view>
@@ -92,6 +75,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -272,18 +256,10 @@ onShow(async () => {
 .welcome-title { margin-top: 10rpx; color: $pf-color-text; font-size: 43rpx; font-weight: 720; letter-spacing: -1rpx; }
 .action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16rpx; }
 .action-card { display: flex; min-height: 112rpx; box-sizing: border-box; align-items: center; padding: 20rpx 22rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
-.action-icon { display: flex; width: 56rpx; height: 56rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }
-.action-icon__image--sprout { width: 36rpx; height: 36rpx; }
-.action-icon__image--operation { width: 36rpx; height: 36rpx; }
-.action-icon__image--harvest { width: 46rpx; height: 46rpx; }
-.action-icon__image--plot { width: 38rpx; height: 38rpx; }
 .action-title { min-width: 0; margin-left: 16rpx; overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .activity-list { overflow: hidden; padding: 0; border: none; border-radius: 20rpx; box-shadow: $pf-shadow-card; }
 .activity-row { display: flex; min-height: 116rpx; align-items: center; padding: 0 22rpx; }
 .activity-row + .activity-row { border-top: 1rpx solid $pf-color-divider; }
-.activity-icon { display: flex; width: 60rpx; height: 60rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 18rpx; background: $pf-color-primary-soft; }
-.activity-icon__image--operation { width: 36rpx; height: 36rpx; }
-.activity-icon__image--harvest { width: 46rpx; height: 46rpx; }
 .activity-copy { min-width: 0; flex: 1; margin: 0 18rpx; }
 .activity-title { overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .activity-meta { margin-top: 7rpx; overflow: hidden; color: $pf-color-text-secondary; font-size: 22rpx; text-overflow: ellipsis; white-space: nowrap; }
@@ -291,9 +267,7 @@ onShow(async () => {
 .state-card text { margin-top: 12rpx; }
 .retry-action { color: $pf-color-primary; font-weight: 600; }
 .empty-activity { display: flex; min-height: 112rpx; align-items: center; padding: 0 24rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
-.empty-activity__icon { display: flex; width: 56rpx; height: 56rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }
 .empty-activity__title { margin-left: 16rpx; color: $pf-color-text; font-size: 25rpx; font-weight: 600; }
-.empty-state { margin-top: 32rpx; padding: 40rpx 28rpx 30rpx; border: none; text-align: center; }
-.empty-state__icon { display: flex; width: 72rpx; height: 72rpx; align-items: center; justify-content: center; margin: 0 auto; border-radius: 22rpx; background: $pf-color-primary-soft; }
+.empty-state { display: flex; flex-direction: column; align-items: center; margin-top: 32rpx; padding: 40rpx 28rpx 30rpx; border: none; text-align: center; }
 .empty-state__title { margin-top: 24rpx; color: $pf-color-text; font-size: 31rpx; font-weight: 650; }
 </style>

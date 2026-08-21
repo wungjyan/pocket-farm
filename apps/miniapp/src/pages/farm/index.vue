@@ -50,7 +50,7 @@
             </view>
           </view>
           <view v-else class="empty-production pf-card">
-            <view class="empty-production__icon"><uv-icon name="list" size="24" color="#286B46" /></view>
+            <PfBusinessIcon name="list" />
             <view class="empty-production__copy">
               <text class="empty-production__title">没有进行中的种养</text>
             </view>
@@ -58,7 +58,7 @@
           </view>
 
           <view class="records-entry pf-tappable" @tap="showRecordsPending">
-            <view class="records-entry__icon"><uv-icon name="clock" size="24" color="#286B46" /></view>
+            <PfBusinessIcon name="clock-3" />
             <view class="records-entry__copy">
               <text class="records-entry__title">生产记录</text>
               <text class="records-entry__description">查看种养/农事/收获</text>
@@ -69,7 +69,7 @@
       </template>
 
       <view v-else class="empty-state pf-card">
-        <view class="empty-state__icon"><uv-icon name="map" size="27" color="#286B46" /></view>
+        <PfBusinessIcon name="map" size="empty" />
         <text class="empty-state__title">先创建一个农场</text>
         <text class="empty-state__description">农场建立后，这里会汇总面积、地块和当前种养。</text>
         <uv-button type="primary" shape="square" custom-style="width: 100%; height: 88rpx; margin-top: 32rpx; border-radius: 16rpx;" @click="openCreateFarm">创建农场</uv-button>
@@ -83,6 +83,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -219,17 +220,14 @@ onShow(async () => {
 .production-name { min-width: 0; overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .production-meta { margin-top: 7rpx; overflow: hidden; color: $pf-color-text-muted; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
 .empty-production { display: flex; min-height: 112rpx; align-items: center; padding: 0 24rpx; border: none; }
-.empty-production__icon { display: flex; width: 56rpx; height: 56rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }
 .empty-production__copy { min-width: 0; flex: 1; margin-left: 16rpx; }
 .empty-production__title { color: $pf-color-text; font-size: 25rpx; font-weight: 600; }
 .empty-production__action { color: $pf-color-primary; font-size: 23rpx; font-weight: 600; }
 .records-entry { display: flex; min-height: 104rpx; align-items: center; margin-top: 32rpx; padding: 0 22rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
-.records-entry__icon { display: flex; width: 56rpx; height: 56rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 16rpx; background: $pf-color-primary-soft; }
 .records-entry__copy { min-width: 0; flex: 1; margin: 0 16rpx; }
 .records-entry__title { color: $pf-color-text; font-size: 27rpx; font-weight: 600; }
 .records-entry__description { margin-top: 6rpx; color: $pf-color-text-muted; font-size: 21rpx; }
-.empty-state { margin-top: 32rpx; padding: 40rpx 28rpx 30rpx; text-align: center; }
-.empty-state__icon { display: flex; width: 72rpx; height: 72rpx; align-items: center; justify-content: center; margin: 0 auto; border-radius: 22rpx; background: $pf-color-primary-soft; }
+.empty-state { display: flex; flex-direction: column; align-items: center; margin-top: 32rpx; padding: 40rpx 28rpx 30rpx; text-align: center; }
 .empty-state__title { margin-top: 24rpx; color: $pf-color-text; font-size: 31rpx; font-weight: 650; }
 .empty-state__description { margin-top: 10rpx; color: $pf-color-text-secondary; font-size: 24rpx; line-height: 1.55; }
 </style>

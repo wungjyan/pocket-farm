@@ -21,9 +21,6 @@
     <view v-else-if="plot" class="pf-page-content">
       <view class="plot-header">
         <view class="plot-header__top">
-          <view class="plot-header__icon">
-            <uv-icon :name="plotIcon(plot.type)" size="20" color="#286B46" />
-          </view>
           <view class="plot-header__copy">
             <text class="plot-header__name">{{ plot.name }}</text>
             <text class="plot-header__meta"
@@ -69,11 +66,7 @@
           class="quick-action pf-tappable"
           @tap="openCreateProduction"
         >
-          <image
-            class="quick-action__image"
-            src="/static/icons/home/sprout.png"
-            mode="aspectFit"
-          />
+          <PfBusinessIcon name="sprout" size="compact" variant="plain" />
           <text class="quick-action__title">开始种养</text>
         </view>
         <view
@@ -81,11 +74,7 @@
           class="quick-action pf-tappable"
           @tap="openCreateOperation"
         >
-          <image
-            class="quick-action__image"
-            src="/static/icons/home/operation.png"
-            mode="aspectFit"
-          />
+          <PfBusinessIcon name="shovel" size="compact" variant="plain" />
           <text class="quick-action__title">记农事</text>
         </view>
         <view
@@ -94,10 +83,11 @@
           :class="{ 'quick-action--disabled': !activeProductions.length }"
           @tap="openCreateHarvest"
         >
-          <image
-            class="quick-action__image quick-action__image--harvest"
-            src="/static/icons/home/harvest.png"
-            mode="aspectFit"
+          <PfBusinessIcon
+            name="shopping-basket"
+            size="compact"
+            variant="plain"
+            :muted="!activeProductions.length"
           />
           <text class="quick-action__title">记收获</text>
         </view>
@@ -136,13 +126,7 @@
         class="production-empty pf-tappable"
         @tap="openCreateProduction"
       >
-        <view class="production-empty__icon">
-          <image
-            class="production-empty__image"
-            src="/static/icons/home/sprout.png"
-            mode="aspectFit"
-          />
-        </view>
+        <PfBusinessIcon name="sprout" />
         <text class="production-empty__title">这个地块目前空闲</text>
         <text v-if="canManageProductions" class="production-empty__action"
           >去开始</text
@@ -181,25 +165,13 @@
       </view>
       <view class="record-list">
         <view class="record-row pf-tappable" @tap="openOperations">
-          <view class="record-row__icon">
-            <image
-              class="record-row__image"
-              src="/static/icons/home/operation.png"
-              mode="aspectFit"
-            />
-          </view>
+          <PfBusinessIcon name="shovel" />
           <text class="record-row__title">农事记录</text>
           <text class="record-row__count">共 {{ operationTotal }} 条</text>
           <PfRowChevron />
         </view>
         <view class="record-row pf-tappable" @tap="openHarvests">
-          <view class="record-row__icon">
-            <image
-              class="record-row__image record-row__image--harvest"
-              src="/static/icons/home/harvest.png"
-              mode="aspectFit"
-            />
-          </view>
+          <PfBusinessIcon name="shopping-basket" />
           <text class="record-row__title">收获记录</text>
           <text class="record-row__count">共 {{ harvestTotal }} 条</text>
           <PfRowChevron />
@@ -212,6 +184,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarm, type Farm } from "../../services/farm";
@@ -276,13 +249,6 @@ const individualUnitLabels: Record<IndividualUnit, string> = {
 
 function plotTypeLabel(type: PlotType | null): string {
   return type ? plotTypeLabels[type] : "未分类";
-}
-
-function plotIcon(type: PlotType | null): string {
-  if (type === "POND") return "order";
-  if (type === "BARN") return "home";
-  if (type === "ORCHARD" || type === "FOREST") return "map";
-  return "grid";
 }
 
 function formatDate(value: string): string {
@@ -432,21 +398,9 @@ onShow(() => {
   align-items: center;
 }
 
-.plot-header__icon {
-  display: flex;
-  width: 72rpx;
-  height: 72rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 22rpx;
-  background: $pf-color-primary-soft;
-}
-
 .plot-header__copy {
   min-width: 0;
   flex: 1;
-  margin-left: 20rpx;
 }
 
 .plot-header__name,
@@ -585,24 +539,10 @@ onShow(() => {
   border-left: 1rpx solid $pf-color-divider;
 }
 
-.quick-action__image {
-  width: 38rpx;
-  height: 38rpx;
-}
-
-.quick-action__image--harvest {
-  width: 46rpx;
-  height: 46rpx;
-}
-
 .quick-action__title {
   color: $pf-color-text;
   font-size: 24rpx;
   font-weight: 600;
-}
-
-.quick-action--disabled .quick-action__image {
-  opacity: 0.35;
 }
 
 .quick-action--disabled .quick-action__title {
@@ -688,22 +628,6 @@ onShow(() => {
   box-shadow: $pf-shadow-card;
 }
 
-.production-empty__icon {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  background: $pf-color-primary-soft;
-}
-
-.production-empty__image {
-  width: 36rpx;
-  height: 36rpx;
-}
-
 .production-empty__title {
   min-width: 0;
   flex: 1;
@@ -737,27 +661,6 @@ onShow(() => {
 
 .record-row + .record-row {
   border-top: 1rpx solid $pf-color-divider;
-}
-
-.record-row__icon {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  background: $pf-color-primary-soft;
-}
-
-.record-row__image {
-  width: 36rpx;
-  height: 36rpx;
-}
-
-.record-row__image--harvest {
-  width: 44rpx;
-  height: 44rpx;
 }
 
 .record-row__title {

@@ -40,7 +40,7 @@
         </view>
       </view>
       <view v-else class="empty-state pf-card">
-        <view class="empty-state__icon"><uv-icon name="grid" size="25" color="#286B46" /></view>
+        <PfBusinessIcon name="land-plot" size="empty" />
         <text class="empty-state__title">没有符合条件的地块</text>
         <text v-if="filterValue !== 'ALL'" class="empty-state__action pf-tappable" @tap="clearFilter">查看全部地块</text>
       </view>
@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
@@ -321,19 +322,11 @@ onShow(() => loadPlots());
 }
 
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 42rpx 28rpx 36rpx;
   text-align: center;
-}
-
-.empty-state__icon {
-  display: flex;
-  width: 72rpx;
-  height: 72rpx;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  border-radius: 22rpx;
-  background: $pf-color-primary-soft;
 }
 
 .empty-state__title {

@@ -19,17 +19,13 @@
       </view>
       <view class="menu-list">
         <view class="menu-row pf-card pf-tappable" @tap="openFarms">
-          <view class="menu-row__icon"
-            ><uv-icon name="grid" size="20" color="#286B46"
-          /></view>
+          <PfBusinessIcon name="land-plot" />
           <text class="menu-row__title">我的农场</text>
           <text class="menu-row__value">{{ currentFarmName }}</text>
           <PfRowChevron />
         </view>
         <view class="menu-row pf-card pf-tappable" @tap="openFarmSettings">
-          <view class="menu-row__icon"
-            ><uv-icon name="setting" size="20" color="#286B46"
-          /></view>
+          <PfBusinessIcon name="settings" />
           <text class="menu-row__title">当前农场管理</text>
           <text class="menu-row__value">{{ roleLabel }}</text>
           <PfRowChevron />
@@ -42,6 +38,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -163,17 +160,6 @@ onShow(async () => {
   box-sizing: border-box;
   align-items: center;
   padding: 0 24rpx;
-}
-
-.menu-row__icon {
-  display: flex;
-  width: 56rpx;
-  height: 56rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  background: $pf-color-primary-soft;
 }
 
 .menu-row__title {
