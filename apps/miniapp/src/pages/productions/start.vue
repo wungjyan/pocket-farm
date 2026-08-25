@@ -102,7 +102,7 @@ function goNext(): void {
   }
   const plotParameter = plotId.value ? `&plotId=${plotId.value}` : "";
   uni.navigateTo({
-    url: `/pages/productions/form?farmId=${farmId.value}${plotParameter}&lockSelection=1`,
+    url: `/pages/productions/form?farmId=${farmId.value}${plotParameter}`,
     success: (result) => {
       const eventChannel = result.eventChannel as unknown as ProductionSetupEventChannel;
       eventChannel.emit("setup", {

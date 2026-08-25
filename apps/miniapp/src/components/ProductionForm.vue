@@ -1,171 +1,209 @@
 <template>
-  <view class="form-card pf-card">
+  <view class="production-form pf-page-content">
     <template v-if="species">
-      <view v-if="showPlotField" class="field-group">
-        <text class="field-label">地块 <text class="field-required">*</text></text>
-        <view
-          class="select-shell plot-select"
-          :class="{ 'plot-select--disabled': !plotSelectable }"
-          @tap="handlePlotSelect"
-        >
-          <view v-if="initialPlot" class="plot-select__copy">
-            <text class="plot-select__name">{{ initialPlot.name }}</text>
-            <text class="plot-select__meta">{{ plotMeta(initialPlot) }}</text>
+      <view class="required-fields">
+        <view class="form-item">
+          <view class="field-group">
+            <text class="field-label">种类</text>
+            <view class="species-summary">
+              <view>
+                <text class="species-summary__name">{{ species.name }}</text>
+                <text class="species-summary__industry">{{ industryLabel(species.industry) }}</text>
+              </view>
+            </view>
           </view>
-          <text v-else class="select-placeholder">请选择地块</text>
-          <uv-icon v-if="plotSelectable" name="arrow-right" size="17" color="#7F8B82" />
         </view>
-      </view>
 
-      <view class="field-group">
-        <text class="field-label">种类</text>
-        <view class="species-summary">
-          <view>
-            <text class="species-summary__name">{{ species.name }}</text>
-            <text class="species-summary__industry">{{ industryLabel(species.industry) }}</text>
+        <view v-if="showPlotField" class="form-item">
+          <view class="field-group">
+            <text class="field-label">地块 <text class="field-required">*</text></text>
+            <view
+              class="select-shell plot-select"
+              :class="{ 'plot-select--disabled': !plotSelectable }"
+              @tap="handlePlotSelect"
+            >
+              <view v-if="initialPlot" class="plot-select__copy">
+                <text class="plot-select__name">{{ initialPlot.name }}</text>
+                <text class="plot-select__meta">{{ plotMeta(initialPlot) }}</text>
+              </view>
+              <text v-else class="select-placeholder">请选择地块</text>
+              <uv-icon v-if="plotSelectable" name="arrow-right" size="17" color="#7F8B82" />
+            </view>
           </view>
-          <uv-icon name="checkmark-circle" size="19" color="#2F7D4A" />
         </view>
-      </view>
 
-      <view class="field-group">
-        <text class="field-label">品种 <text class="field-optional">选填</text></text>
-        <view v-if="lockSpeciesInfo" class="species-summary species-summary--locked">
-          <view>
-            <text class="species-summary__name" :class="{ 'species-summary__name--empty': !form.variety }">
-              {{ form.variety || "未填写品种" }}
-            </text>
+        <template v-if="isPlantingIndustry">
+          <view class="form-item">
+            <view class="field-group">
+              <text class="field-label">种植标准 <text class="field-required">*</text></text>
+              <picker
+                mode="selector"
+                :range="plantingStandardLabels"
+                :value="plantingStandardIndex"
+                @change="handlePlantingStandardChange"
+              >
+                <view class="select-shell">
+                  <text>{{ plantingStandardLabels[plantingStandardIndex] }}</text>
+                  <uv-icon name="arrow-down" size="16" color="#929A93" />
+                </view>
+              </picker>
+            </view>
           </view>
-          <uv-icon name="checkmark-circle" size="19" color="#2F7D4A" />
+
+          <view class="form-item">
+            <view class="field-group">
+              <text class="field-label">种植方式 <text class="field-required">*</text></text>
+              <picker
+                mode="selector"
+                :range="plantingMethodLabels"
+                :value="plantingMethodIndex"
+                @change="handlePlantingMethodChange"
+              >
+                <view class="select-shell">
+                  <text>{{ plantingMethodLabels[plantingMethodIndex] }}</text>
+                  <uv-icon name="arrow-down" size="16" color="#929A93" />
+                </view>
+              </picker>
+            </view>
+          </view>
+        </template>
+
+        <view class="form-item">
+          <view class="field-group">
+            <text class="field-label">{{ startedOnLabel }} <text class="field-required">*</text></text>
+            <picker mode="date" :value="form.startedOn" :end="today" @change="handleStartedOnChange">
+              <view class="select-shell">
+                <text>{{ form.startedOn }}</text>
+                <uv-icon name="calendar" size="17" color="#929A93" />
+              </view>
+            </picker>
+          </view>
         </view>
-        <view v-else class="input-shell">
-          <uv-input
-            v-model="form.variety"
-            maxlength="100"
-            clearable
-            border="none"
-            placeholder="例如：水果黄瓜"
-            placeholder-style="color: #7F8B82;"
-            color="#17231B"
-            @input="notifyChange"
+
+        <view v-if="isLivestock" class="form-item">
+          <FixedUnitNumberField
+            label="入栏日龄"
+            unit="日"
+            placeholder="填写入栏日龄"
+            :required="true"
+            :value="form.entryAgeDays"
+            @change="handleEntryAgeChange"
           />
         </view>
-      </view>
 
-      <template v-if="isPlantingIndustry">
-        <view class="field-group">
-          <text class="field-label">种植标准 <text class="field-required">*</text></text>
-          <picker
-            mode="selector"
-            :range="plantingStandardLabels"
-            :value="plantingStandardIndex"
-            @change="handlePlantingStandardChange"
-          >
-            <view class="select-shell">
-              <text>{{ plantingStandardLabels[plantingStandardIndex] }}</text>
-              <uv-icon name="arrow-down" size="16" color="#929A93" />
-            </view>
-          </picker>
-        </view>
-
-        <view class="field-group">
-          <text class="field-label">种植方式 <text class="field-required">*</text></text>
-          <picker
-            mode="selector"
-            :range="plantingMethodLabels"
-            :value="plantingMethodIndex"
-            @change="handlePlantingMethodChange"
-          >
-            <view class="select-shell">
-              <text>{{ plantingMethodLabels[plantingMethodIndex] }}</text>
-              <uv-icon name="arrow-down" size="16" color="#929A93" />
-            </view>
-          </picker>
-        </view>
-      </template>
-
-      <view class="field-group">
-        <text class="field-label">{{ startedOnLabel }} <text class="field-required">*</text></text>
-        <picker mode="date" :value="form.startedOn" :end="today" @change="handleStartedOnChange">
-          <view class="select-shell">
-            <text>{{ form.startedOn }}</text>
-            <uv-icon name="calendar" size="17" color="#929A93" />
-          </view>
-        </picker>
-      </view>
-
-      <FixedUnitNumberField
-        v-if="isLivestock"
-        label="入栏日龄"
-        unit="日"
-        placeholder="填写入栏日龄"
-        :required="true"
-        :value="form.entryAgeDays"
-        @change="handleEntryAgeChange"
-      />
-
-      <FixedUnitNumberField
-        v-if="showInitialQuantity"
-        :label="initialQuantityLabel"
-        :unit="individualUnitLabel(species.individualUnit)"
-        :placeholder="`填写${initialQuantityLabel}`"
-        :required="initialQuantityRequired"
-        :value="form.initialQuantity"
-        @change="handleInitialQuantityChange"
-      />
-
-      <view v-if="showWorkMethod" class="field-group">
-        <text class="field-label">作业方式 <text class="field-required">*</text></text>
-        <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
-          <view class="select-shell">
-            <text>{{ workMethodLabels[workMethodIndex] }}</text>
-            <uv-icon name="arrow-down" size="16" color="#929A93" />
-          </view>
-        </picker>
-      </view>
-
-      <template v-if="isPlantingIndustry">
-        <view class="field-group">
-          <text class="field-label">预计采收时间 <text class="field-optional">选填</text></text>
-          <picker mode="date" :value="form.expectedHarvestOn" :start="form.startedOn" @change="handleExpectedHarvestChange">
-            <view class="select-shell">
-              <text :class="{ 'select-placeholder': !form.expectedHarvestOn }">
-                {{ form.expectedHarvestOn || "请选择预计采收时间" }}
-              </text>
-              <uv-icon name="calendar" size="17" color="#929A93" />
-            </view>
-          </picker>
-        </view>
-
-        <FixedUnitNumberField
-          v-if="isAgriculture"
-          label="预计亩产"
-          unit="公斤/亩"
-          placeholder="填写预计亩产"
-          :value="form.expectedYieldPerMu"
-          @change="handleExpectedYieldChange"
-        />
-
-        <FixedUnitNumberField
-          label="株间距"
-          unit="厘米"
-          placeholder="填写株间距"
-          :value="form.plantSpacingCm"
-          @change="handlePlantSpacingChange"
-        />
-      </template>
-
-      <view class="field-group">
-        <text class="field-label">备注 <text class="field-optional">选填</text></text>
-        <view class="textarea-shell">
-          <textarea
-            v-model="form.remark"
-            maxlength="1000"
-            auto-height
-            placeholder="补充说明"
-            placeholder-class="textarea-placeholder"
-            @input="notifyChange"
+        <view v-if="showInitialQuantity && initialQuantityRequired" class="form-item">
+          <FixedUnitNumberField
+            :label="initialQuantityLabel"
+            :unit="individualUnitLabel(species.individualUnit)"
+            :placeholder="`填写${initialQuantityLabel}`"
+            :required="true"
+            :value="form.initialQuantity"
+            @change="handleInitialQuantityChange"
           />
+        </view>
+
+        <view v-if="showWorkMethod" class="form-item">
+          <view class="field-group">
+            <text class="field-label">作业方式 <text class="field-required">*</text></text>
+            <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
+              <view class="select-shell">
+                <text>{{ workMethodLabels[workMethodIndex] }}</text>
+                <uv-icon name="arrow-down" size="16" color="#929A93" />
+              </view>
+            </picker>
+          </view>
+        </view>
+      </view>
+
+      <view class="optional-section">
+        <view class="optional-section__trigger pf-tappable" @tap="toggleOptionalSection">
+          <view class="optional-section__heading">
+            <text class="optional-section__title">选填信息</text>
+            <text v-if="filledOptionalCount" class="optional-section__count">{{ filledOptionalCount }}</text>
+          </view>
+          <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#7F8B82" />
+        </view>
+
+        <view v-if="optionalExpanded" class="optional-fields">
+          <view class="form-item">
+            <view class="field-group">
+              <text class="field-label">品种</text>
+              <view class="input-shell">
+                <uv-input
+                  v-model="form.variety"
+                  maxlength="100"
+                  clearable
+                  border="none"
+                  placeholder="填写品种"
+                  placeholder-style="color: #7F8B82;"
+                  color="#17231B"
+                  @input="notifyChange"
+                />
+              </view>
+            </view>
+          </view>
+
+          <view v-if="showInitialQuantity && !initialQuantityRequired" class="form-item">
+            <FixedUnitNumberField
+              :label="initialQuantityLabel"
+              :unit="individualUnitLabel(species.individualUnit)"
+              :placeholder="`填写${initialQuantityLabel}`"
+              :value="form.initialQuantity"
+              @change="handleInitialQuantityChange"
+            />
+          </view>
+
+          <template v-if="isPlantingIndustry">
+            <view class="form-item">
+              <view class="field-group">
+                <text class="field-label">预计采收时间</text>
+                <picker mode="date" :value="form.expectedHarvestOn" :start="form.startedOn" @change="handleExpectedHarvestChange">
+                  <view class="select-shell">
+                    <text :class="{ 'select-placeholder': !form.expectedHarvestOn }">
+                      {{ form.expectedHarvestOn || "请选择预计采收时间" }}
+                    </text>
+                    <uv-icon name="calendar" size="17" color="#929A93" />
+                  </view>
+                </picker>
+              </view>
+            </view>
+
+            <view v-if="isAgriculture" class="form-item">
+              <FixedUnitNumberField
+                label="预计亩产"
+                unit="公斤/亩"
+                placeholder="填写预计亩产"
+                :value="form.expectedYieldPerMu"
+                @change="handleExpectedYieldChange"
+              />
+            </view>
+
+            <view class="form-item">
+              <FixedUnitNumberField
+                label="株间距"
+                unit="厘米"
+                placeholder="填写株间距"
+                :value="form.plantSpacingCm"
+                @change="handlePlantSpacingChange"
+              />
+            </view>
+          </template>
+
+          <view class="form-item">
+            <view class="field-group">
+              <text class="field-label">备注</text>
+              <view class="textarea-shell">
+                <textarea
+                  v-model="form.remark"
+                  maxlength="1000"
+                  auto-height
+                  placeholder="补充说明"
+                  placeholder-class="textarea-placeholder"
+                  @input="notifyChange"
+                />
+              </view>
+            </view>
+          </view>
         </view>
       </view>
     </template>
@@ -226,7 +264,6 @@ const props = withDefaults(
     initialPlot?: Plot | null;
     showPlotField?: boolean;
     plotSelectable?: boolean;
-    lockSpeciesInfo?: boolean;
     submitLabel?: string;
     loadingText?: string;
     submitting?: boolean;
@@ -238,7 +275,6 @@ const props = withDefaults(
     initialPlot: null,
     showPlotField: false,
     plotSelectable: false,
-    lockSpeciesInfo: false,
     submitLabel: "保存修改",
     loadingText: "保存中",
     submitting: false,
@@ -253,6 +289,7 @@ const emit = defineEmits<{
 
 const species = ref<Species | null>(null);
 const today = formatToday();
+const optionalExpanded = ref(false);
 const form = reactive({
   variety: "",
   startedOn: today,
@@ -291,6 +328,15 @@ const initialQuantityLabel = computed(() => {
 const plantingStandardIndex = computed(() => plantingStandardValues.indexOf(form.plantingStandard));
 const plantingMethodIndex = computed(() => plantingMethodValues.indexOf(form.plantingMethod));
 const workMethodIndex = computed(() => workMethodValues.indexOf(form.workMethod));
+const filledOptionalCount = computed(() => {
+  const optionalValues = [form.variety, form.remark];
+  if (!initialQuantityRequired.value) optionalValues.push(form.initialQuantity);
+  if (isPlantingIndustry.value) {
+    optionalValues.push(form.expectedHarvestOn, form.plantSpacingCm);
+  }
+  if (isAgriculture.value) optionalValues.push(form.expectedYieldPerMu);
+  return optionalValues.filter((value) => value.trim()).length;
+});
 
 watch(
   () => [props.initialProduction, props.initialSpecies, props.initialVariety] as const,
@@ -315,6 +361,7 @@ watch(
     form.plantSpacingCm = formatNumber(production?.plantSpacingCm);
     form.entryAgeDays = production?.entryAgeDays?.toString() || "";
     form.remark = production?.remark || "";
+    optionalExpanded.value = filledOptionalCount.value > 0;
   },
   { immediate: true },
 );
@@ -343,6 +390,14 @@ function plotMeta(plot: Plot): string {
 
 function handlePlotSelect(): void {
   if (props.plotSelectable) emit("select-plot");
+}
+
+function toggleOptionalSection(): void {
+  optionalExpanded.value = !optionalExpanded.value;
+}
+
+function showOptionalSection(): void {
+  optionalExpanded.value = true;
 }
 
 function individualUnitLabel(unit: IndividualUnit): string {
@@ -429,14 +484,17 @@ function handleSubmit(): void {
   const plantSpacingCm = parsePositiveNumber(form.plantSpacingCm);
   const entryAgeDays = parseEntryAge(form.entryAgeDays);
   if (form.initialQuantity.trim() && (initialQuantity === null || !Number.isInteger(initialQuantity))) {
+    if (!initialQuantityRequired.value) showOptionalSection();
     uni.showToast({ title: `${initialQuantityLabel.value}需为正整数`, icon: "none" });
     return;
   }
   if (form.expectedYieldPerMu.trim() && expectedYieldPerMu === null) {
+    showOptionalSection();
     uni.showToast({ title: "预计亩产需大于 0", icon: "none" });
     return;
   }
   if (form.plantSpacingCm.trim() && plantSpacingCm === null) {
+    showOptionalSection();
     uni.showToast({ title: "株间距需大于 0", icon: "none" });
     return;
   }
@@ -472,13 +530,12 @@ function handleSubmit(): void {
 <style lang="scss" scoped>
 @import "../styles/design-tokens.scss";
 
-.form-card {
-  margin: 24rpx $pf-space-page-x 0;
-  padding: 28rpx 24rpx;
+.production-form {
+  padding-bottom: 0;
 }
 
-.field-group + .field-group {
-  margin-top: 32rpx;
+.form-item + .form-item {
+  margin-top: $pf-space-5;
 }
 
 .field-label {
@@ -489,16 +546,9 @@ function handleSubmit(): void {
   font-weight: 600;
 }
 
-.field-optional {
-  margin-left: 8rpx;
-  color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 400;
-}
-
 .field-required {
   margin-left: 6rpx;
-  color: #c96a45;
+  color: $pf-color-danger;
 }
 
 .select-shell,
@@ -526,10 +576,6 @@ function handleSubmit(): void {
 
 .input-shell :deep(.uv-input) {
   width: 100%;
-}
-
-.plot-select {
-  min-height: 100rpx;
 }
 
 .plot-select--disabled {
@@ -581,11 +627,6 @@ function handleSubmit(): void {
   font-weight: 600;
 }
 
-.species-summary__name--empty {
-  color: $pf-color-text-muted;
-  font-weight: 400;
-}
-
 .species-summary__industry {
   margin-top: 4rpx;
   color: $pf-color-text-muted;
@@ -608,5 +649,37 @@ function handleSubmit(): void {
 
 .textarea-placeholder {
   color: $pf-color-text-muted;
+}
+
+.optional-section {
+  margin-top: $pf-space-6;
+}
+
+.optional-section__trigger {
+  display: flex;
+  min-height: 56rpx;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.optional-section__heading {
+  display: flex;
+  align-items: baseline;
+}
+
+.optional-section__title {
+  color: $pf-color-text-secondary;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.optional-section__count {
+  margin-left: 10rpx;
+  color: $pf-color-text-muted;
+  font-size: 23rpx;
+}
+
+.optional-fields {
+  margin-top: $pf-space-4;
 }
 </style>
