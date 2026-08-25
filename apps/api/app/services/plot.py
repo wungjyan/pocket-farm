@@ -82,9 +82,9 @@ async def create_plot(
     farm_id: int,
     user_id: int,
     name: str,
-    plot_type: PlotType | None,
-    area_value: Decimal | None,
-    area_unit: AreaUnit | None,
+    plot_type: PlotType,
+    area_value: Decimal,
+    area_unit: AreaUnit,
     boundary: dict[str, Any] | None,
 ) -> Plot:
     _, member = await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)

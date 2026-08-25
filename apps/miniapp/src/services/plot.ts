@@ -53,13 +53,21 @@ export interface PlotInput {
   boundary?: Record<string, unknown> | null;
 }
 
+export interface CreatePlotInput {
+  name: string;
+  type: PlotType;
+  areaValue: number;
+  areaUnit: AreaUnit;
+  boundary?: Record<string, unknown> | null;
+}
+
 export function getFarmPlots(farmId: number, page = 1, pageSize = 100): Promise<PlotPage> {
   return request<PlotPage>({
     url: `/farms/${farmId}/plots?page=${page}&pageSize=${pageSize}`,
   });
 }
 
-export function createPlot(farmId: number, input: PlotInput): Promise<Plot> {
+export function createPlot(farmId: number, input: CreatePlotInput): Promise<Plot> {
   return request<Plot>({
     url: `/farms/${farmId}/plots`,
     method: "POST",

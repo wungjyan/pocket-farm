@@ -32,8 +32,17 @@ export default defineConfig({
         ],
       },
       {
-        text: "重构计划",
-        link: "/refactor/00-miniapp-refactor-plan",
+        text: "小程序重构",
+        items: [
+          {
+            text: "小程序重构计划",
+            link: "/refactor/00-miniapp-refactor-plan",
+          },
+          {
+            text: "小程序 UI 设计规范",
+            link: "/refactor/01-miniapp-ui-design-guidelines",
+          },
+        ],
       },
     ],
 
@@ -66,6 +75,10 @@ export default defineConfig({
           {
             text: "小程序重构计划",
             link: "/refactor/00-miniapp-refactor-plan",
+          },
+          {
+            text: "小程序 UI 设计规范",
+            link: "/refactor/01-miniapp-ui-design-guidelines",
           },
         ],
       },

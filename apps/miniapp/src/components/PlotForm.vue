@@ -1,7 +1,7 @@
 <template>
-  <view class="form-card pf-card">
+  <view class="plot-form" :class="{ 'plot-form--card pf-card': framed }">
     <view class="field-group">
-      <text class="field-label">地块名称</text>
+      <text class="field-label">地块名称<text v-if="requireAllFields" class="field-required"> *</text></text>
       <view class="input-shell" :class="{ 'input-shell--focused': nameFocused }">
         <uv-input
           v-model="form.name"
@@ -19,7 +19,7 @@
     </view>
 
     <view class="field-group">
-      <text class="field-label">地块类型 <text class="field-optional">选填</text></text>
+      <text class="field-label">地块类型<text v-if="requireAllFields" class="field-required"> *</text></text>
       <picker mode="selector" :range="plotTypeLabels" :value="plotTypeIndex" @change="handleTypeChange">
         <view class="select-shell">
           <text :class="{ 'select-placeholder': !form.type }">{{ form.type ? plotTypeLabels[plotTypeIndex] : "请选择地块类型" }}</text>
@@ -29,7 +29,7 @@
     </view>
 
     <view class="field-group">
-      <text class="field-label">面积 <text class="field-optional">选填</text></text>
+      <text class="field-label">面积<text v-if="requireAllFields" class="field-required"> *</text></text>
       <view class="area-row">
         <view class="input-shell area-input-shell" :class="{ 'input-shell--focused': areaFocused }">
           <uv-input
@@ -94,6 +94,9 @@ const props = withDefaults(
     initialType?: PlotType | null;
     initialAreaValue?: number | string | null;
     initialAreaUnit?: AreaUnit | null;
+    defaultAreaUnit?: AreaUnit | null;
+    requireAllFields?: boolean;
+    framed?: boolean;
     submitLabel?: string;
     loadingText?: string;
     submitting?: boolean;
@@ -103,6 +106,9 @@ const props = withDefaults(
     initialType: null,
     initialAreaValue: null,
     initialAreaUnit: null,
+    defaultAreaUnit: null,
+    requireAllFields: false,
+    framed: true,
     submitLabel: "保存修改",
     loadingText: "保存中",
     submitting: false,
@@ -127,12 +133,12 @@ const plotTypeIndex = ref(0);
 const areaUnitIndex = ref(0);
 
 watch(
-  () => [props.initialName, props.initialType, props.initialAreaValue, props.initialAreaUnit],
+  () => [props.initialName, props.initialType, props.initialAreaValue, props.initialAreaUnit, props.defaultAreaUnit],
   () => {
     form.name = props.initialName;
     form.type = props.initialType;
     form.areaValue = formatNumber(props.initialAreaValue);
-    form.areaUnit = props.initialAreaUnit;
+    form.areaUnit = props.initialAreaUnit ?? props.defaultAreaUnit;
     plotTypeIndex.value = form.type ? plotTypeValues.indexOf(form.type) : 0;
     areaUnitIndex.value = form.areaUnit ? areaUnitValues.indexOf(form.areaUnit) : 0;
   },
@@ -169,7 +175,7 @@ function handleSubmit(): void {
 <style lang="scss" scoped>
 @import "../styles/design-tokens.scss";
 
-.form-card {
+.plot-form--card {
   padding: 28rpx 24rpx;
 }
 
@@ -185,10 +191,8 @@ function handleSubmit(): void {
   font-weight: 600;
 }
 
-.field-optional {
-  color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 400;
+.field-required {
+  color: $pf-color-danger;
 }
 
 .input-shell,

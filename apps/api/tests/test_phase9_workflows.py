@@ -70,7 +70,7 @@ def create_plot(
         token,
         f"/api/v1/farms/{farm_id}/plots",
         method="post",
-        json={"name": name, "type": plot_type},
+        json={"name": name, "type": plot_type, "areaValue": 1, "areaUnit": "MU"},
     )
     assert response.status_code == 201
     return response.json()["data"]

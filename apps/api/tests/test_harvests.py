@@ -68,7 +68,7 @@ def create_plot(token: str, farm_id: int, name: str) -> dict[str, Any]:
         token,
         f"/api/v1/farms/{farm_id}/plots",
         method="post",
-        json={"name": name},
+        json={"name": name, "type": "FIELD", "areaValue": 1, "areaUnit": "MU"},
     )
     assert response.status_code == 201
     return response.json()["data"]

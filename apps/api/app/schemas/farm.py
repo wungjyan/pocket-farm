@@ -74,18 +74,15 @@ class MemberPage(BaseModel):
 
 class CreatePlotRequest(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=100)]
-    plot_type: PlotType | None = Field(
-        default=None,
+    plot_type: PlotType = Field(
         validation_alias=AliasChoices("type", "plotType", "plot_type"),
         serialization_alias="type",
     )
-    area_value: Annotated[Decimal | None, Field(default=None, gt=0)] = Field(
-        default=None,
+    area_value: Annotated[Decimal, Field(gt=0)] = Field(
         validation_alias=AliasChoices("areaValue", "area_value"),
         serialization_alias="areaValue",
     )
-    area_unit: AreaUnit | None = Field(
-        default=None,
+    area_unit: AreaUnit = Field(
         validation_alias=AliasChoices("areaUnit", "area_unit"),
         serialization_alias="areaUnit",
     )
@@ -93,8 +90,6 @@ class CreatePlotRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_area_and_boundary(self) -> "CreatePlotRequest":
-        if (self.area_value is None) != (self.area_unit is None):
-            raise ValueError("areaValue and areaUnit must be provided together.")
         _validate_boundary(self.boundary)
         return self
 

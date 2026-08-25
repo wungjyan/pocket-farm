@@ -151,7 +151,7 @@ def test_member_can_read_but_only_admin_can_manage_plot() -> None:
         admin_token,
         f"/api/v1/farms/{farm['id']}/plots",
         method="post",
-        json={"name": "管理员创建地块"},
+        json={"name": "管理员创建地块", "type": "GREENHOUSE", "areaValue": 1, "areaUnit": "MU"},
     )
     assert create_response.status_code == 201
     plot_id = create_response.json()["data"]["id"]
@@ -175,7 +175,7 @@ def test_plot_access_is_scoped_to_farm_membership() -> None:
         owner_token,
         f"/api/v1/farms/{farm['id']}/plots",
         method="post",
-        json={"name": "私有地块"},
+        json={"name": "私有地块", "type": "FIELD", "areaValue": 1, "areaUnit": "MU"},
     )
     assert create_response.status_code == 201
     plot_id = create_response.json()["data"]["id"]
@@ -189,18 +189,38 @@ def test_plot_access_is_scoped_to_farm_membership() -> None:
 def test_plot_area_and_boundary_validation() -> None:
     owner_token = login(OWNER_PHONE)
     farm = create_farm(owner_token)
+    missing_type = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plots",
+        method="post",
+        json={"name": "缺少类型", "areaValue": 2, "areaUnit": "MU"},
+    )
+    missing_area = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plots",
+        method="post",
+        json={"name": "缺少面积", "type": "FIELD", "areaUnit": "MU"},
+    )
     missing_unit = call(
         owner_token,
         f"/api/v1/farms/{farm['id']}/plots",
         method="post",
-        json={"name": "面积不完整", "areaValue": 2},
+        json={"name": "缺少单位", "type": "FIELD", "areaValue": 2},
     )
     invalid_boundary = call(
         owner_token,
         f"/api/v1/farms/{farm['id']}/plots",
         method="post",
-        json={"name": "坐标系错误", "boundary": {"coordinateSystem": "WGS84"}},
+        json={
+            "name": "坐标系错误",
+            "type": "FIELD",
+            "areaValue": 2,
+            "areaUnit": "MU",
+            "boundary": {"coordinateSystem": "WGS84"},
+        },
     )
+    assert missing_type.status_code == 422
+    assert missing_area.status_code == 422
     assert missing_unit.status_code == 422
     assert invalid_boundary.status_code == 422
 
@@ -213,7 +233,7 @@ def test_plot_detail_aggregates_productions_operations_and_harvests() -> None:
         owner_token,
         f"/api/v1/farms/{farm['id']}/plots",
         method="post",
-        json={"name": "聚合详情地块"},
+        json={"name": "聚合详情地块", "type": "GREENHOUSE", "areaValue": 1, "areaUnit": "MU"},
     )
     assert create_response.status_code == 201
     plot = create_response.json()["data"]

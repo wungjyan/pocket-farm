@@ -1,10 +1,14 @@
 <template>
   <view class="pf-page plot-form-page">
-    <view class="page-intro">
-      <text class="page-description">地块是农场里的生产区域。</text>
-    </view>
-
-    <PlotForm submit-label="创建地块" loading-text="创建中" :submitting="submitting" @submit="handleCreate" />
+    <PlotForm
+      :framed="false"
+      require-all-fields
+      default-area-unit="MU"
+      submit-label="创建地块"
+      loading-text="创建中"
+      :submitting="submitting"
+      @submit="handleCreate"
+    />
 
     <uv-toast ref="toastRef" />
   </view>
@@ -16,7 +20,7 @@ import { onLoad } from "@dcloudio/uni-app";
 import PlotForm from "../../components/PlotForm.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
-import { createPlot } from "../../services/plot";
+import { createPlot, type AreaUnit, type PlotType } from "../../services/plot";
 
 const farmId = ref(0);
 const submitting = ref(false);
@@ -27,13 +31,21 @@ function handleUnauthorized(): void {
   uni.reLaunch({ url: "/pages/auth/login" });
 }
 
-async function handleCreate(input: { name: string; type: "FIELD" | "PADDY" | "GREENHOUSE" | "ORCHARD" | "FOREST" | "POND" | "BARN" | "OTHER" | null; areaValue: number | null; areaUnit: "MU" | "SQUARE_METER" | "HECTARE" | null }): Promise<void> {
+async function handleCreate(input: { name: string; type: PlotType | null; areaValue: number | null; areaUnit: AreaUnit | null }): Promise<void> {
   if (!input.name) {
     toastRef.value?.error("请输入地块名称");
     return;
   }
-  if ((input.areaValue === null) !== (input.areaUnit === null)) {
-    toastRef.value?.error("请同时填写面积和单位");
+  if (!input.type) {
+    toastRef.value?.error("请选择地块类型");
+    return;
+  }
+  if (input.areaValue === null || input.areaValue <= 0) {
+    toastRef.value?.error("请输入大于 0 的面积");
+    return;
+  }
+  if (!input.areaUnit) {
+    toastRef.value?.error("请选择面积单位");
     return;
   }
   if (!farmId.value) {
@@ -70,16 +82,6 @@ onLoad((options) => {
 @import "../../styles/design-tokens.scss";
 
 .plot-form-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
-}
-
-.page-intro {
-  padding: 12rpx 4rpx 28rpx;
-}
-
-.page-description {
-  display: block;
-  color: $pf-color-text-secondary;
-  font-size: 25rpx;
+  padding: 40rpx $pf-space-page-x $pf-space-page-bottom;
 }
 </style>
