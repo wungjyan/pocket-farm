@@ -2,29 +2,19 @@
   <view class="pf-page plot-list-page">
     <view class="pf-page-content">
       <view class="list-toolbar">
-        <view class="list-toolbar__copy">
-          <text class="list-toolbar__eyebrow">{{ selectionMode ? "用于本次记录" : "当前农场" }}</text>
-          <text class="list-toolbar__title">{{ selectionMode ? "选择一个地块" : `共 ${loading ? "–" : plots.length} 个地块` }}</text>
-          <text class="list-toolbar__description">
-            {{ selectionMode ? `当前农场共 ${loading ? "–" : plots.length} 个可选地块` : "点击地块查看生产详情" }}
-          </text>
-        </view>
-        <view v-if="canManagePlots" class="create-button pf-tappable" @tap="openCreatePlot">
-          <uv-icon name="plus" size="18" color="#286B46" />
-          <text>创建地块</text>
-        </view>
+        <text class="list-toolbar__count">{{ loading ? "–" : `${plots.length} 个地块` }}</text>
       </view>
 
       <view v-if="loading" class="state-card pf-card">
         <uv-loading-icon mode="circle" color="#286B46" />
         <text>正在加载地块</text>
       </view>
-      <view v-else-if="plots.length" class="plot-list pf-list-card">
+      <view v-else-if="plots.length" class="plot-list">
         <view
           v-for="plot in plots"
           :key="plot.id"
-          class="plot-row pf-tappable"
-          :class="{ 'plot-row--selected': selectionMode && plot.id === selectedPlotId }"
+          class="plot-row pf-card pf-tappable"
+          :class="{ 'plot-row--selected': plot.id === selectedPlotId }"
           @tap="handlePlot(plot)"
         >
           <view class="plot-copy">
@@ -35,17 +25,14 @@
               <text :class="{ 'plot-meta__incomplete': !hasArea(plot) }">{{ areaLabel(plot) }}</text>
             </view>
           </view>
-          <uv-icon
-            :name="selectionMode && plot.id === selectedPlotId ? 'checkmark-circle' : 'arrow-right'"
-            size="17"
-            :color="selectionMode && plot.id === selectedPlotId ? '#286B46' : '#7F8B82'"
-          />
+          <view class="plot-selection" :class="{ 'plot-selection--selected': plot.id === selectedPlotId }">
+            <uv-icon v-if="plot.id === selectedPlotId" name="checkmark" size="15" color="#286B46" />
+          </view>
         </view>
       </view>
       <view v-else class="empty-state pf-card">
-        <view class="empty-state__icon"><uv-icon name="grid" size="25" color="#286B46" /></view>
+        <PfBusinessIcon name="land-plot" size="empty" />
         <text class="empty-state__title">还没有地块</text>
-        <text class="empty-state__description">{{ emptyDescription }}</text>
         <uv-button
           v-if="canManagePlots"
           type="primary"
@@ -63,6 +50,7 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
@@ -72,12 +60,10 @@ import { formatNumber } from "../../utils/number";
 const farmId = ref<number | null>(null);
 const plots = ref<Plot[]>([]);
 const loading = ref(false);
-const selectionMode = ref(false);
 const selectedPlotId = ref<number | null>(null);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const { currentFarm } = useFarmContext();
 let openerEventChannel: { emit: (eventName: string, data: Plot) => void } | null = null;
-const emptyDescription = computed(() => selectionMode.value ? "请先创建地块，再继续当前操作。" : "建立地块后，就可以开始种养和记录生产。");
 const canManagePlots = computed(
   () => currentFarm.value?.id === farmId.value && (currentFarm.value.role === "OWNER" || currentFarm.value.role === "ADMIN"),
 );
@@ -123,22 +109,13 @@ function openCreatePlot(): void {
   if (farmId.value) uni.navigateTo({ url: `/pages/plots/create?farmId=${farmId.value}` });
 }
 
-function openPlot(plotId: number): void {
-  uni.navigateTo({ url: `/pages/plots/detail?plotId=${plotId}` });
-}
-
 function handlePlot(plot: Plot): void {
-  if (!selectionMode.value) {
-    openPlot(plot.id);
-    return;
-  }
   openerEventChannel?.emit("selected", plot);
   uni.navigateBack();
 }
 
 onLoad((query) => {
-  selectionMode.value = query?.mode === "select";
-  uni.setNavigationBarTitle({ title: selectionMode.value ? "选择地块" : "地块列表" });
+  uni.setNavigationBarTitle({ title: "选择地块" });
   const currentSelection = Number(query?.selectedPlotId);
   selectedPlotId.value = Number.isInteger(currentSelection) && currentSelection > 0 ? currentSelection : null;
   const id = Number(query?.farmId);
@@ -157,83 +134,56 @@ onShow(() => loadPlots());
 
 .list-toolbar {
   display: flex;
-  min-height: 142rpx;
+  min-height: 96rpx;
   align-items: center;
-  justify-content: space-between;
-  padding: 12rpx 4rpx 22rpx;
+  justify-content: flex-end;
+  padding: 0 4rpx 10rpx;
 }
 
-.list-toolbar__copy {
-  min-width: 0;
-  flex: 1;
-}
-
-.list-toolbar__eyebrow,
-.list-toolbar__title,
-.list-toolbar__description,
+.list-toolbar__count,
 .plot-name,
-.empty-state__title,
-.empty-state__description {
+.empty-state__title {
   display: block;
 }
 
-.list-toolbar__eyebrow {
-  color: $pf-color-primary;
-  font-size: 21rpx;
-  font-weight: 600;
-}
-
-.list-toolbar__title {
-  margin-top: 5rpx;
-  color: $pf-color-text;
-  font-size: 34rpx;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.list-toolbar__description {
-  margin-top: 7rpx;
+.list-toolbar__count {
   color: $pf-color-text-muted;
-  font-size: 21rpx;
-}
-
-.create-button {
-  display: flex;
-  min-height: 80rpx;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  align-items: center;
-  margin-left: 24rpx;
-  padding: 0 22rpx;
-  border: 1rpx solid rgba(40, 107, 70, 0.12);
-  border-radius: 18rpx;
-  background: $pf-color-primary-soft;
-  color: $pf-color-primary;
-  font-size: 23rpx;
-  font-weight: 600;
-}
-
-.create-button text {
-  margin-left: 7rpx;
+  font-size: 22rpx;
 }
 
 .plot-list {
-  padding: 6rpx 0;
+  display: flex;
+  flex-direction: column;
+  gap: $pf-space-2;
 }
 
 .plot-row {
   display: flex;
-  min-height: 116rpx;
+  min-height: 148rpx;
   align-items: center;
   padding: 0 22rpx;
 }
 
-.plot-row + .plot-row {
-  border-top: 1rpx solid $pf-color-divider;
-}
-
 .plot-row--selected {
   background: $pf-color-primary-soft;
+}
+
+.plot-selection {
+  display: flex;
+  width: 36rpx;
+  height: 36rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid $pf-color-border;
+  border-radius: 50%;
+  background: $pf-color-surface;
+}
+
+.plot-selection--selected {
+  border-color: $pf-color-primary;
+  background: $pf-color-surface;
 }
 
 .plot-copy {
@@ -286,17 +236,6 @@ onShow(() => loadPlots());
   text-align: center;
 }
 
-.empty-state__icon {
-  display: flex;
-  width: 72rpx;
-  height: 72rpx;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  border-radius: 22rpx;
-  background: $pf-color-primary-soft;
-}
-
 .empty-state__title {
   margin-top: 24rpx;
   color: $pf-color-text;
@@ -304,10 +243,4 @@ onShow(() => loadPlots());
   font-weight: 650;
 }
 
-.empty-state__description {
-  margin-top: 10rpx;
-  color: $pf-color-text-secondary;
-  font-size: 23rpx;
-  line-height: 1.55;
-}
 </style>

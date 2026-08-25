@@ -179,7 +179,7 @@ function openPlotSelector(): void {
   if (operationId.value || !farmId.value) return;
   const selectedParameter = plot.value ? `&selectedPlotId=${plot.value.id}` : "";
   uni.navigateTo({
-    url: `/pages/plots/index?farmId=${farmId.value}&mode=select${selectedParameter}`,
+    url: `/pages/plots/index?farmId=${farmId.value}${selectedParameter}`,
     events: {
       selected: (selectedPlot: Plot) => {
         if (selectedPlot.id === plotId.value) return;

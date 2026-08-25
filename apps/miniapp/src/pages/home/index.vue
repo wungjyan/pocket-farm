@@ -205,7 +205,7 @@ function openCreateHarvest(): void {
 }
 
 function openPlotList(): void {
-  if (currentFarm.value) uni.navigateTo({ url: `/pages/plots/index?farmId=${currentFarm.value.id}` });
+  if (currentFarm.value) uni.navigateTo({ url: `/pages/farm-plots/index?farmId=${currentFarm.value.id}&filter=ALL` });
 }
 
 function openPlotOperations(plotId: number): void {

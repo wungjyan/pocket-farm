@@ -68,7 +68,7 @@
     {
       "path": "pages/plots/index",
       "style": {
-        "navigationBarTitleText": "地块列表"
+        "navigationBarTitleText": "选择地块"
       }
     },
     {

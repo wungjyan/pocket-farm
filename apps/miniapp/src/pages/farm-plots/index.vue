@@ -14,7 +14,12 @@
             <uv-icon name="arrow-down" size="15" color="#7F8B82" />
           </view>
         </picker>
-        <text class="filter-count">{{ loading ? "–" : `${filteredPlotItems.length} 个地块` }}</text>
+        <view class="filter-toolbar__right">
+          <text class="filter-count">{{ loading ? "–" : `${filteredPlotItems.length} 个地块` }}</text>
+          <view v-if="canManagePlots" class="create-button pf-tappable" @tap="openCreatePlot">
+            <text>创建地块</text>
+          </view>
+        </view>
       </view>
 
       <view v-if="loading" class="state-card pf-card">
@@ -86,6 +91,9 @@ const plotItems = ref<FarmPlotItem[]>([]);
 const loading = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const { currentFarm } = useFarmContext();
+const canManagePlots = computed(
+  () => currentFarm.value?.id === farmId.value && (currentFarm.value.role === "OWNER" || currentFarm.value.role === "ADMIN"),
+);
 
 const plotTypeLabels: Record<PlotType, string> = {
   FIELD: "大田",
@@ -140,6 +148,10 @@ function clearFilter(): void {
 
 function openPlot(plotId: number): void {
   uni.navigateTo({ url: `/pages/plots/detail?plotId=${plotId}` });
+}
+
+function openCreatePlot(): void {
+  if (farmId.value) uni.navigateTo({ url: `/pages/plots/create?farmId=${farmId.value}` });
 }
 
 function handleUnauthorized(): void {
@@ -236,9 +248,27 @@ onShow(() => loadPlots());
   margin-left: 8rpx;
 }
 
+.filter-toolbar__right {
+  display: flex;
+  align-items: center;
+}
+
 .filter-count {
   color: $pf-color-text-muted;
   font-size: 22rpx;
+}
+
+.create-button {
+  display: flex;
+  min-height: 64rpx;
+  align-items: center;
+  margin-left: 16rpx;
+  padding: 0 18rpx;
+  border-radius: $pf-radius-control;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
 .plot-list {
