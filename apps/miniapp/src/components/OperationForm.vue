@@ -1,68 +1,101 @@
 <template>
-  <view class="form-card pf-card">
-    <view class="field-group">
-      <text class="field-label">农事类型 <text class="field-required">*</text></text>
-      <view class="select-shell" @click="emit('select-operation-type')">
-        <text :class="{ 'select-placeholder': !selectedOperationType }">
-          {{ selectedOperationType?.name || "请选择农事类型" }}
-        </text>
-        <uv-icon name="arrow-right" size="16" color="#929A93" />
+  <view class="operation-form pf-page-content">
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">地块 <text class="field-required">*</text></text>
+        <view
+          class="select-shell plot-select"
+          :class="{ 'select-shell--disabled': !plotSelectable }"
+          @tap="handlePlotSelect"
+        >
+          <view v-if="plot" class="plot-select__copy">
+            <text class="plot-select__name">{{ plot.name }}</text>
+            <text class="plot-select__meta">{{ plotMeta(plot) }}</text>
+          </view>
+          <text v-else class="select-placeholder">请选择地块</text>
+          <uv-icon v-if="plotSelectable" name="arrow-right" size="16" color="#929A93" />
+        </view>
       </view>
     </view>
 
-    <view class="field-group">
-      <text class="field-label">关联种养 <text class="field-optional">选填</text></text>
-      <view class="select-shell" :class="{ 'select-shell--disabled': !hasPlot }" @click="handleSelectProduction">
-        <text>{{ selectedProduction ? productionLabel(selectedProduction) : hasPlot ? "整个地块" : "请先选择地块" }}</text>
-        <uv-icon name="arrow-right" size="16" color="#929A93" />
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">农事类型 <text class="field-required">*</text></text>
+        <view class="select-shell" @tap="emit('select-operation-type')">
+          <text :class="{ 'select-placeholder': !selectedOperationType }">
+            {{ selectedOperationType?.name || "请选择农事类型" }}
+          </text>
+          <uv-icon name="arrow-right" size="16" color="#929A93" />
+        </view>
       </view>
-      <text class="field-help">默认记录整个地块；需要追溯到具体批次时再关联。</text>
     </view>
 
-    <view class="field-group">
-      <text class="field-label">作业方式 <text class="field-required">*</text></text>
-      <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
-        <view class="select-shell">
-          <text>{{ workMethodLabels[workMethodIndex] }}</text>
-          <uv-icon name="arrow-down" size="16" color="#929A93" />
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">关联种养 <text class="field-optional">选填</text></text>
+        <view class="select-shell" :class="{ 'select-shell--disabled': !hasPlot }" @tap="handleSelectProduction">
+          <text :class="{ 'select-placeholder': !selectedProduction && !hasPlot }">
+            {{ selectedProduction ? productionLabel(selectedProduction) : hasPlot ? "暂不关联种养" : "请先选择地块" }}
+          </text>
+          <uv-icon v-if="hasPlot" name="arrow-right" size="16" color="#929A93" />
         </view>
-      </picker>
+      </view>
     </view>
 
-    <view class="field-group">
-      <text class="field-label">作业日期 <text class="field-required">*</text></text>
-      <picker mode="date" :value="form.operatedDate" :start="selectedProduction?.startedOn" :end="today" @change="handleDateChange">
-        <view class="select-shell">
-          <text>{{ form.operatedDate }}</text>
-          <uv-icon name="calendar" size="17" color="#929A93" />
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">作业方式 <text class="field-required">*</text></text>
+        <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
+          <view class="select-shell">
+            <text>{{ workMethodLabels[workMethodIndex] }}</text>
+            <uv-icon name="arrow-down" size="16" color="#929A93" />
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">作业日期 <text class="field-required">*</text></text>
+        <picker mode="date" :value="form.operatedDate" :start="selectedProduction?.startedOn" :end="today" @change="handleDateChange">
+          <view class="select-shell">
+            <text>{{ form.operatedDate }}</text>
+            <uv-icon name="calendar" size="17" color="#929A93" />
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">作业时间 <text class="field-required">*</text></text>
+        <picker mode="time" :value="form.operatedTime" @change="handleTimeChange">
+          <view class="select-shell">
+            <text>{{ form.operatedTime }}</text>
+            <uv-icon name="clock" size="17" color="#929A93" />
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">操作人 <text class="field-required">*</text></text>
+        <picker mode="selector" :range="operatorLabels" :value="operatorIndex" @change="handleOperatorChange">
+          <view class="select-shell">
+            <text>{{ operatorLabels[operatorIndex] }}</text>
+            <uv-icon name="arrow-down" size="16" color="#929A93" />
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="field-group">
+        <text class="field-label">备注 <text class="field-optional">选填</text></text>
+        <view class="textarea-shell">
+          <textarea v-model="form.remark" maxlength="1000" auto-height placeholder="补充说明" placeholder-class="textarea-placeholder" />
         </view>
-      </picker>
-    </view>
-
-    <view class="field-group">
-      <text class="field-label">作业时间 <text class="field-required">*</text></text>
-      <picker mode="time" :value="form.operatedTime" @change="handleTimeChange">
-        <view class="select-shell">
-          <text>{{ form.operatedTime }}</text>
-          <uv-icon name="clock" size="17" color="#929A93" />
-        </view>
-      </picker>
-    </view>
-
-    <view class="field-group">
-      <text class="field-label">操作人 <text class="field-required">*</text></text>
-      <picker mode="selector" :range="operatorLabels" :value="operatorIndex" @change="handleOperatorChange">
-        <view class="select-shell">
-          <text>{{ operatorLabels[operatorIndex] }}</text>
-          <uv-icon name="arrow-down" size="16" color="#929A93" />
-        </view>
-      </picker>
-    </view>
-
-    <view class="field-group">
-      <text class="field-label">备注 <text class="field-optional">选填</text></text>
-      <view class="textarea-shell">
-        <textarea v-model="form.remark" maxlength="1000" auto-height placeholder="补充说明" placeholder-class="textarea-placeholder" />
       </view>
     </view>
 
@@ -89,6 +122,8 @@ import type {
   OperationType,
 } from "../services/operation";
 import type { Production, WorkMethod } from "../services/production";
+import type { Plot, PlotType } from "../services/plot";
+import { formatNumber } from "../utils/number";
 
 const workMethodValues: WorkMethod[] = ["MANUAL", "MECHANICAL"];
 const workMethodLabels = ["人工", "机械"];
@@ -99,7 +134,8 @@ const props = withDefaults(
     members: FarmMember[];
     operationTypes: OperationType[];
     currentUserId: number;
-    hasPlot?: boolean;
+    plot?: Plot | null;
+    plotSelectable?: boolean;
     selectedOperationTypeId?: number;
     selectedProductionId?: number | null;
     initialOperation?: FarmOperation | null;
@@ -111,7 +147,8 @@ const props = withDefaults(
     initialOperation: null,
     selectedOperationTypeId: 0,
     selectedProductionId: null,
-    hasPlot: false,
+    plot: null,
+    plotSelectable: false,
     submitLabel: "保存农事",
     loadingText: "保存中",
     submitting: false,
@@ -120,6 +157,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   submit: [input: OperationInput];
+  "select-plot": [];
   "select-operation-type": [];
   "select-production": [];
 }>();
@@ -137,6 +175,7 @@ const form = reactive({
 const selectedProduction = computed(
   () => props.productions.find((production) => production.id === form.productionId) || null,
 );
+const hasPlot = computed(() => Boolean(props.plot));
 const selectedOperationType = computed(
   () =>
     props.operationTypes.find((operationType) => operationType.id === form.operationTypeId) ||
@@ -223,11 +262,33 @@ function handleWorkMethodChange(event: { detail: { value: number | string } }): 
 }
 
 function handleSelectProduction(): void {
-  if (!props.hasPlot) {
+  if (!hasPlot.value) {
     uni.showToast({ title: "请先选择地块", icon: "none" });
     return;
   }
   emit("select-production");
+}
+
+function handlePlotSelect(): void {
+  if (props.plotSelectable) emit("select-plot");
+}
+
+const plotTypeLabels: Record<PlotType, string> = {
+  FIELD: "大田",
+  PADDY: "水田",
+  GREENHOUSE: "大棚",
+  ORCHARD: "果园",
+  FOREST: "林地",
+  POND: "鱼塘",
+  BARN: "栏舍",
+  OTHER: "其他",
+};
+
+function plotMeta(value: Plot): string {
+  const type = value.type ? plotTypeLabels[value.type] : "未分类";
+  if (value.areaValue === null || value.areaValue === undefined || !value.areaUnit) return type;
+  const units: Record<string, string> = { MU: "亩", SQUARE_METER: "平方米", HECTARE: "公顷" };
+  return `${type} · ${formatNumber(value.areaValue)}${units[value.areaUnit] || ""}`;
 }
 
 function productionLabel(production: Production): string {
@@ -248,7 +309,7 @@ function handleOperatorChange(event: { detail: { value: number | string } }): vo
 }
 
 function handleSubmit(): void {
-  if (!props.hasPlot) {
+  if (!hasPlot.value) {
     uni.showToast({ title: "请选择地块", icon: "none" });
     return;
   }
@@ -283,12 +344,12 @@ function handleSubmit(): void {
 <style lang="scss" scoped>
 @import "../styles/design-tokens.scss";
 
-.form-card {
-  padding: 28rpx 24rpx;
+.operation-form {
+  padding-top: 28rpx;
 }
 
-.field-group + .field-group {
-  margin-top: 32rpx;
+.form-item + .form-item {
+  margin-top: $pf-space-5;
 }
 
 .field-label {
@@ -301,7 +362,7 @@ function handleSubmit(): void {
 
 .field-required {
   margin-left: 6rpx;
-  color: #c96a45;
+  color: $pf-color-danger;
 }
 
 .field-optional {
@@ -309,14 +370,6 @@ function handleSubmit(): void {
   color: $pf-color-text-muted;
   font-size: 23rpx;
   font-weight: 400;
-}
-
-.field-help {
-  display: block;
-  margin-top: 10rpx;
-  color: $pf-color-text-muted;
-  font-size: 21rpx;
-  line-height: 1.45;
 }
 
 .select-shell,
@@ -345,6 +398,24 @@ function handleSubmit(): void {
 .select-shell--disabled {
   background: $pf-color-surface-muted;
   color: $pf-color-text-muted;
+}
+
+.plot-select__copy,
+.plot-select__name,
+.plot-select__meta {
+  display: block;
+}
+
+.plot-select__name {
+  color: $pf-color-text;
+  font-size: 26rpx;
+  font-weight: 650;
+}
+
+.plot-select__meta {
+  margin-top: 5rpx;
+  color: $pf-color-text-muted;
+  font-size: 21rpx;
 }
 
 .textarea-shell {

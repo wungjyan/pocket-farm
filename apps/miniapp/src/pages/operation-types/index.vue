@@ -11,8 +11,7 @@
         <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 22rpx; border-radius: 12rpx;" @click="loadTypes">重试</uv-button>
       </view>
       <view v-else-if="operationTypes.length" class="type-grid">
-        <view v-for="item in operationTypes" :key="item.id" class="type-card pf-card" @click="chooseType(item)">
-          <uv-icon :name="operationIcon(item.code)" size="22" color="#2F7D4A" />
+        <view v-for="item in operationTypes" :key="item.id" class="type-item pf-tappable" @click="chooseType(item)">
           <text>{{ item.name }}</text>
         </view>
       </view>
@@ -37,10 +36,6 @@ const operationTypes = ref<OperationType[]>([]);
 const loading = ref(false);
 const loadError = ref("");
 let openerEventChannel: OpenerEventChannel | null = null;
-
-function operationIcon(code: string): string {
-  return ({ FERTILIZE: "bag", PESTICIDE: "warning", IRRIGATE: "clock", DISINFECT: "shield", CHANGE_WATER: "reload" } as Record<string, string>)[code] || "calendar";
-}
 
 async function loadTypes(): Promise<void> {
   loading.value = true;
@@ -74,9 +69,9 @@ onLoad(() => {
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.type-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
-.type-card { display: flex; width: calc(33.333% - 11rpx); min-height: 142rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; color: $pf-color-text; font-size: 25rpx; font-weight: 600; }
-.type-card text { margin-top: 12rpx; }
+.type-grid { display: flex; flex-wrap: wrap; gap: $pf-space-2; }
+.type-item { display: flex; width: calc(33.333% - 11rpx); min-height: 88rpx; box-sizing: border-box; align-items: center; justify-content: center; border: 1rpx solid $pf-color-border; border-radius: $pf-radius-control; background: $pf-color-surface; color: $pf-color-text; font-size: 25rpx; font-weight: 600; }
+.type-item:active { border-color: $pf-color-primary; background: $pf-color-primary-soft; color: $pf-color-primary; }
 .state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; color: $pf-color-text-secondary; font-size: 24rpx; }
 .state-card text { margin-top: 16rpx; }
 </style>

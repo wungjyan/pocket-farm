@@ -20,28 +20,13 @@
     </view>
 
     <template v-else>
-      <view class="page-intro">
-        <text class="page-title">{{ operationId ? "编辑农事" : "记录农事" }}</text>
-        <text class="page-description">填写本次农事，地块可随时选择</text>
-      </view>
-      <view
-        class="plot-field pf-card"
-        :class="{ 'plot-field--selectable': !operationId, 'plot-field--empty': !plot }"
-        @click="openPlotSelector"
-      >
-        <view>
-          <text class="plot-field__label">地块 <text v-if="!operationId" class="field-required">*</text></text>
-          <text class="plot-field__name">{{ plot?.name || "请选择地块" }}</text>
-        </view>
-        <text v-if="operationId" class="plot-field__locked">编辑时不可变更</text>
-        <uv-icon v-else name="arrow-right" size="17" color="#929A93" />
-      </view>
       <OperationForm
         :productions="activeProductions"
         :members="members"
         :operation-types="operationTypes"
         :current-user-id="currentUserId"
-        :has-plot="Boolean(plot)"
+        :plot="plot"
+        :plot-selectable="!operationId"
         :initial-operation="operation"
         :selected-operation-type-id="selectedOperationTypeId"
         :selected-production-id="selectedProductionId"
@@ -49,6 +34,7 @@
         :submit-label="operationId ? '保存修改' : '保存农事'"
         :loading-text="operationId ? '保存中' : '记录中'"
         @submit="handleSubmit"
+        @select-plot="openPlotSelector"
         @select-operation-type="openOperationTypeSelector"
         @select-production="openProductionSelector"
       />
@@ -251,68 +237,9 @@ onLoad((options) => {
 @import "../../styles/design-tokens.scss";
 
 .operation-form-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
-}
-
-.page-intro {
-  padding: 12rpx 4rpx 28rpx;
-}
-
-.page-title,
-.page-description {
-  display: block;
-}
-
-.plot-field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-  padding: 20rpx 24rpx;
-}
-
-.plot-field--selectable {
-  border-color: $pf-color-primary;
-}
-
-.plot-field--empty .plot-field__name {
-  color: $pf-color-text-muted;
-  font-weight: 400;
-}
-
-.plot-field__label,
-.plot-field__name {
-  display: block;
-}
-
-.plot-field__label,
-.plot-field__locked {
-  color: $pf-color-text-muted;
-  font-size: 21rpx;
-}
-
-.field-required {
-  margin-left: 4rpx;
-  color: #c96a45;
-}
-
-.plot-field__name {
-  margin-top: 5rpx;
-  color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
-}
-
-.page-title {
-  color: $pf-color-text;
-  font-size: 38rpx;
-  font-weight: 700;
-}
-
-.page-description {
-  margin-top: 10rpx;
-  color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: $pf-space-page-bottom;
 }
 
 .state-card {
@@ -322,6 +249,7 @@ onLoad((options) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margin: 28rpx $pf-space-page-x 0;
   padding: 28rpx;
   color: $pf-color-text-secondary;
   font-size: 24rpx;
