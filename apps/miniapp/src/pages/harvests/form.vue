@@ -135,8 +135,9 @@ async function loadForm(): Promise<void> {
 function openProductionSelector(): void {
   if (harvestId.value || !farmId.value) return;
   const plotParameter = selectionPlotId.value ? `&plotId=${selectionPlotId.value}` : "";
+  const selectedParameter = productionId.value ? `&selectedProductionId=${productionId.value}` : "";
   uni.navigateTo({
-    url: `/pages/harvests/productions?farmId=${farmId.value}${plotParameter}`,
+    url: `/pages/harvests/productions?farmId=${farmId.value}${plotParameter}${selectedParameter}`,
     events: {
       selected: (selection: HarvestProductionSelection) => {
         if (selection.production.id === productionId.value) return;
