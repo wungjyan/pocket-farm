@@ -1,83 +1,123 @@
 <template>
-  <view class="form-card pf-card">
-    <view class="field-group">
-      <text class="field-label">{{ quantityFieldLabel }} <text class="field-required">*</text></text>
-      <view class="quantity-shell">
-        <uv-input
-          v-model="form.quantity"
-          type="digit"
-          maxlength="15"
-          clearable
-          border="none"
-          :placeholder="quantityPlaceholder"
-          placeholder-style="color: #929A93;"
-          color="#202821"
-        />
-        <view class="unit-label" :class="{ 'unit-label--empty': !quantityUnit }">
-          {{ selectedUnitLabel }}
+  <view class="harvest-form pf-page-content">
+    <view class="required-fields">
+      <view class="form-item">
+        <view class="field-group">
+          <text class="field-label">种养 <text class="field-required">*</text></text>
+          <view
+            class="select-shell"
+            :class="{ 'select-shell--disabled': !productionSelectable }"
+            @tap="handleProductionSelect"
+          >
+            <text :class="{ 'select-placeholder': !production }">{{ productionName }}</text>
+            <uv-icon v-if="productionSelectable" name="arrow-right" size="16" color="#929A93" />
+          </view>
         </view>
       </view>
-      <text class="field-help">{{ quantityHelp }}</text>
-    </view>
 
-    <view class="field-group">
-      <text class="field-label">作业方式 <text class="field-required">*</text></text>
-      <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
-        <view class="select-shell">
-          <text>{{ workMethodLabels[workMethodIndex] }}</text>
-          <uv-icon name="arrow-down" size="16" color="#929A93" />
+      <view class="form-item">
+        <view class="field-group">
+          <text class="field-label">{{ quantityFieldLabel }} <text class="field-required">*</text></text>
+          <view class="quantity-shell">
+            <uv-input
+              v-model="form.quantity"
+              type="digit"
+              maxlength="15"
+              clearable
+              border="none"
+              :placeholder="quantityPlaceholder"
+              placeholder-style="color: #929A93;"
+              color="#202821"
+            />
+            <view class="unit-label" :class="{ 'unit-label--empty': !quantityUnit }">
+              {{ selectedUnitLabel }}
+            </view>
+          </view>
         </view>
-      </picker>
-    </view>
+      </view>
 
-    <view class="field-group">
-      <text class="field-label">{{ actionLabel }}日期 <text class="field-required">*</text></text>
-      <picker mode="date" :value="form.harvestedDate" :start="production?.startedOn" :end="today" @change="handleDateChange">
-        <view class="select-shell">
-          <text>{{ form.harvestedDate }}</text>
-          <uv-icon name="calendar" size="17" color="#929A93" />
+      <view class="form-item">
+        <view class="field-group">
+          <text class="field-label">作业方式 <text class="field-required">*</text></text>
+          <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
+            <view class="select-shell">
+              <text>{{ workMethodLabels[workMethodIndex] }}</text>
+              <uv-icon name="arrow-down" size="16" color="#929A93" />
+            </view>
+          </picker>
         </view>
-      </picker>
-    </view>
+      </view>
 
-    <view class="field-group">
-      <text class="field-label">{{ actionLabel }}时间 <text class="field-required">*</text></text>
-      <picker mode="time" :value="form.harvestedTime" @change="handleTimeChange">
-        <view class="select-shell">
-          <text>{{ form.harvestedTime }}</text>
-          <uv-icon name="clock" size="17" color="#929A93" />
+      <view class="form-item">
+        <view class="field-group">
+          <text class="field-label">{{ actionLabel }}日期 <text class="field-required">*</text></text>
+          <picker mode="date" :value="form.harvestedDate" :start="production?.startedOn" :end="today" @change="handleDateChange">
+            <view class="select-shell">
+              <text>{{ form.harvestedDate }}</text>
+              <uv-icon name="calendar" size="17" color="#929A93" />
+            </view>
+          </picker>
         </view>
-      </picker>
-    </view>
+      </view>
 
-    <view class="field-group">
-      <text class="field-label">操作人 <text class="field-required">*</text></text>
-      <picker mode="selector" :range="operatorLabels" :value="operatorIndex" @change="handleOperatorChange">
-        <view class="select-shell">
-          <text>{{ operatorLabels[operatorIndex] }}</text>
-          <uv-icon name="arrow-down" size="16" color="#929A93" />
+      <view class="form-item">
+        <view class="field-group">
+          <text class="field-label">{{ actionLabel }}时间 <text class="field-required">*</text></text>
+          <picker mode="time" :value="form.harvestedTime" @change="handleTimeChange">
+            <view class="select-shell">
+              <text>{{ form.harvestedTime }}</text>
+              <uv-icon name="clock" size="17" color="#929A93" />
+            </view>
+          </picker>
         </view>
-      </picker>
-    </view>
+      </view>
 
-    <view class="field-group">
-      <text class="field-label">产品名称 <text class="field-optional">选填</text></text>
-      <view class="input-shell">
-        <uv-input v-model="form.productName" maxlength="100" border="none" placeholder="默认使用种养名称" placeholder-style="color: #929A93;" color="#202821" />
+      <view class="form-item">
+        <view class="field-group">
+          <text class="field-label">操作人 <text class="field-required">*</text></text>
+          <picker mode="selector" :range="operatorLabels" :value="operatorIndex" @change="handleOperatorChange">
+            <view class="select-shell">
+              <text>{{ operatorLabels[operatorIndex] }}</text>
+              <uv-icon name="arrow-down" size="16" color="#929A93" />
+            </view>
+          </picker>
+        </view>
       </view>
     </view>
 
-    <view class="field-group">
-      <text class="field-label">等级 <text class="field-optional">选填</text></text>
-      <view class="input-shell">
-        <uv-input v-model="form.grade" maxlength="100" border="none" placeholder="如一级、二级" placeholder-style="color: #929A93;" color="#202821" />
+    <view class="optional-section">
+      <view class="optional-section__trigger pf-tappable" @tap="toggleOptionalSection">
+        <text class="optional-section__title">选填信息</text>
+        <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#7F8B82" />
       </view>
-    </view>
 
-    <view class="field-group">
-      <text class="field-label">备注 <text class="field-optional">选填</text></text>
-      <view class="textarea-shell">
-        <textarea v-model="form.remark" maxlength="1000" auto-height placeholder="补充说明" placeholder-class="textarea-placeholder" />
+      <view v-if="optionalExpanded" class="optional-fields">
+        <view class="form-item">
+          <view class="field-group">
+            <text class="field-label">产品名称</text>
+            <view class="input-shell">
+              <uv-input v-model="form.productName" maxlength="100" border="none" placeholder="默认使用种养名称" placeholder-style="color: #929A93;" color="#202821" />
+            </view>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <view class="field-group">
+            <text class="field-label">等级</text>
+            <view class="input-shell">
+              <uv-input v-model="form.grade" maxlength="100" border="none" placeholder="如一级、二级" placeholder-style="color: #929A93;" color="#202821" />
+            </view>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <view class="field-group">
+            <text class="field-label">备注</text>
+            <view class="textarea-shell">
+              <textarea v-model="form.remark" maxlength="1000" auto-height placeholder="补充说明" placeholder-class="textarea-placeholder" />
+            </view>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -117,6 +157,7 @@ const workMethodLabels = ["人工", "机械"];
 const props = withDefaults(
   defineProps<{
     production?: Production | null;
+    productionSelectable?: boolean;
     members: FarmMember[];
     currentUserId: number;
     initialHarvest?: HarvestRecord | null;
@@ -126,6 +167,7 @@ const props = withDefaults(
   }>(),
   {
     production: null,
+    productionSelectable: true,
     initialHarvest: null,
     submitLabel: "保存记录",
     loadingText: "保存中",
@@ -133,9 +175,13 @@ const props = withDefaults(
   },
 );
 
-const emit = defineEmits<{ submit: [input: HarvestInput] }>();
+const emit = defineEmits<{
+  submit: [input: HarvestInput];
+  "select-production": [];
+}>();
 const today = formatDate(new Date());
 const initialized = ref(false);
+const optionalExpanded = ref(false);
 const form = reactive({
   quantity: "",
   workMethod: "MANUAL" as WorkMethod,
@@ -166,10 +212,9 @@ const quantityUnit = computed<QuantityUnit | null>(() => {
 });
 const selectedUnitLabel = computed(() => quantityUnit.value ? unitLabels[quantityUnit.value] : "待确定");
 const quantityPlaceholder = computed(() => quantityUnit.value === "KG" ? "填写重量" : "填写数量");
-const quantityHelp = computed(() => {
-  if (!quantityUnit.value) return "选择具体种养后，系统将自动确定单位。";
-  if (quantityUnit.value === "KG") return "单位固定为公斤，可填写小数。";
-  return `单位按种类固定为${selectedUnitLabel.value}，请填写整数。`;
+const productionName = computed(() => {
+  if (!props.production) return "请选择具体种养";
+  return `${props.production.speciesName}${props.production.variety ? ` · ${props.production.variety}` : ""}`;
 });
 const workMethodIndex = computed(() => Math.max(0, workMethodValues.indexOf(form.workMethod)));
 const operatorLabels = computed(() => props.members.map(displayMemberName));
@@ -233,6 +278,14 @@ function handleWorkMethodChange(event: { detail: { value: number | string } }): 
   form.workMethod = workMethodValues[Number(event.detail.value)] || "MANUAL";
 }
 
+function handleProductionSelect(): void {
+  if (props.productionSelectable) emit("select-production");
+}
+
+function toggleOptionalSection(): void {
+  optionalExpanded.value = !optionalExpanded.value;
+}
+
 function handleDateChange(event: { detail: { value: string } }): void {
   form.harvestedDate = event.detail.value;
 }
@@ -291,12 +344,10 @@ function handleSubmit(): void {
 <style lang="scss" scoped>
 @import "../styles/design-tokens.scss";
 
-.form-card { padding: 28rpx 24rpx; }
-.field-group + .field-group { margin-top: 32rpx; }
+.harvest-form { padding-top: 28rpx; padding-bottom: $pf-space-page-bottom; }
+.form-item + .form-item { margin-top: $pf-space-5; }
 .field-label { display: block; margin-bottom: 14rpx; color: $pf-color-text; font-size: 27rpx; font-weight: 600; }
-.field-required { margin-left: 6rpx; color: #c96a45; }
-.field-optional { margin-left: 8rpx; color: $pf-color-text-muted; font-size: 23rpx; font-weight: 400; }
-.field-help { display: block; margin-top: 10rpx; color: $pf-color-text-muted; font-size: 21rpx; line-height: 1.45; }
+.field-required { margin-left: 6rpx; color: $pf-color-danger; }
 .quantity-shell, .input-shell, .select-shell, .textarea-shell { display: flex; box-sizing: border-box; border: 1rpx solid $pf-color-border; border-radius: $pf-radius-control; background: $pf-color-surface; }
 .quantity-shell, .input-shell, .select-shell { min-height: 88rpx; align-items: center; }
 .quantity-shell, .input-shell { padding: 0 20rpx; }
@@ -304,7 +355,12 @@ function handleSubmit(): void {
 .unit-label { min-width: 92rpx; box-sizing: border-box; padding-left: 18rpx; border-left: 1rpx solid $pf-color-divider; color: $pf-color-text-secondary; font-size: 24rpx; text-align: right; }
 .unit-label--empty { color: $pf-color-text-muted; }
 .select-shell { justify-content: space-between; padding: 0 20rpx; color: $pf-color-text; font-size: 25rpx; }
+.select-shell--disabled { background: $pf-color-surface-muted; color: $pf-color-text-secondary; }
 .select-placeholder, .textarea-placeholder { color: $pf-color-text-muted; }
 .textarea-shell { min-height: 160rpx; align-items: flex-start; padding: 18rpx 20rpx; }
 .textarea-shell textarea { width: 100%; min-height: 110rpx; color: $pf-color-text; font-size: 25rpx; line-height: 1.5; }
+.optional-section { margin-top: $pf-space-6; }
+.optional-section__trigger { display: flex; min-height: 56rpx; align-items: center; justify-content: space-between; }
+.optional-section__title { color: $pf-color-text-secondary; font-size: 26rpx; font-weight: 600; }
+.optional-fields { margin-top: $pf-space-4; }
 </style>

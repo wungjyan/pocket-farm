@@ -10,25 +10,9 @@
       <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 22rpx; border-radius: 12rpx;" @click="loadForm">重试</uv-button>
     </view>
     <template v-else>
-      <view class="page-intro">
-        <text class="page-title">{{ harvestId ? `编辑${actionLabel}` : production ? `记录${actionLabel}` : "记录收获" }}</text>
-        <text class="page-description">收获必须关联某一次具体种养，保存后不会自动结束种养</text>
-      </view>
-      <view
-        class="production-field pf-card"
-        :class="{ 'production-field--selectable': !harvestId, 'production-field--empty': !production }"
-        @click="openProductionSelector"
-      >
-        <view class="production-field__copy">
-          <text class="production-field__label">种养 <text v-if="!harvestId" class="field-required">*</text></text>
-          <text class="production-field__name">{{ productionName }}</text>
-          <text v-if="production && plot" class="production-field__meta">{{ plot.name }} · {{ production.startedOn }} 开始</text>
-        </view>
-        <text v-if="harvestId" class="production-field__locked">编辑时不可变更</text>
-        <uv-icon v-else name="arrow-right" size="17" color="#929A93" />
-      </view>
       <HarvestForm
         :production="production"
+        :production-selectable="!harvestId"
         :members="members"
         :current-user-id="currentUserId"
         :initial-harvest="harvest"
@@ -36,6 +20,7 @@
         :submit-label="harvestId ? '保存修改' : `保存${actionLabel}`"
         :loading-text="harvestId ? '保存中' : '记录中'"
         @submit="handleSubmit"
+        @select-production="openProductionSelector"
       />
     </template>
     <uv-toast ref="toastRef" />
@@ -79,10 +64,6 @@ const actionLabel = computed(() => {
   if (production.value?.industry === "LIVESTOCK") return "出栏";
   if (production.value?.industry === "FISHERY") return "捕捞";
   return production.value ? "采收" : "收获";
-});
-const productionName = computed(() => {
-  if (!production.value) return "请选择具体种养";
-  return `${production.value.speciesName}${production.value.variety ? ` · ${production.value.variety}` : ""}`;
 });
 
 function handleUnauthorized(): void {
@@ -204,19 +185,7 @@ onLoad((options) => {
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.harvest-form-page { padding: 28rpx $pf-space-page-x $pf-space-page-bottom; }
-.page-intro { padding: 12rpx 4rpx 28rpx; }
-.page-title, .page-description, .production-field__label, .production-field__name, .production-field__meta { display: block; }
-.page-title { color: $pf-color-text; font-size: 38rpx; font-weight: 700; }
-.page-description { margin-top: 10rpx; color: $pf-color-text-secondary; font-size: 24rpx; line-height: 1.5; }
-.production-field { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20rpx; padding: 20rpx 24rpx; }
-.production-field--selectable { border-color: $pf-color-harvest; }
-.production-field--empty .production-field__name { color: $pf-color-text-muted; font-weight: 400; }
-.production-field__copy { min-width: 0; flex: 1; }
-.production-field__label, .production-field__locked { color: $pf-color-text-muted; font-size: 21rpx; }
-.field-required { margin-left: 4rpx; color: #c96a45; }
-.production-field__name { margin-top: 5rpx; overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.production-field__meta { margin-top: 5rpx; color: $pf-color-harvest; font-size: 21rpx; }
+.harvest-form-page { padding: 0; }
 .state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 28rpx; color: $pf-color-text-secondary; font-size: 24rpx; text-align: center; }
 .state-card text { margin-top: 16rpx; }
 </style>
