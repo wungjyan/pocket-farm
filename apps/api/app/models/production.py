@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.dialects.mysql import BIGINT, INTEGER
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -42,6 +42,14 @@ class QuantityUnit(StrEnum):
 
 class Production(Base):
     __tablename__ = "productions"
+    __table_args__ = (
+        Index(
+            "ix_productions_plot_status_species",
+            "plot_id",
+            "status",
+            "species_id",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True, autoincrement=True)
     plot_id: Mapped[int] = mapped_column(

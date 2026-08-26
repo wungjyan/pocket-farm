@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
+from app.core.error_codes import ErrorCode
+from app.core.exceptions import AppException
 from app.models.harvest import HarvestRecord
 from app.models.operation import OperationType
 from app.models.plot import PlotType
@@ -18,10 +20,15 @@ from app.models.production import (
 from app.models.species import IndividualUnit, Industry
 from app.models.user import User
 from app.schemas.farm import (
+    ActiveSpeciesResponse,
     CreatePlotRequest,
     PlotDetailResponse,
+    PlotFilterOptionsResponse,
     PlotPage,
     PlotResponse,
+    PlotSummaryFilter,
+    PlotSummaryPage,
+    PlotSummaryResponse,
     UpdatePlotRequest,
 )
 from app.schemas.harvest import HarvestResponse
@@ -31,7 +38,9 @@ from app.schemas.response import ApiResponse
 from app.services.plot import (
     create_plot,
     get_plot_detail,
+    get_plot_filter_options,
     get_plot_with_member,
+    list_plot_summaries,
     list_plots,
     update_plot,
 )
@@ -51,6 +60,20 @@ def _plot_response(plot) -> PlotResponse:
         boundary=plot.boundary,
         created_at=plot.created_at,
         updated_at=plot.updated_at,
+    )
+
+
+def _active_species_response(active_species) -> ActiveSpeciesResponse:
+    return ActiveSpeciesResponse(id=active_species.id, name=active_species.name)
+
+
+def _plot_summary_response(plot_summary) -> PlotSummaryResponse:
+    return PlotSummaryResponse(
+        **_plot_response(plot_summary.plot).model_dump(),
+        active_species=[
+            _active_species_response(active_species)
+            for active_species in plot_summary.active_species
+        ],
     )
 
 
@@ -157,6 +180,72 @@ async def get_farm_plots(
             page=page,
             page_size=page_size,
             total=total,
+        )
+    )
+
+
+@router.get("/farms/{farm_id}/plot-summaries", response_model=ApiResponse[PlotSummaryPage])
+async def get_farm_plot_summaries(
+    farm_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(alias="pageSize", ge=1, le=100)] = 20,
+    filter_value: Annotated[PlotSummaryFilter, Query(alias="filter")] = PlotSummaryFilter.ALL,
+    species_id: Annotated[int | None, Query(alias="speciesId", ge=1)] = None,
+) -> ApiResponse[PlotSummaryPage]:
+    if filter_value == PlotSummaryFilter.SPECIES and species_id is None:
+        raise AppException(
+            status_code=422,
+            code=ErrorCode.VALIDATION_ERROR,
+            message="speciesId is required when filter is SPECIES.",
+        )
+    if filter_value != PlotSummaryFilter.SPECIES and species_id is not None:
+        raise AppException(
+            status_code=422,
+            code=ErrorCode.VALIDATION_ERROR,
+            message="speciesId is only allowed when filter is SPECIES.",
+        )
+    plot_summaries, total = await list_plot_summaries(
+        session,
+        farm_id=farm_id,
+        user_id=current_user.id,
+        filter_value=filter_value,
+        species_id=species_id,
+        page=page,
+        page_size=page_size,
+    )
+    return ApiResponse.success_response(
+        data=PlotSummaryPage(
+            items=[_plot_summary_response(plot_summary) for plot_summary in plot_summaries],
+            page=page,
+            page_size=page_size,
+            total=total,
+        )
+    )
+
+
+@router.get(
+    "/farms/{farm_id}/plot-filter-options",
+    response_model=ApiResponse[PlotFilterOptionsResponse],
+)
+async def get_farm_plot_filter_options(
+    farm_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[PlotFilterOptionsResponse]:
+    options = await get_plot_filter_options(
+        session,
+        farm_id=farm_id,
+        user_id=current_user.id,
+    )
+    return ApiResponse.success_response(
+        data=PlotFilterOptionsResponse(
+            active_species=[
+                _active_species_response(active_species)
+                for active_species in options.active_species
+            ],
+            idle_plot_count=options.idle_plot_count,
         )
     )
 

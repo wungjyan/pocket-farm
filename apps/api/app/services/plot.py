@@ -31,6 +31,24 @@ class PlotDetailData:
     harvest_total: int
 
 
+@dataclass(frozen=True)
+class ActiveSpeciesSummary:
+    id: int
+    name: str
+
+
+@dataclass
+class PlotSummaryData:
+    plot: Plot
+    active_species: list[ActiveSpeciesSummary]
+
+
+@dataclass(frozen=True)
+class PlotFilterOptionsData:
+    active_species: list[ActiveSpeciesSummary]
+    idle_plot_count: int
+
+
 def _not_found(message: str) -> AppException:
     return AppException(status_code=404, code=ErrorCode.NOT_FOUND, message=message)
 
@@ -74,6 +92,123 @@ async def list_plots(
         .limit(page_size)
     )
     return list(result.scalars()), int(total or 0)
+
+
+async def list_plot_summaries(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+    filter_value: str,
+    species_id: int | None,
+    page: int,
+    page_size: int,
+) -> tuple[list[PlotSummaryData], int]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+
+    active_production_exists = (
+        select(Production.id)
+        .where(
+            Production.plot_id == Plot.id,
+            Production.status == ProductionStatus.ACTIVE,
+        )
+        .exists()
+    )
+    filters = [Plot.farm_id == farm_id]
+    if filter_value == "IDLE":
+        filters.append(~active_production_exists)
+    elif filter_value == "SPECIES" and species_id is not None:
+        filters.append(
+            select(Production.id)
+            .where(
+                Production.plot_id == Plot.id,
+                Production.status == ProductionStatus.ACTIVE,
+                Production.species_id == species_id,
+            )
+            .exists()
+        )
+
+    total = await session.scalar(select(func.count()).select_from(Plot).where(*filters))
+    plot_result = await session.execute(
+        select(Plot)
+        .where(*filters)
+        .order_by(Plot.created_at.desc(), Plot.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    plots = list(plot_result.scalars())
+    plot_ids = [plot.id for plot in plots]
+
+    active_species_by_plot = {plot_id: [] for plot_id in plot_ids}
+    if plot_ids:
+        active_species_result = await session.execute(
+            select(Production.plot_id, Species.id, Species.name)
+            .join(Species, Species.id == Production.species_id)
+            .where(
+                Production.plot_id.in_(plot_ids),
+                Production.status == ProductionStatus.ACTIVE,
+            )
+            .order_by(Production.plot_id.asc(), Species.name.asc(), Species.id.asc())
+        )
+        seen_species_by_plot = {plot_id: set() for plot_id in plot_ids}
+        for plot_id, active_species_id, active_species_name in active_species_result.all():
+            if active_species_id in seen_species_by_plot[plot_id]:
+                continue
+            seen_species_by_plot[plot_id].add(active_species_id)
+            active_species_by_plot[plot_id].append(
+                ActiveSpeciesSummary(id=active_species_id, name=active_species_name)
+            )
+
+    return (
+        [
+            PlotSummaryData(plot=plot, active_species=active_species_by_plot[plot.id])
+            for plot in plots
+        ],
+        int(total or 0),
+    )
+
+
+async def get_plot_filter_options(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+) -> PlotFilterOptionsData:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+
+    active_species_result = await session.execute(
+        select(Species.id, Species.name)
+        .join(Production, Production.species_id == Species.id)
+        .join(Plot, Plot.id == Production.plot_id)
+        .where(
+            Plot.farm_id == farm_id,
+            Production.status == ProductionStatus.ACTIVE,
+        )
+        .distinct()
+        .order_by(Species.name.asc(), Species.id.asc())
+    )
+    active_species = [
+        ActiveSpeciesSummary(id=active_species_id, name=active_species_name)
+        for active_species_id, active_species_name in active_species_result.all()
+    ]
+
+    active_production_exists = (
+        select(Production.id)
+        .where(
+            Production.plot_id == Plot.id,
+            Production.status == ProductionStatus.ACTIVE,
+        )
+        .exists()
+    )
+    idle_plot_count = await session.scalar(
+        select(func.count())
+        .select_from(Plot)
+        .where(Plot.farm_id == farm_id, ~active_production_exists)
+    )
+    return PlotFilterOptionsData(
+        active_species=active_species,
+        idle_plot_count=int(idle_plot_count or 0),
+    )
 
 
 async def create_plot(

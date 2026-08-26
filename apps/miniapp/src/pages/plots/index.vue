@@ -2,7 +2,19 @@
   <view class="pf-page plot-list-page">
     <view class="pf-page-content">
       <view class="list-toolbar">
-        <text class="list-toolbar__count">{{ loading ? "–" : `${plots.length} 个地块` }}</text>
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="filterLabels"
+          :value="filterIndex"
+          @change="handleFilterChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedFilterLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+        <text class="list-toolbar__count">{{ loading ? "–" : `${plotTotal} 个地块` }}</text>
       </view>
 
       <view v-if="loading" class="state-card pf-card">
@@ -23,6 +35,10 @@
               <text>{{ plotTypeLabel(plot.type) }}</text>
               <text class="plot-meta__separator">·</text>
               <text :class="{ 'plot-meta__incomplete': !hasArea(plot) }">{{ areaLabel(plot) }}</text>
+            </view>
+            <view class="species-tags">
+              <text v-if="!plot.activeSpecies.length" class="species-tag species-tag--idle">空闲</text>
+              <text v-for="species in plot.activeSpecies" :key="species.id" class="species-tag">{{ species.name }}</text>
             </view>
           </view>
           <view class="plot-selection" :class="{ 'plot-selection--selected': plot.id === selectedPlotId }">
@@ -54,11 +70,30 @@ import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
-import { getFarmPlots, type Plot, type PlotType } from "../../services/plot";
+import {
+  getFarmPlotFilterOptions,
+  getFarmPlotSummaries,
+  type ActiveSpeciesSummary,
+  type Plot,
+  type PlotSummary,
+  type PlotSummaryFilter,
+  type PlotType,
+} from "../../services/plot";
 import { formatNumber } from "../../utils/number";
 
+type FilterValue = "ALL" | "IDLE" | `SPECIES:${number}`;
+
+interface FilterOption {
+  value: FilterValue;
+  label: string;
+}
+
 const farmId = ref<number | null>(null);
-const plots = ref<Plot[]>([]);
+const plots = ref<PlotSummary[]>([]);
+const plotTotal = ref(0);
+const filterValue = ref<FilterValue>("ALL");
+const activeSpecies = ref<ActiveSpeciesSummary[]>([]);
+const idlePlotCount = ref(0);
 const loading = ref(false);
 const selectedPlotId = ref<number | null>(null);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
@@ -67,6 +102,17 @@ let openerEventChannel: { emit: (eventName: string, data: Plot) => void } | null
 const canManagePlots = computed(
   () => currentFarm.value?.id === farmId.value && (currentFarm.value.role === "OWNER" || currentFarm.value.role === "ADMIN"),
 );
+const filterOptions = computed<FilterOption[]>(() => [
+  { value: "ALL", label: "全部种类" },
+  ...activeSpecies.value.map((species) => ({
+    value: `SPECIES:${species.id}` as const,
+    label: species.name,
+  })),
+  ...(idlePlotCount.value > 0 ? [{ value: "IDLE" as const, label: "空闲地块" }] : []),
+]);
+const filterLabels = computed(() => filterOptions.value.map((item) => item.label));
+const filterIndex = computed(() => Math.max(0, filterOptions.value.findIndex((item) => item.value === filterValue.value)));
+const selectedFilterLabel = computed(() => filterOptions.value.find((item) => item.value === filterValue.value)?.label || "全部种类");
 
 const plotTypeLabels: Record<PlotType, string> = {
   FIELD: "大田", PADDY: "水田", GREENHOUSE: "大棚", ORCHARD: "果园",
@@ -87,12 +133,56 @@ function hasArea(plot: Plot): boolean {
   return plot.areaValue !== null && plot.areaValue !== undefined && Boolean(plot.areaUnit);
 }
 
+function handleFilterChange(event: { detail: { value: number | string } }): void {
+  const selected = filterOptions.value[Number(event.detail.value)];
+  if (!selected || selected.value === filterValue.value) return;
+  filterValue.value = selected.value;
+  loadPlots();
+}
+
 async function loadPlots(): Promise<void> {
   if (!farmId.value) return;
   loading.value = true;
   try {
-    const page = await getFarmPlots(farmId.value);
+    const speciesId = filterValue.value.startsWith("SPECIES:")
+      ? Number(filterValue.value.slice("SPECIES:".length))
+      : undefined;
+    const filter: PlotSummaryFilter = speciesId
+      ? "SPECIES"
+      : filterValue.value === "IDLE"
+        ? "IDLE"
+        : "ALL";
+    const page = await getFarmPlotSummaries(farmId.value, {
+      page: 1,
+      pageSize: 100,
+      filter,
+      speciesId,
+    });
     plots.value = page.items;
+    plotTotal.value = page.total;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      clearAuthToken();
+      uni.reLaunch({ url: "/pages/auth/login" });
+      return;
+    }
+    toastRef.value?.show({ type: "default", message: error instanceof ApiRequestError ? error.message : "地块加载失败" });
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadPageData(): Promise<void> {
+  if (!farmId.value) return;
+  loading.value = true;
+  try {
+    const options = await getFarmPlotFilterOptions(farmId.value);
+    activeSpecies.value = options.activeSpecies;
+    idlePlotCount.value = options.idlePlotCount;
+    if (!filterOptions.value.some((item) => item.value === filterValue.value)) {
+      filterValue.value = "ALL";
+    }
+    await loadPlots();
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       clearAuthToken();
@@ -126,7 +216,7 @@ onLoad((query) => {
   openerEventChannel = page?.getOpenerEventChannel?.() || null;
 });
 
-onShow(() => loadPlots());
+onShow(() => loadPageData());
 </script>
 
 <style lang="scss" scoped>
@@ -136,8 +226,35 @@ onShow(() => loadPlots());
   display: flex;
   min-height: 96rpx;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 0 4rpx 10rpx;
+}
+
+.filter-picker-wrap {
+  display: block;
+}
+
+.filter-picker {
+  display: flex;
+  min-height: 88rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 16rpx;
+  border-radius: $pf-radius-control;
+}
+
+.filter-picker--pressed {
+  background: $pf-color-surface-muted;
+}
+
+.filter-picker__label {
+  color: $pf-color-text-secondary;
+  font-size: 25rpx;
+  font-weight: 550;
+}
+
+.filter-picker .uv-icon {
+  margin-left: 8rpx;
 }
 
 .list-toolbar__count,
@@ -215,6 +332,28 @@ onShow(() => loadPlots());
 
 .plot-meta__incomplete {
   color: $pf-color-warning;
+}
+
+.species-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.species-tag {
+  display: block;
+  padding: 5rpx 14rpx;
+  border-radius: 999rpx;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 20rpx;
+  line-height: 1.25;
+}
+
+.species-tag--idle {
+  background: $pf-color-surface-muted;
+  color: $pf-color-text-muted;
 }
 
 .state-card {

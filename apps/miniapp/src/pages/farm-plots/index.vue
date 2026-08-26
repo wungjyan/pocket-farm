@@ -15,7 +15,7 @@
           </view>
         </picker>
         <view class="filter-toolbar__right">
-          <text class="filter-count">{{ loading ? "–" : `${filteredPlotItems.length} 个地块` }}</text>
+          <text class="filter-count">{{ loading ? "–" : `${plotTotal} 个地块` }}</text>
           <view v-if="canManagePlots" class="create-button pf-tappable" @tap="openCreatePlot">
             <text>创建地块</text>
           </view>
@@ -26,19 +26,19 @@
         <uv-loading-icon mode="circle" color="#286B46" />
         <text>正在加载地块</text>
       </view>
-      <view v-else-if="filteredPlotItems.length" class="plot-list">
+      <view v-else-if="plotItems.length" class="plot-list">
         <view
-          v-for="item in filteredPlotItems"
-          :key="item.plot.id"
+          v-for="item in plotItems"
+          :key="item.id"
           class="plot-row pf-card pf-tappable"
-          @tap="openPlot(item.plot.id)"
+          @tap="openPlot(item.id)"
         >
           <view class="plot-copy">
-            <text class="plot-name">{{ item.plot.name }}</text>
-            <text class="plot-meta">{{ plotTypeLabel(item.plot.type) }} · {{ areaLabel(item.plot) }}</text>
+            <text class="plot-name">{{ item.name }}</text>
+            <text class="plot-meta">{{ plotTypeLabel(item.type) }} · {{ areaLabel(item) }}</text>
             <view class="species-tags">
-              <text v-if="!item.activeProductions.length" class="species-tag species-tag--idle">空闲</text>
-              <text v-for="species in item.species" :key="species.id" class="species-tag">{{ species.name }}</text>
+              <text v-if="!item.activeSpecies.length" class="species-tag species-tag--idle">空闲</text>
+              <text v-for="species in item.activeSpecies" :key="species.id" class="species-tag">{{ species.name }}</text>
             </view>
           </view>
           <PfRowChevron />
@@ -63,8 +63,15 @@ import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
-import { getFarmPlots, type Plot, type PlotType } from "../../services/plot";
-import { getPlotProductions, type Production } from "../../services/production";
+import {
+  getFarmPlotFilterOptions,
+  getFarmPlotSummaries,
+  type ActiveSpeciesSummary,
+  type Plot,
+  type PlotSummary,
+  type PlotSummaryFilter,
+  type PlotType,
+} from "../../services/plot";
 import { formatNumber } from "../../utils/number";
 
 type FilterValue = "ALL" | "IDLE" | `SPECIES:${number}`;
@@ -74,12 +81,6 @@ interface SpeciesOption {
   name: string;
 }
 
-interface FarmPlotItem {
-  plot: Plot;
-  activeProductions: Production[];
-  species: SpeciesOption[];
-}
-
 interface FilterOption {
   value: FilterValue;
   label: string;
@@ -87,7 +88,10 @@ interface FilterOption {
 
 const farmId = ref(0);
 const filterValue = ref<FilterValue>("ALL");
-const plotItems = ref<FarmPlotItem[]>([]);
+const plotItems = ref<PlotSummary[]>([]);
+const plotTotal = ref(0);
+const activeSpecies = ref<ActiveSpeciesSummary[]>([]);
+const idlePlotCount = ref(0);
 const loading = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const { currentFarm } = useFarmContext();
@@ -107,26 +111,17 @@ const plotTypeLabels: Record<PlotType, string> = {
 };
 
 const speciesOptions = computed<SpeciesOption[]>(() => {
-  const species = new Map<number, string>();
-  plotItems.value.forEach((item) => item.activeProductions.forEach((production) => species.set(production.speciesId, production.speciesName)));
-  return Array.from(species, ([id, name]) => ({ id, name })).sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
+  return activeSpecies.value;
 });
 
 const filterOptions = computed<FilterOption[]>(() => [
   { value: "ALL", label: "全部种类" },
   ...speciesOptions.value.map((species) => ({ value: `SPECIES:${species.id}` as const, label: species.name })),
-  { value: "IDLE", label: "空闲地块" },
+  ...(idlePlotCount.value > 0 ? [{ value: "IDLE" as const, label: "空闲地块" }] : []),
 ]);
 const filterLabels = computed(() => filterOptions.value.map((item) => item.label));
 const filterIndex = computed(() => Math.max(0, filterOptions.value.findIndex((item) => item.value === filterValue.value)));
 const selectedFilterLabel = computed(() => filterOptions.value.find((item) => item.value === filterValue.value)?.label || "全部种类");
-const filteredPlotItems = computed(() => {
-  if (filterValue.value === "ALL") return plotItems.value;
-  if (filterValue.value === "IDLE") return plotItems.value.filter((item) => !item.activeProductions.length);
-  const speciesId = Number(filterValue.value.slice("SPECIES:".length));
-  return plotItems.value.filter((item) => item.activeProductions.some((production) => production.speciesId === speciesId));
-});
-
 function plotTypeLabel(type: PlotType | null): string {
   return type ? plotTypeLabels[type] : "未分类";
 }
@@ -139,11 +134,15 @@ function areaLabel(plot: Plot): string {
 
 function handleFilterChange(event: { detail: { value: number | string } }): void {
   const selected = filterOptions.value[Number(event.detail.value)];
-  if (selected) filterValue.value = selected.value;
+  if (!selected || selected.value === filterValue.value) return;
+  filterValue.value = selected.value;
+  loadPlots();
 }
 
 function clearFilter(): void {
+  if (filterValue.value === "ALL") return;
   filterValue.value = "ALL";
+  loadPlots();
 }
 
 function openPlot(plotId: number): void {
@@ -159,6 +158,13 @@ function handleUnauthorized(): void {
   uni.reLaunch({ url: "/pages/auth/login" });
 }
 
+async function loadFilterOptions(targetFarmId: number): Promise<void> {
+  const options = await getFarmPlotFilterOptions(targetFarmId);
+  if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+  activeSpecies.value = options.activeSpecies;
+  idlePlotCount.value = options.idlePlotCount;
+}
+
 async function loadPlots(): Promise<void> {
   const currentFarmId = currentFarm.value?.id || 0;
   if (currentFarmId && farmId.value && currentFarmId !== farmId.value) {
@@ -168,27 +174,64 @@ async function loadPlots(): Promise<void> {
   const targetFarmId = currentFarmId || farmId.value;
   if (!targetFarmId) {
     plotItems.value = [];
+    plotTotal.value = 0;
+    activeSpecies.value = [];
+    idlePlotCount.value = 0;
     return;
   }
   farmId.value = targetFarmId;
   loading.value = true;
   try {
-    const page = await getFarmPlots(targetFarmId);
-    const activeProductions = await Promise.all(
-      page.items.map(async (plot) => {
-        const productionPage = await getPlotProductions(plot.id, "ACTIVE", 1, 100);
-        return productionPage.items;
-      }),
-    );
-    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
-    plotItems.value = page.items.map((plot, index) => {
-      const productions = activeProductions[index] || [];
-      const species = Array.from(
-        new Map(productions.map((production) => [production.speciesId, { id: production.speciesId, name: production.speciesName }])).values(),
-      );
-      return { plot, activeProductions: productions, species };
+    const speciesId = filterValue.value.startsWith("SPECIES:")
+      ? Number(filterValue.value.slice("SPECIES:".length))
+      : undefined;
+    const filter: PlotSummaryFilter = speciesId
+      ? "SPECIES"
+      : filterValue.value === "IDLE"
+        ? "IDLE"
+        : "ALL";
+    const page = await getFarmPlotSummaries(targetFarmId, {
+      page: 1,
+      pageSize: 100,
+      filter,
+      speciesId,
     });
-    if (!filterOptions.value.some((item) => item.value === filterValue.value)) filterValue.value = "ALL";
+    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+    plotItems.value = page.items;
+    plotTotal.value = page.total;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({ type: "default", message: error instanceof ApiRequestError ? error.message : "地块加载失败" });
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadPageData(): Promise<void> {
+  const currentFarmId = currentFarm.value?.id || 0;
+  if (currentFarmId && farmId.value && currentFarmId !== farmId.value) {
+    farmId.value = currentFarmId;
+    filterValue.value = "ALL";
+  }
+  const targetFarmId = currentFarmId || farmId.value;
+  if (!targetFarmId) {
+    plotItems.value = [];
+    plotTotal.value = 0;
+    activeSpecies.value = [];
+    idlePlotCount.value = 0;
+    return;
+  }
+  farmId.value = targetFarmId;
+  loading.value = true;
+  try {
+    await loadFilterOptions(targetFarmId);
+    if (!filterOptions.value.some((item) => item.value === filterValue.value)) {
+      filterValue.value = "ALL";
+    }
+    await loadPlots();
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -207,7 +250,7 @@ onLoad((query) => {
   uni.setNavigationBarTitle({ title: "地块列表" });
 });
 
-onShow(() => loadPlots());
+onShow(() => loadPageData());
 </script>
 
 <style lang="scss" scoped>

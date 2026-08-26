@@ -181,9 +181,93 @@ def test_plot_access_is_scoped_to_farm_membership() -> None:
     plot_id = create_response.json()["data"]["id"]
 
     list_response = call(outsider_token, f"/api/v1/farms/{farm['id']}/plots")
+    summary_response = call(outsider_token, f"/api/v1/farms/{farm['id']}/plot-summaries")
+    filter_options_response = call(
+        outsider_token,
+        f"/api/v1/farms/{farm['id']}/plot-filter-options",
+    )
     detail_response = call(outsider_token, f"/api/v1/plots/{plot_id}")
     assert list_response.status_code == 404
+    assert summary_response.status_code == 404
+    assert filter_options_response.status_code == 404
     assert detail_response.status_code == 404
+
+
+def test_plot_summaries_include_active_species_and_filter_in_the_database() -> None:
+    owner_token = login(OWNER_PHONE)
+    farm = create_farm(owner_token)
+    plots = []
+    for name in ("种养地块", "生菜地块", "空闲地块"):
+        response = call(
+            owner_token,
+            f"/api/v1/farms/{farm['id']}/plots",
+            method="post",
+            json={"name": name, "type": "FIELD", "areaValue": 1, "areaUnit": "MU"},
+        )
+        assert response.status_code == 201
+        plots.append(response.json()["data"])
+
+    cucumber = species_by_name(owner_token, "黄瓜")
+    lettuce = species_by_name(owner_token, "生菜")
+    start_agriculture_production(owner_token, plots[0]["id"], cucumber["id"])
+    start_agriculture_production(owner_token, plots[0]["id"], cucumber["id"])
+    start_agriculture_production(owner_token, plots[0]["id"], lettuce["id"])
+    start_agriculture_production(owner_token, plots[1]["id"], lettuce["id"])
+
+    summary_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plot-summaries?page=1&pageSize=100&filter=ALL",
+    )
+    assert summary_response.status_code == 200
+    summary_page = summary_response.json()["data"]
+    assert summary_page["total"] == 3
+    active_species_by_plot = {
+        item["name"]: {species["name"] for species in item["activeSpecies"]}
+        for item in summary_page["items"]
+    }
+    assert active_species_by_plot["种养地块"] == {"黄瓜", "生菜"}
+    assert active_species_by_plot["生菜地块"] == {"生菜"}
+    assert active_species_by_plot["空闲地块"] == set()
+
+    filter_options_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plot-filter-options",
+    )
+    assert filter_options_response.status_code == 200
+    filter_options = filter_options_response.json()["data"]
+    assert {item["name"] for item in filter_options["activeSpecies"]} == {"黄瓜", "生菜"}
+    assert filter_options["idlePlotCount"] == 1
+
+    species_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plot-summaries?filter=SPECIES&speciesId={lettuce['id']}",
+    )
+    assert species_response.status_code == 200
+    assert species_response.json()["data"]["total"] == 2
+    assert {item["name"] for item in species_response.json()["data"]["items"]} == {
+        "种养地块",
+        "生菜地块",
+    }
+
+    idle_response = call(owner_token, f"/api/v1/farms/{farm['id']}/plot-summaries?filter=IDLE")
+    assert idle_response.status_code == 200
+    assert [item["name"] for item in idle_response.json()["data"]["items"]] == ["空闲地块"]
+
+    paged_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plot-summaries?page=2&pageSize=1",
+    )
+    assert paged_response.status_code == 200
+    assert paged_response.json()["data"]["page"] == 2
+    assert paged_response.json()["data"]["pageSize"] == 1
+    assert paged_response.json()["data"]["total"] == 3
+    assert len(paged_response.json()["data"]["items"]) == 1
+
+    missing_species_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/plot-summaries?filter=SPECIES",
+    )
+    assert missing_species_response.status_code == 422
 
 
 def test_plot_area_and_boundary_validation() -> None:

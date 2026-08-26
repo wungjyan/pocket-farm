@@ -35,6 +35,36 @@ export interface PlotPage {
   total: number;
 }
 
+export type PlotSummaryFilter = "ALL" | "IDLE" | "SPECIES";
+
+export interface ActiveSpeciesSummary {
+  id: number;
+  name: string;
+}
+
+export interface PlotSummary extends Plot {
+  activeSpecies: ActiveSpeciesSummary[];
+}
+
+export interface PlotSummaryPage {
+  items: PlotSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface PlotFilterOptions {
+  activeSpecies: ActiveSpeciesSummary[];
+  idlePlotCount: number;
+}
+
+export interface PlotSummaryListParams {
+  page?: number;
+  pageSize?: number;
+  filter?: PlotSummaryFilter;
+  speciesId?: number;
+}
+
 export interface PlotDetail {
   plot: Plot;
   activeProductions: Production[];
@@ -64,6 +94,27 @@ export interface CreatePlotInput {
 export function getFarmPlots(farmId: number, page = 1, pageSize = 100): Promise<PlotPage> {
   return request<PlotPage>({
     url: `/farms/${farmId}/plots?page=${page}&pageSize=${pageSize}`,
+  });
+}
+
+export function getFarmPlotSummaries(
+  farmId: number,
+  params: PlotSummaryListParams = {},
+): Promise<PlotSummaryPage> {
+  const parameters = [
+    `page=${params.page || 1}`,
+    `pageSize=${params.pageSize || 20}`,
+    `filter=${params.filter || "ALL"}`,
+  ];
+  if (params.speciesId) parameters.push(`speciesId=${params.speciesId}`);
+  return request<PlotSummaryPage>({
+    url: `/farms/${farmId}/plot-summaries?${parameters.join("&")}`,
+  });
+}
+
+export function getFarmPlotFilterOptions(farmId: number): Promise<PlotFilterOptions> {
+  return request<PlotFilterOptions>({
+    url: `/farms/${farmId}/plot-filter-options`,
   });
 }
 

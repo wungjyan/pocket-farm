@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import StrEnum
 from typing import Annotated, Any
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
@@ -143,6 +144,33 @@ class PlotPage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class PlotSummaryFilter(StrEnum):
+    ALL = "ALL"
+    IDLE = "IDLE"
+    SPECIES = "SPECIES"
+
+
+class ActiveSpeciesResponse(BaseModel):
+    id: int
+    name: str
+
+
+class PlotSummaryResponse(PlotResponse):
+    active_species: list[ActiveSpeciesResponse] = Field(serialization_alias="activeSpecies")
+
+
+class PlotSummaryPage(BaseModel):
+    items: list[PlotSummaryResponse]
+    page: int
+    page_size: int = Field(serialization_alias="pageSize")
+    total: int
+
+
+class PlotFilterOptionsResponse(BaseModel):
+    active_species: list[ActiveSpeciesResponse] = Field(serialization_alias="activeSpecies")
+    idle_plot_count: int = Field(serialization_alias="idlePlotCount")
 
 
 class PlotDetailResponse(BaseModel):
