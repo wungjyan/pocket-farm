@@ -20,6 +20,7 @@ from app.models.production import (
     WorkMethod,
 )
 from app.models.species import Industry, Species
+from app.services.farm import get_farm_with_member
 from app.services.plot import get_plot_with_member
 
 PLANTING_INDUSTRIES = {Industry.AGRICULTURE, Industry.FORESTRY}
@@ -125,6 +126,45 @@ async def list_plot_productions(
     total = await session.scalar(select(func.count()).select_from(Production).where(*filters))
     result = await session.execute(
         select(Production, Species)
+        .join(Species, Species.id == Production.species_id)
+        .where(*filters)
+        .order_by(
+            case((Production.status == ProductionStatus.ACTIVE, 0), else_=1),
+            Production.started_on.desc(),
+            Production.id.desc(),
+        )
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return list(result.all()), int(total or 0)
+
+
+async def list_farm_productions(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+    industry: Industry | None,
+    status: ProductionStatus | None,
+    page: int,
+    page_size: int,
+) -> tuple[list[tuple[Production, Plot, Species]], int]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    filters = [Plot.farm_id == farm_id]
+    if status is not None:
+        filters.append(Production.status == status)
+    if industry is not None:
+        filters.append(Species.industry == industry)
+    total = await session.scalar(
+        select(func.count())
+        .select_from(Production)
+        .join(Plot, Plot.id == Production.plot_id)
+        .join(Species, Species.id == Production.species_id)
+        .where(*filters)
+    )
+    result = await session.execute(
+        select(Production, Plot, Species)
+        .join(Plot, Plot.id == Production.plot_id)
         .join(Species, Species.id == Production.species_id)
         .where(*filters)
         .order_by(

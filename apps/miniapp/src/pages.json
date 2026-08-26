@@ -168,6 +168,12 @@
       }
     },
     {
+      "path": "pages/records/index",
+      "style": {
+        "navigationBarTitleText": "生产记录"
+      }
+    },
+    {
       "path": "pages/profile/edit",
       "style": {
         "navigationBarTitleText": "个人资料"

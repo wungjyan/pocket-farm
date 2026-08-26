@@ -195,3 +195,25 @@ class ProductionPage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class FarmProductionResponse(BaseModel):
+    id: int
+    plot_id: int = Field(serialization_alias="plotId")
+    plot_name: str = Field(serialization_alias="plotName")
+    species_id: int = Field(serialization_alias="speciesId")
+    species_name: str = Field(serialization_alias="speciesName")
+    industry: Industry
+    individual_unit: IndividualUnit = Field(serialization_alias="individualUnit")
+    variety: str | None = None
+    status: ProductionStatus
+    started_on: date = Field(serialization_alias="startedOn")
+    ended_on: date | None = Field(default=None, serialization_alias="endedOn")
+    initial_quantity: Decimal | None = Field(default=None, serialization_alias="initialQuantity")
+
+
+class FarmProductionPage(BaseModel):
+    items: list[FarmProductionResponse]
+    page: int
+    page_size: int = Field(serialization_alias="pageSize")
+    total: int

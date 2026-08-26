@@ -37,6 +37,35 @@ export interface ProductionPage {
   total: number;
 }
 
+export interface FarmProduction {
+  id: number;
+  plotId: number;
+  plotName: string;
+  speciesId: number;
+  speciesName: string;
+  industry: Industry;
+  individualUnit: IndividualUnit;
+  variety: string | null;
+  status: ProductionStatus;
+  startedOn: string;
+  endedOn: string | null;
+  initialQuantity: number | string | null;
+}
+
+export interface FarmProductionPage {
+  items: FarmProduction[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface FarmProductionListParams {
+  industry?: Industry;
+  status?: ProductionStatus;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface ProductionInput {
   speciesId: number;
   variety?: string | null;
@@ -69,6 +98,18 @@ export function getPlotProductions(
   const parameters = [`page=${page}`, `pageSize=${pageSize}`];
   if (status) parameters.push(`status=${status}`);
   return request<ProductionPage>({ url: `/plots/${plotId}/productions?${parameters.join("&")}` });
+}
+
+export function getFarmProductions(
+  farmId: number,
+  params: FarmProductionListParams = {},
+): Promise<FarmProductionPage> {
+  const parameters = [`page=${params.page || 1}`, `pageSize=${params.pageSize || 20}`];
+  if (params.industry) parameters.push(`industry=${params.industry}`);
+  if (params.status) parameters.push(`status=${params.status}`);
+  return request<FarmProductionPage>({
+    url: `/farms/${farmId}/productions?${parameters.join("&")}`,
+  });
 }
 
 export function createProduction(plotId: number, input: ProductionInput): Promise<Production> {

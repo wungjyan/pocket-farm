@@ -57,7 +57,7 @@
             <text class="empty-production__action" @tap="openStartProduction">去开始</text>
           </view>
 
-          <view class="records-entry pf-tappable" @tap="showRecordsPending">
+          <view class="records-entry pf-tappable" @tap="openRecords">
             <PfBusinessIcon name="clock-3" />
             <view class="records-entry__copy">
               <text class="records-entry__title">生产记录</text>
@@ -177,8 +177,8 @@ function openProduction(productionId: number): void {
   uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
 }
 
-function showRecordsPending(): void {
-  toastRef.value?.show({ type: "default", message: "生产记录待完成" });
+function openRecords(): void {
+  if (currentFarm.value) uni.navigateTo({ url: `/pages/records/index?farmId=${currentFarm.value.id}` });
 }
 
 function openStartProduction(): void {

@@ -15,6 +15,8 @@ from app.models.user import User
 from app.schemas.production import (
     CreateProductionRequest,
     EndProductionRequest,
+    FarmProductionPage,
+    FarmProductionResponse,
     ProductionPage,
     ProductionResponse,
     UpdateProductionRequest,
@@ -25,6 +27,7 @@ from app.services.production import (
     delete_production,
     end_production,
     get_production_with_member,
+    list_farm_productions,
     list_plot_productions,
     update_production,
 )
@@ -89,6 +92,51 @@ async def get_plot_productions(
         data=ProductionPage(
             items=[
                 _production_response(production, species) for production, species in productions
+            ],
+            page=page,
+            page_size=page_size,
+            total=total,
+        )
+    )
+
+
+@router.get("/farms/{farm_id}/productions", response_model=ApiResponse[FarmProductionPage])
+async def get_farm_productions(
+    farm_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    industry: Industry | None = None,
+    production_status: Annotated[ProductionStatus | None, Query(alias="status")] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(alias="pageSize", ge=1, le=100)] = 20,
+) -> ApiResponse[FarmProductionPage]:
+    productions, total = await list_farm_productions(
+        session,
+        farm_id=farm_id,
+        user_id=current_user.id,
+        industry=industry,
+        status=production_status,
+        page=page,
+        page_size=page_size,
+    )
+    return ApiResponse.success_response(
+        data=FarmProductionPage(
+            items=[
+                FarmProductionResponse(
+                    id=production.id,
+                    plot_id=plot.id,
+                    plot_name=plot.name,
+                    species_id=species.id,
+                    species_name=species.name,
+                    industry=Industry(species.industry),
+                    individual_unit=IndividualUnit(species.individual_unit),
+                    variety=production.variety,
+                    status=ProductionStatus(production.status),
+                    started_on=production.started_on,
+                    ended_on=production.ended_on,
+                    initial_quantity=production.initial_quantity,
+                )
+                for production, plot, species in productions
             ],
             page=page,
             page_size=page_size,
