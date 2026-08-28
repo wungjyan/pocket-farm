@@ -71,7 +71,17 @@
                 <text v-if="item.variety" class="variety-tag">{{ item.variety }}</text>
                 <text v-if="item.status === 'ENDED'" class="ended-tag">已结束</text>
               </view>
-              <text class="production-meta">{{ productionMeta(item) }}</text>
+              <text class="production-field">地块：{{ item.plotName }}</text>
+              <text class="production-field">开始日期：{{ operationDateLabel(item.startedOn) }}</text>
+              <text
+                v-if="item.status === 'ACTIVE' && item.initialQuantity !== null && item.initialQuantity !== undefined"
+                class="production-field"
+              >
+                初始数量：{{ formatNumber(item.initialQuantity) }}{{ individualUnitLabels[item.individualUnit] }}
+              </text>
+              <text v-else-if="item.endedOn" class="production-field">
+                结束日期：{{ operationDateLabel(item.endedOn) }}
+              </text>
             </view>
             <PfRowChevron />
           </view>
@@ -230,22 +240,6 @@ const selectedOperationTypeLabel = computed(
     operationTypeOptions.value.find((item) => item.id === operationTypeValue.value)?.name ||
     ALL_TYPE_LABEL,
 );
-
-function productionMeta(item: FarmProduction): string {
-  const parts = [item.plotName, `${formatMonthDay(item.startedOn)}开始`];
-  if (item.status === "ENDED") {
-    if (item.endedOn) parts.push(`${formatMonthDay(item.endedOn)}结束`);
-  } else if (item.initialQuantity !== null && item.initialQuantity !== undefined) {
-    parts.push(`初始 ${formatNumber(item.initialQuantity)}${individualUnitLabels[item.individualUnit]}`);
-  }
-  return parts.join(" · ");
-}
-
-function formatMonthDay(value: string): string {
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
-}
 
 function operationDateLabel(value: string): string {
   const date = new Date(value);
@@ -556,9 +550,8 @@ onShow(() => loadPageData());
 
 .production-row {
   display: flex;
-  min-height: 132rpx;
   align-items: center;
-  padding: 0 22rpx;
+  padding: $pf-space-3;
 }
 
 .production-copy {
@@ -603,14 +596,19 @@ onShow(() => loadPageData());
   color: $pf-color-text-muted;
 }
 
-.production-meta {
+.production-field {
   display: block;
-  margin-top: 7rpx;
+  margin-top: $pf-space-1;
   overflow: hidden;
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: 22rpx;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.production-title + .production-field {
+  margin-top: $pf-space-2;
 }
 
 .production-row--ended .production-name {
