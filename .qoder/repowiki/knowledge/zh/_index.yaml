@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-08-21T09:38:02Z"
+exported_at: "2026-08-28T06:39:07Z"
 modules:
     "":
-        dir_name: 掌上农场 Monorepo（pnpm workspace）
-        title: 掌上农场 Monorepo（pnpm workspace）
+        dir_name: 掌上农场 Monorepo（FastAPI + uni-app + VitePress）
+        title: 掌上农场 Monorepo（FastAPI + uni-app + VitePress）
         scope:
             - .gitignore
             - package.json
@@ -22,8 +22,8 @@ modules:
         depends_on: []
         related_to: []
     api_backend:
-        dir_name: Pocket Farm API 后端服务
-        title: Pocket Farm API 后端服务
+        dir_name: Pocket Farm FastAPI 后端应用
+        title: Pocket Farm FastAPI 后端应用
         scope:
             - apps/api/
         source_files: []
@@ -40,8 +40,8 @@ modules:
         depends_on: []
         related_to: []
     api_backend/api_routes:
-        dir_name: API v1 路由与端点层
-        title: API v1 路由与端点层
+        dir_name: API v1 路由与依赖注入层
+        title: API v1 路由与依赖注入层
         scope:
             - apps/api/app/api/v1/endpoints/
             - apps/api/app/api/v1/router.py
@@ -49,10 +49,18 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/tests
+            - path: miniapp_frontend/auth_and_profile
+            - path: miniapp_frontend/farms
+            - path: miniapp_frontend/harvests
+            - path: miniapp_frontend/home_and_settings
+            - path: miniapp_frontend/operations
+            - path: miniapp_frontend/plots
+            - path: miniapp_frontend/productions
     api_backend/core_infrastructure:
-        dir_name: API 应用核心基础设施
-        title: API 应用核心基础设施
+        dir_name: FastAPI 应用核心基础设施
+        title: FastAPI 应用核心基础设施
         scope:
             - apps/api/app/core/
             - apps/api/app/db/
@@ -62,8 +70,8 @@ modules:
         depends_on: []
         related_to: []
     api_backend/farm_domain:
-        dir_name: 农场（Farm）领域服务与数据模型
-        title: 农场（Farm）领域服务与数据模型
+        dir_name: 农场领域服务（模型_模式_业务逻辑）
+        title: 农场领域服务（模型/模式/业务逻辑）
         scope:
             - apps/api/app/services/farm.py
             - apps/api/app/models/farm.py
@@ -117,14 +125,15 @@ modules:
         depends_on: []
         related_to: []
     api_backend/tests:
-        dir_name: API 集成测试套件
-        title: API 集成测试套件
+        dir_name: Pocket Farm FastAPI 后端集成测试套件
+        title: Pocket Farm FastAPI 后端集成测试套件
         scope:
             - apps/api/tests/
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
     api_backend/users_auth_domain:
         dir_name: 用户与认证领域服务
         title: 用户与认证领域服务
@@ -137,8 +146,8 @@ modules:
         depends_on: []
         related_to: []
     docs:
-        dir_name: 掌上农场产品与研发文档站（VitePress）
-        title: 掌上农场产品与研发文档站（VitePress）
+        dir_name: 掌上农场文档站（VitePress）
+        title: 掌上农场文档站（VitePress）
         scope:
             - docs/
         source_files: []
@@ -146,19 +155,21 @@ modules:
         depends_on: []
         related_to: []
     miniapp_frontend:
-        dir_name: 掌上农场小程序（uni-app）
-        title: 掌上农场小程序（uni-app）
+        dir_name: 掌上农场小程序前端（uni-app）
+        title: 掌上农场小程序前端（uni-app）
         scope:
             - apps/miniapp/
         source_files: []
         children:
             - miniapp_frontend/auth_and_profile
+            - miniapp_frontend/business_icons
             - miniapp_frontend/farms
             - miniapp_frontend/harvests
             - miniapp_frontend/home_and_settings
             - miniapp_frontend/operations
             - miniapp_frontend/plots
             - miniapp_frontend/productions
+            - miniapp_frontend/records
         depends_on: []
         related_to: []
     miniapp_frontend/auth_and_profile:
@@ -173,10 +184,21 @@ modules:
         source_files: []
         children: []
         depends_on: []
+        related_to:
+            - path: api_backend/api_routes
+    miniapp_frontend/business_icons:
+        dir_name: 业务图标展示组件（PfBusinessIcon）
+        title: 业务图标展示组件（PfBusinessIcon）
+        scope:
+            - apps/miniapp/src/components/PfBusinessIcon.vue
+            - apps/miniapp/src/static/icons/business/
+        source_files: []
+        children: []
+        depends_on: []
         related_to: []
     miniapp_frontend/farms:
-        dir_name: 农场与地块管理（Farms & Plots）
-        title: 农场与地块管理（Farms & Plots）
+        dir_name: 农场与地块管理页面（Farms & Plots）
+        title: 农场与地块管理页面（Farms & Plots）
         scope:
             - apps/miniapp/src/pages/farms/
             - apps/miniapp/src/pages/farm/
@@ -186,20 +208,23 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
+            - path: miniapp_frontend/plots
     miniapp_frontend/harvests:
-        dir_name: 收获记录管理页面
-        title: 收获记录管理页面
+        dir_name: 收获记录管理（列表_表单_种养选择）
+        title: 收获记录管理（列表/表单/种养选择）
         scope:
             - apps/miniapp/src/pages/harvests/
             - apps/miniapp/src/services/harvest.ts
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
     miniapp_frontend/home_and_settings:
-        dir_name: 首页、设置与物种选择页面
-        title: 首页、设置与物种选择页面
+        dir_name: 首页与设置页面集合
+        title: 首页与设置页面集合
         scope:
             - apps/miniapp/src/pages/home/
             - apps/miniapp/src/pages/index/
@@ -208,10 +233,11 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
     miniapp_frontend/operations:
-        dir_name: 农事记录（Operations）前端页面与服务
-        title: 农事记录（Operations）前端页面与服务
+        dir_name: 农事记录与类型选择页面
+        title: 农事记录与类型选择页面
         scope:
             - apps/miniapp/src/pages/operations/
             - apps/miniapp/src/pages/operation-types/
@@ -219,24 +245,40 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
     miniapp_frontend/plots:
-        dir_name: 农场地块管理页面与服务
-        title: 农场地块管理页面与服务
+        dir_name: 农场地块管理页面与数据服务
+        title: 农场地块管理页面与数据服务
         scope:
             - apps/miniapp/src/pages/plots/
             - apps/miniapp/src/services/plot.ts
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
+            - path: miniapp_frontend/farms
     miniapp_frontend/productions:
-        dir_name: 种养记录页面与服务（Productions）
-        title: 种养记录页面与服务（Productions）
+        dir_name: 种养记录（Productions）页面与数据服务
+        title: 种养记录（Productions）页面与数据服务
         scope:
             - apps/miniapp/src/pages/productions/
             - apps/miniapp/src/services/production.ts
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: api_backend/api_routes
+            - path: miniapp_frontend/records
+    miniapp_frontend/records:
+        dir_name: 种养记录列表页与服务层
+        title: 种养记录列表页与服务层
+        scope:
+            - apps/miniapp/src/pages/records/
+            - apps/miniapp/src/services/production.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: miniapp_frontend/productions

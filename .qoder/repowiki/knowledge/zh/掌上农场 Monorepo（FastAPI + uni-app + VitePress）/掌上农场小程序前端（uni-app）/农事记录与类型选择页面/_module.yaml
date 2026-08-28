@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: miniapp_frontend/operations
+title: 农事记录与类型选择页面
+scope:
+    - apps/miniapp/src/pages/operations/
+    - apps/miniapp/src/pages/operation-types/
+    - apps/miniapp/src/services/operation.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/api_routes

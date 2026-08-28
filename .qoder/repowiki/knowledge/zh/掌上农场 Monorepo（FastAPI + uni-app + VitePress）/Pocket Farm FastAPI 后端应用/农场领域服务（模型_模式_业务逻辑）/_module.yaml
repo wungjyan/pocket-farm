@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: api_backend/farm_domain
+title: 农场领域服务（模型/模式/业务逻辑）
+scope:
+    - apps/api/app/services/farm.py
+    - apps/api/app/models/farm.py
+    - apps/api/app/schemas/farm.py
+source_files: []
+depends_on: []
+related_to: []

@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: docs
-title: 掌上农场产品与研发文档站（VitePress）
-scope:
-    - docs/
-source_files: []
-depends_on: []
-related_to: []

@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: miniapp_frontend/plots
+title: 农场地块管理页面与数据服务
+scope:
+    - apps/miniapp/src/pages/plots/
+    - apps/miniapp/src/services/plot.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/api_routes
+    - path: miniapp_frontend/farms

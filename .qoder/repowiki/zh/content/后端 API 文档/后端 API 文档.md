@@ -13,11 +13,21 @@
 - [users.py](file://apps/api/app/api/v1/endpoints/users.py)
 - [farms.py](file://apps/api/app/api/v1/endpoints/farms.py)
 - [plots.py](file://apps/api/app/api/v1/endpoints/plots.py)
+- [plot_service.py](file://apps/api/app/services/plot.py)
+- [farm_schema.py](file://apps/api/app/schemas/farm.py)
 - [operations.py](file://apps/api/app/api/v1/endpoints/operations.py)
 - [harvests.py](file://apps/api/app/api/v1/endpoints/harvests.py)
 - [productions.py](file://apps/api/app/api/v1/endpoints/productions.py)
 - [species.py](file://apps/api/app/api/v1/endpoints/species.py)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增地块摘要筛选 API 端点 `/api/v1/farms/{farm_id}/plot-summaries`，支持按空闲状态和物种筛选
+- 新增地块筛选选项 API 端点 `/api/v1/farms/{farm_id}/plot-filter-options`，提供可用的筛选条件
+- 增强地块管理功能，使用 SQLAlchemy exists() 子查询实现高效的数据库筛选操作
+- 添加 PlotSummaryFilter 枚举类型，支持 ALL、IDLE、SPECIES 三种筛选模式
+- 完善地块摘要响应结构，包含活跃物种信息和分页支持
 
 ## 目录
 1. [简介](#简介)
@@ -49,6 +59,8 @@ C --> H["生产模块 /productions/*"]
 C --> I["作业模块 /operations/*"]
 C --> J["采收模块 /harvests/*"]
 C --> K["物种枚举 /species/*"]
+G --> L["地块摘要筛选<br/>/plot-summaries"]
+G --> M["地块筛选选项<br/>/plot-filter-options"]
 ```
 
 图表来源
@@ -156,14 +168,39 @@ Auth-->>C : "{success : true, data : {access_token, user}}"
 - [farms.py:58-199](file://apps/api/app/api/v1/endpoints/farms.py#L58-L199)
 
 ### 地块相关接口
+
+**已更新** 新增地块摘要筛选和筛选选项功能，提供更强大的地块管理能力
+
+#### 基础地块操作
 - 列出农场地块：GET /api/v1/plots/farms/{farm_id}/plots?page=...&pageSize=...
 - 创建地块：POST /api/v1/plots/farms/{farm_id}/plots
 - 查看地块：GET /api/v1/plots/{plot_id}
 - 查看地块详情（含生产、作业、采收汇总）：GET /api/v1/plots/{plot_id}/detail
 - 编辑地块：PATCH /api/v1/plots/{plot_id}
 
+#### 新增：地块摘要筛选
+- **列出地块摘要**：GET /api/v1/farms/{farm_id}/plot-summaries
+  - 支持筛选参数：
+    - `filter`: 筛选类型（ALL | IDLE | SPECIES），默认为 ALL
+    - `speciesId`: 当 filter 为 SPECIES 时的必需参数，指定物种 ID
+  - 响应包含每个地块的活跃物种列表
+  - 支持分页：page、pageSize
+
+#### 新增：地块筛选选项
+- **获取筛选选项**：GET /api/v1/farms/{farm_id}/plot-filter-options
+  - 返回可用的筛选条件：
+    - `activeSpecies`: 当前农场中活跃的物种列表
+    - `idlePlotCount`: 空闲地块数量统计
+
+**技术实现亮点**：
+- 使用 SQLAlchemy `exists()` 子查询优化数据库性能
+- 支持复杂的多条件组合筛选
+- 自动验证参数依赖关系（如 SPECIES 筛选必须提供 speciesId）
+
 章节来源
-- [plots.py:139-246](file://apps/api/app/api/v1/endpoints/plots.py#L139-L246)
+- [plots.py:162-335](file://apps/api/app/api/v1/endpoints/plots.py#L162-L335)
+- [plot_service.py:75-211](file://apps/api/app/services/plot.py#L75-L211)
+- [farm_schema.py:149-173](file://apps/api/app/schemas/farm.py#L149-L173)
 
 ### 生产相关接口
 - 列出地块生产：GET /api/v1/productions/plots/{plot_id}/productions?status=...&page=...&pageSize=...
@@ -218,19 +255,15 @@ R --> PR["生产端点"]
 R --> O["作业端点"]
 R --> H["采收端点"]
 R --> S["物种端点"]
-A --> SEC["安全模块"]
-U --> SEC
-F --> SEC
-P --> SEC
-PR --> SEC
-O --> SEC
-H --> SEC
-S --> SEC
+P --> PS["地块服务层"]
+PS --> DB["数据库查询优化"]
+DB --> SQ["SQLAlchemy exists() 子查询"]
 ```
 
 图表来源
 - [router.py:12-20](file://apps/api/app/api/v1/router.py#L12-L20)
 - [security.py:8-28](file://apps/api/app/core/security.py#L8-L28)
+- [plot_service.py:109-129](file://apps/api/app/services/plot.py#L109-L129)
 
 章节来源
 - [router.py:1-21](file://apps/api/app/api/v1/router.py#L1-L21)
@@ -241,6 +274,7 @@ S --> SEC
 - 时区处理：部分时间字段在服务层统一转换为 UTC 再序列化，确保跨时区一致性。
 - 数据库会话：使用异步会话提升并发能力，注意在长事务中减少锁竞争。
 - 缓存建议：对只读且变化不频繁的枚举数据（如作业类型、物种）可在网关或客户端侧做短期缓存。
+- **查询优化**：新增的地块筛选功能使用 SQLAlchemy `exists()` 子查询，避免 N+1 查询问题，显著提升大数据量下的查询性能。
 
 ## 故障排查指南
 - 统一错误响应结构：
@@ -261,6 +295,7 @@ S --> SEC
   2. 检查请求体是否符合对应端点的 Pydantic 模型约束
   3. 关注 error.details 中的具体校验错误或堆栈信息
   4. 核对资源 ID 是否存在且当前用户具备相应权限
+  5. **新增**：对于地块筛选接口，检查 filter 参数与 speciesId 参数的依赖关系是否正确
 
 章节来源
 - [response.py:10-39](file://apps/api/app/schemas/response.py#L10-L39)
@@ -268,7 +303,7 @@ S --> SEC
 - [exceptions.py:35-87](file://apps/api/app/core/exceptions.py#L35-L87)
 
 ## 结论
-Pocket Farm 后端 API 采用清晰的模块化设计与统一的响应/异常规范，结合 JWT 认证与依赖注入实现安全的权限控制。通过 v1 前缀的版本化管理，便于后续演进与向后兼容。建议客户端严格遵循分页、时区与错误处理约定，以获得稳定可靠的集成体验。
+Pocket Farm 后端 API 采用清晰的模块化设计与统一的响应/异常规范，结合 JWT 认证与依赖注入实现安全的权限控制。通过 v1 前缀的版本化管理，便于后续演进与向后兼容。**最新的地块筛选功能通过高效的数据库查询优化，为用户提供更强大的地块管理能力**。建议客户端严格遵循分页、时区与错误处理约定，以获得稳定可靠的集成体验。
 
 ## 附录：API 端点规范
 
@@ -316,14 +351,67 @@ Pocket Farm 后端 API 采用清晰的模块化设计与统一的响应/异常�
 - [farms.py:58-199](file://apps/api/app/api/v1/endpoints/farms.py#L58-L199)
 
 ### 地块
+
+**已更新** 新增地块摘要筛选和筛选选项功能
+
+#### 基础地块操作
 - GET /api/v1/plots/farms/{farm_id}/plots?page=...&pageSize=...
 - POST /api/v1/plots/farms/{farm_id}/plots
 - GET /api/v1/plots/{plot_id}
 - GET /api/v1/plots/{plot_id}/detail
 - PATCH /api/v1/plots/{plot_id}
 
+#### 新增：地块摘要筛选
+- **GET /api/v1/farms/{farm_id}/plot-summaries**
+  - 查询参数：
+    - `page`: 页码，默认 1
+    - `pageSize`: 每页条数，默认 20，最大 100
+    - `filter`: 筛选类型，可选值：ALL（全部）、IDLE（空闲）、SPECIES（按物种），默认 ALL
+    - `speciesId`: 当 filter 为 SPECIES 时的必需参数，指定物种 ID
+  - 成功响应：
+    ```json
+    {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": 1,
+            "name": "地块名称",
+            "type": "FIELD",
+            "activeSpecies": [
+              {"id": 1, "name": "黄瓜"},
+              {"id": 2, "name": "生菜"}
+            ]
+          }
+        ],
+        "page": 1,
+        "pageSize": 20,
+        "total": 10
+      }
+    }
+    ```
+  - 错误响应：当 filter 为 SPECIES 但未提供 speciesId 时返回 422 验证错误
+
+#### 新增：地块筛选选项
+- **GET /api/v1/farms/{farm_id}/plot-filter-options**
+  - 成功响应：
+    ```json
+    {
+      "success": true,
+      "data": {
+        "activeSpecies": [
+          {"id": 1, "name": "黄瓜"},
+          {"id": 2, "name": "生菜"}
+        ],
+        "idlePlotCount": 5
+      }
+    }
+    ```
+
 章节来源
-- [plots.py:139-246](file://apps/api/app/api/v1/endpoints/plots.py#L139-L246)
+- [plots.py:162-335](file://apps/api/app/api/v1/endpoints/plots.py#L162-L335)
+- [plot_service.py:97-211](file://apps/api/app/services/plot.py#L97-L211)
+- [farm_schema.py:149-173](file://apps/api/app/schemas/farm.py#L149-L173)
 
 ### 生产
 - GET /api/v1/productions/plots/{plot_id}/productions?status=...&page=...&pageSize=...

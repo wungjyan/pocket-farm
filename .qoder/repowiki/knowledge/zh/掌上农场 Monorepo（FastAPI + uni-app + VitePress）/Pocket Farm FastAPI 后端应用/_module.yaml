@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: api_backend
+title: Pocket Farm FastAPI 后端应用
+scope:
+    - apps/api/
+source_files: []
+depends_on: []
+related_to: []

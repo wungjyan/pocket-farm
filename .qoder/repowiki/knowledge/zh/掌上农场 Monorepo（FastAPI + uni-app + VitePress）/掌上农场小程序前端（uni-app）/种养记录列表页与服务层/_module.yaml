@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: miniapp_frontend/records
+title: 种养记录列表页与服务层
+scope:
+    - apps/miniapp/src/pages/records/
+    - apps/miniapp/src/services/production.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: miniapp_frontend/productions

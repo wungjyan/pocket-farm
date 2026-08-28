@@ -1,0 +1,18 @@
+schema_version: 1
+module_path: api_backend/api_routes
+title: API v1 路由与依赖注入层
+scope:
+    - apps/api/app/api/v1/endpoints/
+    - apps/api/app/api/v1/router.py
+    - apps/api/app/api/deps.py
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/tests
+    - path: miniapp_frontend/auth_and_profile
+    - path: miniapp_frontend/farms
+    - path: miniapp_frontend/harvests
+    - path: miniapp_frontend/home_and_settings
+    - path: miniapp_frontend/operations
+    - path: miniapp_frontend/plots
+    - path: miniapp_frontend/productions

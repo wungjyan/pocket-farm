@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: miniapp_frontend/productions
+title: 种养记录（Productions）页面与数据服务
+scope:
+    - apps/miniapp/src/pages/productions/
+    - apps/miniapp/src/services/production.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: api_backend/api_routes
+    - path: miniapp_frontend/records
