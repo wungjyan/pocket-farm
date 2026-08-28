@@ -65,11 +65,7 @@
             <PfRowChevron />
           </view>
         </view>
-        <view v-else class="empty-state pf-card">
-          <PfBusinessIcon name="clock-3" size="empty" />
-          <text class="empty-state__title">没有符合条件的种养</text>
-          <text v-if="hasFilters" class="empty-state__action pf-tappable" @tap="clearFilters">查看全部种养</text>
-        </view>
+        <PfEmptyState v-else />
       </template>
 
       <view v-else class="placeholder-state pf-card">
@@ -86,6 +82,7 @@
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
@@ -106,8 +103,7 @@ const tabs: { value: RecordsTab; label: string }[] = [
   { value: "HARVEST", label: "收获" },
 ];
 
-const industryOptions: { value: Industry | ""; label: string }[] = [
-  { value: "", label: "全部行业" },
+const industryOptions: { value: Industry; label: string }[] = [
   { value: "AGRICULTURE", label: "农业" },
   { value: "FORESTRY", label: "林业" },
   { value: "LIVESTOCK", label: "牧业" },
@@ -115,9 +111,9 @@ const industryOptions: { value: Industry | ""; label: string }[] = [
 ];
 
 const statusOptions: { value: ProductionStatus | ""; label: string }[] = [
+  { value: "", label: "全部状态" },
   { value: "ACTIVE", label: "进行中" },
   { value: "ENDED", label: "已结束" },
-  { value: "", label: "全部状态" },
 ];
 
 const individualUnitLabels: Record<IndividualUnit, string> = {
@@ -130,7 +126,7 @@ const individualUnitLabels: Record<IndividualUnit, string> = {
 
 const farmId = ref(0);
 const activeTab = ref<RecordsTab>("PRODUCTION");
-const industryValue = ref<Industry | "">("");
+const industryValue = ref<Industry>("AGRICULTURE");
 const statusValue = ref<ProductionStatus | "">("ACTIVE");
 const productions = ref<FarmProduction[]>([]);
 const productionTotal = ref(0);
@@ -146,7 +142,6 @@ const statusIndex = computed(() =>
 );
 const selectedIndustryLabel = computed(() => industryOptions[industryIndex.value].label);
 const selectedStatusLabel = computed(() => statusOptions[statusIndex.value].label);
-const hasFilters = computed(() => Boolean(industryValue.value || statusValue.value !== "ACTIVE"));
 
 function productionMeta(item: FarmProduction): string {
   const parts = [item.plotName, `${formatMonthDay(item.startedOn)}开始`];
@@ -183,11 +178,6 @@ function handleStatusChange(event: { detail: { value: number | string } }): void
   loadProductions();
 }
 
-function clearFilters(): void {
-  industryValue.value = "";
-  statusValue.value = "ACTIVE";
-  loadProductions();
-}
 
 function openProduction(productionId: number): void {
   uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
@@ -415,29 +405,5 @@ onShow(() => loadPageData());
   margin-top: 14rpx;
 }
 
-.empty-state,
-.placeholder-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 42rpx 28rpx 36rpx;
-  text-align: center;
-}
 
-.empty-state__title,
-.placeholder-state__title {
-  display: block;
-  margin-top: 24rpx;
-  color: $pf-color-text;
-  font-size: 28rpx;
-  font-weight: 650;
-}
-
-.empty-state__action {
-  display: block;
-  margin-top: 16rpx;
-  color: $pf-color-primary;
-  font-size: 23rpx;
-  font-weight: 600;
-}
 </style>
