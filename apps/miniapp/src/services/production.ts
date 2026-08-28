@@ -62,8 +62,18 @@ export interface FarmProductionPage {
 export interface FarmProductionListParams {
   industry?: Industry;
   status?: ProductionStatus;
+  speciesId?: number;
   page?: number;
   pageSize?: number;
+}
+
+export interface ProductionSpeciesOption {
+  id: number;
+  name: string;
+}
+
+export interface ProductionFilterOptions {
+  species: ProductionSpeciesOption[];
 }
 
 export interface ProductionInput {
@@ -107,9 +117,20 @@ export function getFarmProductions(
   const parameters = [`page=${params.page || 1}`, `pageSize=${params.pageSize || 20}`];
   if (params.industry) parameters.push(`industry=${params.industry}`);
   if (params.status) parameters.push(`status=${params.status}`);
+  if (params.speciesId) parameters.push(`speciesId=${params.speciesId}`);
   return request<FarmProductionPage>({
     url: `/farms/${farmId}/productions?${parameters.join("&")}`,
   });
+}
+
+export function getProductionFilterOptions(
+  farmId: number,
+  industry?: Industry,
+): Promise<ProductionFilterOptions> {
+  const parameters: string[] = [];
+  if (industry) parameters.push(`industry=${industry}`);
+  const query = parameters.length ? `?${parameters.join("&")}` : "";
+  return request<ProductionFilterOptions>({ url: `/farms/${farmId}/production-filter-options${query}` });
 }
 
 export function createProduction(plotId: number, input: ProductionInput): Promise<Production> {

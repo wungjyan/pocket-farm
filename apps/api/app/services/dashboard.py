@@ -29,9 +29,7 @@ async def get_farm_dashboard(
 
     # 1. All plots for the farm
     plots_result = await session.execute(
-        select(Plot)
-        .where(Plot.farm_id == farm_id)
-        .order_by(Plot.created_at.desc(), Plot.id.desc())
+        select(Plot).where(Plot.farm_id == farm_id).order_by(Plot.created_at.desc(), Plot.id.desc())
     )
     plots = list(plots_result.scalars())
 

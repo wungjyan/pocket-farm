@@ -217,3 +217,12 @@ class FarmProductionPage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class ProductionSpeciesOption(BaseModel):
+    id: int
+    name: str
+
+
+class ProductionFilterOptionsResponse(BaseModel):
+    species: list[ProductionSpeciesOption]

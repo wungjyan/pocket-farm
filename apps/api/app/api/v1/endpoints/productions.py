@@ -17,8 +17,10 @@ from app.schemas.production import (
     EndProductionRequest,
     FarmProductionPage,
     FarmProductionResponse,
+    ProductionFilterOptionsResponse,
     ProductionPage,
     ProductionResponse,
+    ProductionSpeciesOption,
     UpdateProductionRequest,
 )
 from app.schemas.response import ApiResponse
@@ -26,6 +28,7 @@ from app.services.production import (
     create_production,
     delete_production,
     end_production,
+    get_farm_production_filter_options,
     get_production_with_member,
     list_farm_productions,
     list_plot_productions,
@@ -107,6 +110,7 @@ async def get_farm_productions(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     industry: Industry | None = None,
     production_status: Annotated[ProductionStatus | None, Query(alias="status")] = None,
+    species_id: Annotated[int | None, Query(alias="speciesId", gt=0)] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(alias="pageSize", ge=1, le=100)] = 20,
 ) -> ApiResponse[FarmProductionPage]:
@@ -116,6 +120,7 @@ async def get_farm_productions(
         user_id=current_user.id,
         industry=industry,
         status=production_status,
+        species_id=species_id,
         page=page,
         page_size=page_size,
     )
@@ -141,6 +146,32 @@ async def get_farm_productions(
             page=page,
             page_size=page_size,
             total=total,
+        )
+    )
+
+
+@router.get(
+    "/farms/{farm_id}/production-filter-options",
+    response_model=ApiResponse[ProductionFilterOptionsResponse],
+)
+async def list_farm_production_filter_options(
+    farm_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    industry: Industry | None = None,
+) -> ApiResponse[ProductionFilterOptionsResponse]:
+    species_options = await get_farm_production_filter_options(
+        session,
+        farm_id=farm_id,
+        user_id=current_user.id,
+        industry=industry,
+    )
+    return ApiResponse.success_response(
+        data=ProductionFilterOptionsResponse(
+            species=[
+                ProductionSpeciesOption(id=species_id, name=species_name)
+                for species_id, species_name in species_options
+            ]
         )
     )
 

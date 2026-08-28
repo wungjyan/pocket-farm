@@ -149,6 +149,41 @@ def setup_farm() -> tuple[str, int]:
     return token, farm["id"]
 
 
+def setup_species_farm() -> tuple[str, int, dict[str, int]]:
+    """创建农场并准备跨种类的种养数据。
+
+    返回 (owner_token, farm_id, species_ids)。数据顺序：
+    - 黄瓜（农业）1 号大棚，5 天前开始，已结束（黄瓜仅存在于已结束状态）
+    - 生菜（农业）1 号大棚，3 天前开始，进行中
+    - 青鱼（渔业）东鱼塘，2 天前开始，进行中
+    - 大豆（农业）东鱼塘，1 天前开始，进行中
+    """
+    token = login(OWNER_PHONE)
+    farm = create_farm(token, "农场种类筛选测试")
+    greenhouse = create_plot(token, farm["id"], "1号大棚", "GREENHOUSE")
+    pond = create_plot(token, farm["id"], "东鱼塘", "POND")
+    cucumber = species_id(token, "黄瓜")
+    lettuce = species_id(token, "生菜")
+    black_carp = species_id(token, "青鱼")
+    soybean = species_id(token, "大豆")
+
+    ended_cucumber = start_production(token, greenhouse["id"], cucumber, "AGRICULTURE", 5)
+    start_production(token, greenhouse["id"], lettuce, "AGRICULTURE", 3)
+    start_production(token, pond["id"], black_carp, "FISHERY", 2)
+    start_production(token, pond["id"], soybean, "AGRICULTURE", 1)
+    end_production(token, ended_cucumber["id"])
+    return (
+        token,
+        farm["id"],
+        {
+            "黄瓜": cucumber,
+            "生菜": lettuce,
+            "青鱼": black_carp,
+            "大豆": soybean,
+        },
+    )
+
+
 def test_farm_productions_requires_farm_membership() -> None:
     owner_token, farm_id = setup_farm()
     outsider_token = login(OUTSIDER_PHONE)
@@ -277,3 +312,93 @@ def test_farm_productions_rejects_invalid_industry() -> None:
     response = call(token, f"/api/v1/farms/{farm_id}/productions?industry=INVALID")
 
     assert response.status_code == 422
+
+
+def test_farm_productions_species_filter() -> None:
+    token, farm_id, species_ids = setup_species_farm()
+
+    response = call(
+        token,
+        f"/api/v1/farms/{farm_id}/productions?speciesId={species_ids['黄瓜']}&pageSize=100",
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["total"] == 1
+    assert data["items"][0]["speciesId"] == species_ids["黄瓜"]
+    assert data["items"][0]["status"] == "ENDED"
+
+    combined = call(
+        token,
+        f"/api/v1/farms/{farm_id}/productions"
+        f"?speciesId={species_ids['生菜']}&status=ACTIVE&pageSize=100",
+    )
+    assert combined.status_code == 200
+    combined_data = combined.json()["data"]
+    assert combined_data["total"] == 1
+    assert combined_data["items"][0]["speciesName"] == "生菜"
+
+    missing = call(
+        token,
+        f"/api/v1/farms/{farm_id}/productions"
+        f"?speciesId={species_ids['黄瓜']}&status=ACTIVE&pageSize=100",
+    )
+    assert missing.status_code == 200
+    assert missing.json()["data"]["total"] == 0
+
+    invalid = call(token, f"/api/v1/farms/{farm_id}/productions?speciesId=0")
+    assert invalid.status_code == 422
+
+
+def test_farm_production_filter_options_species() -> None:
+    owner_token, farm_id, species_ids = setup_species_farm()
+
+    response = call(owner_token, f"/api/v1/farms/{farm_id}/production-filter-options")
+
+    assert response.status_code == 200
+    # 当前农场种植过的种类（含已结束），去重并按名称排序。
+    assert response.json()["data"]["species"] == [
+        {"id": species_ids["大豆"], "name": "大豆"},
+        {"id": species_ids["生菜"], "name": "生菜"},
+        {"id": species_ids["青鱼"], "name": "青鱼"},
+        {"id": species_ids["黄瓜"], "name": "黄瓜"},
+    ]
+
+    # 行业筛选联动：品种选项只保留对应行业下种植过的种类。
+    fishery = call(
+        owner_token,
+        f"/api/v1/farms/{farm_id}/production-filter-options?industry=FISHERY",
+    )
+    assert fishery.status_code == 200
+    assert fishery.json()["data"]["species"] == [{"id": species_ids["青鱼"], "name": "青鱼"}]
+
+    agriculture = call(
+        owner_token,
+        f"/api/v1/farms/{farm_id}/production-filter-options?industry=AGRICULTURE",
+    )
+    assert agriculture.status_code == 200
+    assert [item["name"] for item in agriculture.json()["data"]["species"]] == [
+        "大豆",
+        "生菜",
+        "黄瓜",
+    ]
+
+    outsider_token = login(OUTSIDER_PHONE)
+    denied = call(outsider_token, f"/api/v1/farms/{farm_id}/production-filter-options")
+    assert denied.status_code == 404
+    assert denied.json()["error"]["code"] == "NOT_FOUND"
+
+
+def test_farm_production_filter_options_excludes_other_farms() -> None:
+    owner_token, farm_id, _ = setup_species_farm()
+    outsider_token = login(OUTSIDER_PHONE)
+    other_farm = create_farm(outsider_token, "其他种类农场")
+    other_plot = create_plot(outsider_token, other_farm["id"], "其他大棚", "GREENHOUSE")
+    rice = species_id(outsider_token, "水稻")
+    start_production(outsider_token, other_plot["id"], rice, "AGRICULTURE", 1)
+
+    response = call(owner_token, f"/api/v1/farms/{farm_id}/production-filter-options")
+
+    assert response.status_code == 200
+    listed_ids = {item["id"] for item in response.json()["data"]["species"]}
+    assert rice not in listed_ids

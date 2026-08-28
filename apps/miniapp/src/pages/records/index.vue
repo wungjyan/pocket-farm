@@ -30,6 +30,18 @@
           <picker
             class="filter-picker-wrap"
             mode="selector"
+            :range="varietyPickerOptions"
+            :value="varietyIndex"
+            @change="handleVarietyChange"
+          >
+            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedVarietyLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+            </view>
+          </picker>
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
             :range="statusOptions.map((item) => item.label)"
             :value="statusIndex"
             @change="handleStatusChange"
@@ -39,7 +51,6 @@
               <uv-icon name="arrow-down" size="15" color="#7F8B82" />
             </view>
           </picker>
-          <text class="filter-count">{{ loading ? "–" : `${productionTotal} 条` }}</text>
         </view>
 
         <view v-if="loading" class="state-card pf-card">
@@ -89,7 +100,9 @@ import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
 import {
   getFarmProductions,
+  getProductionFilterOptions,
   type FarmProduction,
+  type ProductionSpeciesOption,
 } from "../../services/production";
 import type { IndividualUnit, Industry } from "../../services/species";
 import type { ProductionStatus } from "../../services/production";
@@ -128,11 +141,14 @@ const farmId = ref(0);
 const activeTab = ref<RecordsTab>("PRODUCTION");
 const industryValue = ref<Industry>("AGRICULTURE");
 const statusValue = ref<ProductionStatus | "">("ACTIVE");
+const varietyOptions = ref<ProductionSpeciesOption[]>([]);
+const varietyValue = ref(0);
 const productions = ref<FarmProduction[]>([]);
-const productionTotal = ref(0);
 const loading = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const { currentFarm } = useFarmContext();
+
+const ALL_VARIETY_LABEL = "全部品种";
 
 const industryIndex = computed(() =>
   Math.max(0, industryOptions.findIndex((item) => item.value === industryValue.value)),
@@ -142,6 +158,18 @@ const statusIndex = computed(() =>
 );
 const selectedIndustryLabel = computed(() => industryOptions[industryIndex.value].label);
 const selectedStatusLabel = computed(() => statusOptions[statusIndex.value].label);
+const varietyPickerOptions = computed(() => [
+  ALL_VARIETY_LABEL,
+  ...varietyOptions.value.map((item) => item.name),
+]);
+const varietyIndex = computed(() => {
+  if (!varietyValue.value) return 0;
+  const index = varietyOptions.value.findIndex((item) => item.id === varietyValue.value);
+  return index >= 0 ? index + 1 : 0;
+});
+const selectedVarietyLabel = computed(
+  () => varietyOptions.value.find((item) => item.id === varietyValue.value)?.name || ALL_VARIETY_LABEL,
+);
 
 function productionMeta(item: FarmProduction): string {
   const parts = [item.plotName, `${formatMonthDay(item.startedOn)}开始`];
@@ -168,6 +196,8 @@ function handleIndustryChange(event: { detail: { value: number | string } }): vo
   const selected = industryOptions[Number(event.detail.value)];
   if (!selected || selected.value === industryValue.value) return;
   industryValue.value = selected.value;
+  varietyValue.value = 0;
+  loadVarietyOptions();
   loadProductions();
 }
 
@@ -175,6 +205,15 @@ function handleStatusChange(event: { detail: { value: number | string } }): void
   const selected = statusOptions[Number(event.detail.value)];
   if (!selected || selected.value === statusValue.value) return;
   statusValue.value = selected.value;
+  loadProductions();
+}
+
+function handleVarietyChange(event: { detail: { value: number | string } }): void {
+  const index = Number(event.detail.value);
+  const selected = varietyOptions.value[index - 1];
+  const targetId = index > 0 && selected ? selected.id : 0;
+  if (targetId === varietyValue.value) return;
+  varietyValue.value = targetId;
   loadProductions();
 }
 
@@ -192,7 +231,6 @@ async function loadProductions(): Promise<void> {
   const targetFarmId = farmId.value;
   if (!targetFarmId) {
     productions.value = [];
-    productionTotal.value = 0;
     return;
   }
   loading.value = true;
@@ -200,12 +238,12 @@ async function loadProductions(): Promise<void> {
     const page = await getFarmProductions(targetFarmId, {
       industry: industryValue.value || undefined,
       status: statusValue.value || undefined,
+      speciesId: varietyValue.value || undefined,
       page: 1,
       pageSize: 100,
     });
     if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
     productions.value = page.items;
-    productionTotal.value = page.total;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -220,18 +258,46 @@ async function loadProductions(): Promise<void> {
   }
 }
 
+async function loadVarietyOptions(): Promise<void> {
+  const targetFarmId = farmId.value;
+  if (!targetFarmId) {
+    varietyOptions.value = [];
+    return;
+  }
+  try {
+    const options = await getProductionFilterOptions(targetFarmId, industryValue.value || undefined);
+    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+    varietyOptions.value = options.species;
+    if (varietyValue.value && !options.species.some((item) => item.id === varietyValue.value)) {
+      varietyValue.value = 0;
+      await loadProductions();
+    }
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "筛选选项加载失败",
+    });
+  }
+}
+
 async function loadPageData(): Promise<void> {
   const currentFarmId = currentFarm.value?.id || 0;
   if (!currentFarmId) {
     farmId.value = 0;
+    varietyValue.value = 0;
+    varietyOptions.value = [];
     productions.value = [];
-    productionTotal.value = 0;
     return;
   }
   if (currentFarmId !== farmId.value) {
     farmId.value = currentFarmId;
+    varietyValue.value = 0;
   }
-  await loadProductions();
+  await Promise.all([loadVarietyOptions(), loadProductions()]);
 }
 
 onLoad((query) => {
@@ -286,6 +352,8 @@ onShow(() => loadPageData());
 
 .filter-picker-wrap {
   display: block;
+  flex: 1;
+  min-width: 0;
 }
 
 .filter-picker-wrap + .filter-picker-wrap {
@@ -293,7 +361,7 @@ onShow(() => loadPageData());
 }
 
 .filter-picker {
-  display: flex;
+  display: inline-flex;
   min-height: 88rpx;
   box-sizing: border-box;
   align-items: center;
@@ -306,19 +374,17 @@ onShow(() => loadPageData());
 }
 
 .filter-picker__label {
+  overflow: hidden;
   color: $pf-color-text-secondary;
   font-size: 25rpx;
   font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .filter-picker .uv-icon {
   margin-left: 8rpx;
-}
-
-.filter-count {
-  margin-left: auto;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
+  flex-shrink: 0;
 }
 
 .production-list {

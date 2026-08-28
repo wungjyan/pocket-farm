@@ -146,6 +146,7 @@ async def list_farm_productions(
     user_id: int,
     industry: Industry | None,
     status: ProductionStatus | None,
+    species_id: int | None,
     page: int,
     page_size: int,
 ) -> tuple[list[tuple[Production, Plot, Species]], int]:
@@ -155,6 +156,8 @@ async def list_farm_productions(
         filters.append(Production.status == status)
     if industry is not None:
         filters.append(Species.industry == industry)
+    if species_id is not None:
+        filters.append(Production.species_id == species_id)
     total = await session.scalar(
         select(func.count())
         .select_from(Production)
@@ -176,6 +179,28 @@ async def list_farm_productions(
         .limit(page_size)
     )
     return list(result.all()), int(total or 0)
+
+
+async def get_farm_production_filter_options(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+    industry: Industry | None,
+) -> list[tuple[int, str]]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    filters = [Plot.farm_id == farm_id]
+    if industry is not None:
+        filters.append(Species.industry == industry)
+    result = await session.execute(
+        select(Species.id, Species.name)
+        .join(Production, Production.species_id == Species.id)
+        .join(Plot, Plot.id == Production.plot_id)
+        .where(*filters)
+        .distinct()
+        .order_by(Species.name.asc(), Species.id.asc())
+    )
+    return list(result.all())
 
 
 async def get_production_with_member(
