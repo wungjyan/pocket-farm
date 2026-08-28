@@ -79,33 +79,22 @@ import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
-import { getFarmMembers, type FarmMember } from "../../services/farm";
 import { useFarmContext } from "../../services/farm-context";
-import { getPlotHarvests, type HarvestRecord, type QuantityUnit } from "../../services/harvest";
+import { getFarmDashboard, type FarmDashboardResponse } from "../../services/home";
 import { ApiRequestError } from "../../services/http";
-import { getPlotOperations, type FarmOperation } from "../../services/operation";
-import { getFarmPlots, type Plot } from "../../services/plot";
-import { getPlotProductions, type Production } from "../../services/production";
 import { getCurrentUser, type User } from "../../services/user";
 import { formatNumber } from "../../utils/number";
-import type { Industry } from "../../services/species";
+import type { QuantityUnit } from "../../services/harvest";
 
 type HomeActivity =
-  | { type: "operation"; id: number; timestamp: string; operatorId: number; plot: Plot; operation: FarmOperation }
-  | { type: "harvest"; id: number; timestamp: string; operatorId: number; plot: Plot; harvest: HarvestRecord; production: Production | null };
-
-interface PlotDashboardData {
-  plot: Plot;
-  productions: Production[];
-  operations: FarmOperation[];
-  harvests: HarvestRecord[];
-}
+  | { type: "operation"; id: number; timestamp: string; operatorId: number; plotName: string; plotId: number; item: FarmDashboardResponse["recentOperations"][number] }
+  | { type: "harvest"; id: number; timestamp: string; operatorId: number; plotName: string; plotId: number; item: FarmDashboardResponse["recentHarvests"][number] };
 
 const user = ref<User | null>(null);
 const { currentFarm, currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
 const hasFarm = hasCurrentFarm;
 const recentActivities = ref<HomeActivity[]>([]);
-const members = ref<FarmMember[]>([]);
+const members = ref<FarmDashboardResponse["members"]>([]);
 const loadingDashboard = ref(false);
 const dashboardError = ref("");
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
@@ -155,24 +144,29 @@ async function loadDashboard(): Promise<void> {
   loadingDashboard.value = true;
   dashboardError.value = "";
   try {
-    const [plotPage, memberPage] = await Promise.all([getFarmPlots(farm.id), getFarmMembers(farm.id)]);
-    const plotData: PlotDashboardData[] = await Promise.all(
-      plotPage.items.map(async (plot) => {
-        const [productionPage, operationPage, harvestPage] = await Promise.all([
-          getPlotProductions(plot.id, undefined, 1, 100),
-          getPlotOperations(plot.id, 1, 5),
-          getPlotHarvests(plot.id, 1, 5),
-        ]);
-        return { plot, productions: productionPage.items, operations: operationPage.items, harvests: harvestPage.items };
-      }),
-    );
+    const dashboard = await getFarmDashboard(farm.id);
     if (currentFarm.value?.id !== farm.id) return;
-    members.value = memberPage.items;
-    recentActivities.value = plotData
-      .flatMap(({ plot, productions, operations, harvests }): HomeActivity[] => [
-        ...operations.map((operation) => ({ type: "operation" as const, id: operation.id, timestamp: operation.operatedAt, operatorId: operation.operatorId, plot, operation })),
-        ...harvests.map((harvest) => ({ type: "harvest" as const, id: harvest.id, timestamp: harvest.harvestedAt, operatorId: harvest.operatorId, plot, harvest, production: productions.find((production) => production.id === harvest.productionId) || null })),
-      ])
+    members.value = dashboard.members;
+    recentActivities.value = [
+      ...dashboard.recentOperations.map((item): HomeActivity => ({
+        type: "operation" as const,
+        id: item.operation.id,
+        timestamp: item.operation.operatedAt,
+        operatorId: item.operation.operatorId,
+        plotName: item.plotName,
+        plotId: item.plotId,
+        item,
+      })),
+      ...dashboard.recentHarvests.map((item): HomeActivity => ({
+        type: "harvest" as const,
+        id: item.harvest.id,
+        timestamp: item.harvest.harvestedAt,
+        operatorId: item.harvest.operatorId,
+        plotName: item.plotName,
+        plotId: item.plotId,
+        item,
+      })),
+    ]
       .sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime())
       .slice(0, 5);
   } catch (error) {
@@ -208,11 +202,7 @@ function openPlotList(): void {
   if (currentFarm.value) uni.navigateTo({ url: `/pages/farm-plots/index?farmId=${currentFarm.value.id}&filter=ALL` });
 }
 
-function openPlotOperations(plotId: number): void {
-  uni.navigateTo({ url: `/pages/operations/index?plotId=${plotId}` });
-}
-
-function harvestActionLabel(industry?: Industry): string {
+function harvestActionLabel(industry?: string): string {
   if (industry === "LIVESTOCK") return "出栏";
   if (industry === "FISHERY") return "捕捞";
   return "采收";
@@ -224,16 +214,16 @@ function quantityUnitLabel(unit: QuantityUnit): string {
 }
 
 function activityTitle(activity: HomeActivity): string {
-  if (activity.type === "operation") return `${activity.operation.operationType.name} · ${activity.plot.name}`;
-  return `${harvestActionLabel(activity.production?.industry)} ${formatNumber(activity.harvest.quantity)} ${quantityUnitLabel(activity.harvest.unit)} · ${activity.plot.name}`;
+  if (activity.type === "operation") return `${activity.item.operation.operationType.name} · ${activity.plotName}`;
+  return `${harvestActionLabel(activity.item.industry ?? undefined)} ${formatNumber(activity.item.harvest.quantity)} ${quantityUnitLabel(activity.item.harvest.unit)} · ${activity.plotName}`;
 }
 
 function openActivity(activity: HomeActivity): void {
   if (activity.type === "operation") {
-    openPlotOperations(activity.plot.id);
+    uni.navigateTo({ url: `/pages/operations/index?plotId=${activity.plotId}` });
     return;
   }
-  uni.navigateTo({ url: `/pages/harvests/index?productionId=${activity.harvest.productionId}` });
+  uni.navigateTo({ url: `/pages/harvests/index?productionId=${activity.item.harvest.productionId}` });
 }
 
 onShow(async () => {
