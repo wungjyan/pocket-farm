@@ -37,7 +37,7 @@
           </view>
           <view v-if="activeProductions.length" class="production-list pf-list-card">
             <view
-              v-for="item in activeProductions"
+              v-for="item in displayProductions"
               :key="item.id"
               class="production-row pf-tappable"
               @tap="openProduction(item.id)"
@@ -46,6 +46,10 @@
                 <text class="production-name">{{ productionName(item) }}</text>
                 <text class="production-meta">{{ item.plotName }} · {{ productionTime(item.startedOn) }}</text>
               </view>
+              <PfRowChevron />
+            </view>
+            <view v-if="hasMoreProductions" class="view-more-row pf-tappable" @tap="openAllProductions">
+              <text class="view-more-text">查看更多</text>
               <PfRowChevron />
             </view>
           </view>
@@ -90,12 +94,8 @@ import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { useFarmContext } from "../../services/farm-context";
 import { getFarmPlots, type Plot } from "../../services/plot";
-import { getPlotProductions, type Production } from "../../services/production";
+import { getFarmProductions, type FarmProduction } from "../../services/production";
 import { formatNumber } from "../../utils/number";
-
-interface FarmProduction extends Production {
-  plotName: string;
-}
 
 const { currentFarm, currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
 const hasFarm = hasCurrentFarm;
@@ -103,6 +103,10 @@ const plots = ref<Plot[]>([]);
 const activeProductions = ref<FarmProduction[]>([]);
 const loading = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
+
+const FARM_OVERVIEW_LIMIT = 5;
+const displayProductions = computed(() => activeProductions.value.slice(0, FARM_OVERVIEW_LIMIT));
+const hasMoreProductions = computed(() => activeProductions.value.length > FARM_OVERVIEW_LIMIT);
 
 const idlePlots = computed(() => {
   const activePlotIds = new Set(activeProductions.value.map((item) => item.plotId));
@@ -142,17 +146,10 @@ async function loadOverview(): Promise<void> {
   loading.value = true;
   try {
     const plotPage = await getFarmPlots(farm.id);
-    const productionGroups = await Promise.all(
-      plotPage.items.map(async (plot) => {
-        const page = await getPlotProductions(plot.id, "ACTIVE", 1, 100);
-        return page.items.map((item) => ({ ...item, plotName: plot.name }));
-      }),
-    );
+    const productionPage = await getFarmProductions(farm.id, { status: "ACTIVE", pageSize: 100 });
     if (currentFarm.value?.id !== farm.id) return;
     plots.value = plotPage.items;
-    activeProductions.value = productionGroups
-      .flat()
-      .sort((left, right) => right.startedOn.localeCompare(left.startedOn));
+    activeProductions.value = productionPage.items;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       clearAuthToken();
@@ -178,6 +175,10 @@ function openProduction(productionId: number): void {
 }
 
 function openRecords(): void {
+  if (currentFarm.value) uni.navigateTo({ url: `/pages/records/index?farmId=${currentFarm.value.id}` });
+}
+
+function openAllProductions(): void {
   if (currentFarm.value) uni.navigateTo({ url: `/pages/records/index?farmId=${currentFarm.value.id}` });
 }
 
@@ -216,6 +217,8 @@ onShow(async () => {
 .production-list { padding: 0; border: none; border-radius: 20rpx; box-shadow: $pf-shadow-card; }
 .production-row { display: flex; min-height: 112rpx; align-items: center; padding: 0 22rpx; }
 .production-row + .production-row { border-top: 1rpx solid $pf-color-divider; }
+.view-more-row { display: flex; min-height: 96rpx; align-items: center; justify-content: center; border-top: 1rpx solid $pf-color-divider; }
+.view-more-text { color: $pf-color-primary; font-size: 24rpx; font-weight: 600; }
 .production-copy { min-width: 0; flex: 1; margin-right: 16rpx; }
 .production-name { min-width: 0; overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .production-meta { margin-top: 7rpx; overflow: hidden; color: $pf-color-text-muted; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
