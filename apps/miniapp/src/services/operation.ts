@@ -41,6 +41,41 @@ export interface OperationPage {
   total: number;
 }
 
+export interface FarmOperationSummary {
+  id: number;
+  plotId: number;
+  plotName: string;
+  plotAreaValue: number | string | null;
+  plotAreaUnit: "MU" | "SQUARE_METER" | "HECTARE" | null;
+  productionId: number | null;
+  operationTypeId: number;
+  operationTypeName: string;
+  operatedAt: string;
+  speciesName: string | null;
+}
+
+export interface FarmOperationSummaryPage {
+  items: FarmOperationSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface OperationTypeOption {
+  id: number;
+  name: string;
+}
+
+export interface OperationFilterOptions {
+  types: OperationTypeOption[];
+}
+
+export interface FarmOperationListParams {
+  operationTypeId?: number;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface OperationInput {
   productionId: number | null;
   operationTypeId: number;
@@ -60,6 +95,21 @@ export function getPlotOperations(
   return request<OperationPage>({
     url: `/plots/${plotId}/operations?page=${page}&pageSize=${pageSize}`,
   });
+}
+
+export function getFarmOperations(
+  farmId: number,
+  params: FarmOperationListParams = {},
+): Promise<FarmOperationSummaryPage> {
+  const parameters = [`page=${params.page || 1}`, `pageSize=${params.pageSize || 20}`];
+  if (params.operationTypeId) parameters.push(`operationTypeId=${params.operationTypeId}`);
+  return request<FarmOperationSummaryPage>({
+    url: `/farms/${farmId}/operations?${parameters.join("&")}`,
+  });
+}
+
+export function getOperationFilterOptions(farmId: number): Promise<OperationFilterOptions> {
+  return request<OperationFilterOptions>({ url: `/farms/${farmId}/operation-filter-options` });
 }
 
 export function getOperationTypes(page = 1, pageSize = 100): Promise<OperationTypePage> {

@@ -9,7 +9,9 @@ from app.models.farm import FarmMember
 from app.models.operation import FarmOperation, OperationType, OperationTypeStatus
 from app.models.plot import Plot
 from app.models.production import Production, ProductionStatus, WorkMethod
+from app.models.species import Species
 from app.models.user import User, utc_now_naive
+from app.services.farm import get_farm_with_member
 from app.services.plot import get_plot_with_member
 from app.services.production import get_production_with_member
 
@@ -134,6 +136,58 @@ async def list_plot_operations(
         .limit(page_size)
     )
     return list(result.all()), int(total or 0)
+
+
+async def list_farm_operations(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+    operation_type_id: int | None,
+    page: int,
+    page_size: int,
+) -> tuple[list[tuple[FarmOperation, Plot, OperationType, Species | None]], int]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    filters = [Plot.farm_id == farm_id]
+    if operation_type_id is not None:
+        filters.append(OperationType.id == operation_type_id)
+    total = await session.scalar(
+        select(func.count())
+        .select_from(FarmOperation)
+        .join(Plot, Plot.id == FarmOperation.plot_id)
+        .join(OperationType, OperationType.id == FarmOperation.operation_type_id)
+        .where(*filters)
+    )
+    result = await session.execute(
+        select(FarmOperation, Plot, OperationType, Species)
+        .join(Plot, Plot.id == FarmOperation.plot_id)
+        .join(OperationType, OperationType.id == FarmOperation.operation_type_id)
+        .outerjoin(Production, Production.id == FarmOperation.production_id)
+        .outerjoin(Species, Species.id == Production.species_id)
+        .where(*filters)
+        .order_by(FarmOperation.operated_at.desc(), FarmOperation.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return list(result.all()), int(total or 0)
+
+
+async def get_farm_operation_filter_options(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+) -> list[tuple[int, str]]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    result = await session.execute(
+        select(OperationType.id, OperationType.name, OperationType.sort_order)
+        .join(FarmOperation, FarmOperation.operation_type_id == OperationType.id)
+        .join(Plot, Plot.id == FarmOperation.plot_id)
+        .where(Plot.farm_id == farm_id)
+        .distinct()
+        .order_by(OperationType.sort_order.asc(), OperationType.id.asc())
+    )
+    return [(type_id, type_name) for type_id, type_name, _ in result.all()]
 
 
 async def create_operation(

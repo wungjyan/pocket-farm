@@ -1,8 +1,10 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from app.models.operation import OperationTypeStatus
+from app.models.plot import AreaUnit
 from app.models.production import WorkMethod
 
 
@@ -119,3 +121,32 @@ class OperationTypePage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class FarmOperationSummaryResponse(BaseModel):
+    id: int
+    plot_id: int = Field(serialization_alias="plotId")
+    plot_name: str = Field(serialization_alias="plotName")
+    plot_area_value: Decimal | None = Field(default=None, serialization_alias="plotAreaValue")
+    plot_area_unit: AreaUnit | None = Field(default=None, serialization_alias="plotAreaUnit")
+    production_id: int | None = Field(default=None, serialization_alias="productionId")
+    operation_type_id: int = Field(serialization_alias="operationTypeId")
+    operation_type_name: str = Field(serialization_alias="operationTypeName")
+    operated_at: datetime = Field(serialization_alias="operatedAt")
+    species_name: str | None = Field(default=None, serialization_alias="speciesName")
+
+
+class FarmOperationSummaryPage(BaseModel):
+    items: list[FarmOperationSummaryResponse]
+    page: int
+    page_size: int = Field(serialization_alias="pageSize")
+    total: int
+
+
+class OperationTypeOption(BaseModel):
+    id: int
+    name: str
+
+
+class OperationFilterOptionsResponse(BaseModel):
+    types: list[OperationTypeOption]

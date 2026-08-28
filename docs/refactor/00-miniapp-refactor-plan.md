@@ -29,6 +29,7 @@
 | R17 | 收获表单样式对齐 | 已完成 |
 | R18 | 收获种养选择页样式对齐 | 已完成 |
 | R19 | 生产记录种养 Tab 品种筛选 | 已完成 |
+| R20 | 生产记录农事 Tab | 已完成 |
 
 ## 3. 视觉基线入口
 
@@ -506,3 +507,22 @@ GET /api/v1/farms/{farmId}/productions?industry=&status=&page=1&pageSize=20
 - 品种选项在每次进入页面和农场切换时刷新；农场切换时重置品种选择；刷新后当前选中种类已不存在时回退为“全部品种”并重载列表。
 - 长种类名称在筛选栏截断显示，不破坏工具栏布局。
 - 后端覆盖种类过滤、组合筛选、选项去重、行业联动、农场隔离与权限 404；通过 Alembic、Ruff、pytest、前端 TypeScript 检查和微信小程序构建。
+
+## 21. R20：生产记录农事 Tab
+
+### 21.1 目标
+
+实现生产记录页“农事”Tab，替换原“农事记录待上线”占位；提供“农事类型”筛选器，选项反查当前农场实际进行过的农事类型，不下发全量类型。
+
+### 21.2 接口与数据口径
+
+- 新增 `GET /api/v1/farms/{farmId}/operations`，支持可选 `operationTypeId` 过滤，`page`、`pageSize` 分页（默认 20，最大 100）。返回轻量行（`plotName`、`plotAreaValue`、`plotAreaUnit`、`operationTypeId`、`operationTypeName`、`operatedAt`、`productionId`、`speciesName`）；`speciesName` 经 `FarmOperation → Production → Species` 外连接取回，仅在关联种养时有值。排序沿用农事口径：`operatedAt DESC, id DESC`。所有查询校验 FarmMember 权限，未加入农场返回 404。
+- 新增 `GET /api/v1/farms/{farmId}/operation-filter-options`，返回当前农场进行过的农事类型去重列表（`id` + `name`），按 `sort_order`、`id` 升序；含其他农场已下架类型的历史记录名称。无数据库结构变更。
+
+### 21.3 前端范围与验收
+
+- “农事”Tab 筛选栏为单个“农事类型”picker，默认“全部类型”，切换后重置分页重新加载。
+- 列表项自上而下分行展示：农事类型名（标题样式）；“地块：地块名（面积）”，面积缺失时只显示地块名；“操作日期：yyyy.mm.dd”；“品种：xxx”仅关联种养时显示。面积数值复用 `formatNumber`。
+- 类型选项在进入页面、切到农事 Tab 和农场切换时刷新；农场切换重置类型选择；选项失效时回退“全部类型”并重载。
+- “收获”Tab 维持占位不变。
+- 后端覆盖权限 404、类型过滤、排序、作物带回、选项反查与农场隔离；通过 Alembic、Ruff、pytest、前端 TypeScript 检查和微信小程序构建。

@@ -6,12 +6,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
 from app.models.operation import OperationType
+from app.models.plot import AreaUnit
 from app.models.production import WorkMethod
 from app.models.user import User
 from app.schemas.operation import (
     CreateOperationRequest,
+    FarmOperationSummaryPage,
+    FarmOperationSummaryResponse,
+    OperationFilterOptionsResponse,
     OperationPage,
     OperationResponse,
+    OperationTypeOption,
     OperationTypePage,
     OperationTypeResponse,
     UpdateOperationRequest,
@@ -20,6 +25,8 @@ from app.schemas.response import ApiResponse
 from app.services.operation import (
     create_operation,
     delete_operation,
+    get_farm_operation_filter_options,
+    list_farm_operations,
     list_operation_types,
     list_plot_operations,
     update_operation,
@@ -84,6 +91,74 @@ async def get_plot_operations(
             page=page,
             page_size=page_size,
             total=total,
+        )
+    )
+
+
+@router.get(
+    "/farms/{farm_id}/operations",
+    response_model=ApiResponse[FarmOperationSummaryPage],
+)
+async def get_farm_operations(
+    farm_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    operation_type_id: Annotated[int | None, Query(alias="operationTypeId", gt=0)] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(alias="pageSize", ge=1, le=100)] = 20,
+) -> ApiResponse[FarmOperationSummaryPage]:
+    operations, total = await list_farm_operations(
+        session,
+        farm_id=farm_id,
+        user_id=current_user.id,
+        operation_type_id=operation_type_id,
+        page=page,
+        page_size=page_size,
+    )
+    return ApiResponse.success_response(
+        data=FarmOperationSummaryPage(
+            items=[
+                FarmOperationSummaryResponse(
+                    id=operation.id,
+                    plot_id=plot.id,
+                    plot_name=plot.name,
+                    plot_area_value=plot.area_value,
+                    plot_area_unit=AreaUnit(plot.area_unit) if plot.area_unit else None,
+                    production_id=operation.production_id,
+                    operation_type_id=operation_type.id,
+                    operation_type_name=operation_type.name,
+                    operated_at=_as_utc(operation.operated_at),
+                    species_name=species.name if species else None,
+                )
+                for operation, plot, operation_type, species in operations
+            ],
+            page=page,
+            page_size=page_size,
+            total=total,
+        )
+    )
+
+
+@router.get(
+    "/farms/{farm_id}/operation-filter-options",
+    response_model=ApiResponse[OperationFilterOptionsResponse],
+)
+async def list_farm_operation_filter_options(
+    farm_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[OperationFilterOptionsResponse]:
+    type_options = await get_farm_operation_filter_options(
+        session,
+        farm_id=farm_id,
+        user_id=current_user.id,
+    )
+    return ApiResponse.success_response(
+        data=OperationFilterOptionsResponse(
+            types=[
+                OperationTypeOption(id=type_id, name=type_name)
+                for type_id, type_name in type_options
+            ]
         )
     )
 
