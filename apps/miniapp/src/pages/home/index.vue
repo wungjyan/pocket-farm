@@ -86,7 +86,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app";
+import { onShow } from "@dcloudio/uni-app";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
@@ -276,11 +276,6 @@ function openActivity(activity: FarmActivity): void {
 // 首页展示时只需刷新真正会变化的最近动态。
 onShow(() => {
   loadActivities();
-});
-
-onPullDownRefresh(async () => {
-  await loadActivities();
-  uni.stopPullDownRefresh();
 });
 </script>
 
