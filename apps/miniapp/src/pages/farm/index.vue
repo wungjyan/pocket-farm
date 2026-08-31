@@ -97,7 +97,7 @@ import { getFarmPlots, type Plot } from "../../services/plot";
 import { getFarmProductions, type FarmProduction } from "../../services/production";
 import { formatNumber } from "../../utils/number";
 
-const { currentFarm, currentFarmName, hasCurrentFarm, refreshFromApi } = useFarmContext();
+const { currentFarm, currentFarmName, hasCurrentFarm } = useFarmContext();
 const hasFarm = hasCurrentFarm;
 const plots = ref<Plot[]>([]);
 const activeProductions = ref<FarmProduction[]>([]);
@@ -186,16 +186,10 @@ function openStartProduction(): void {
   if (currentFarm.value) uni.navigateTo({ url: `/pages/productions/start?farmId=${currentFarm.value.id}` });
 }
 
-onShow(async () => {
-  try {
-    await refreshFromApi();
-    await loadOverview();
-  } catch (error) {
-    if (error instanceof ApiRequestError && error.statusCode === 401) {
-      clearAuthToken();
-      uni.reLaunch({ url: "/pages/auth/login" });
-    }
-  }
+// 农场上下文由共享上下文维护（创建/编辑/退出/切换时本地更新），
+// 展示时只需刷新真正会变化的概览数据。
+onShow(() => {
+  loadOverview();
 });
 </script>
 

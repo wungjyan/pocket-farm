@@ -97,6 +97,9 @@
 import { onUnmounted, reactive, ref, watch } from "vue";
 import { ApiRequestError } from "../../services/http";
 import { login } from "../../services/user";
+import { useUserContext } from "../../services/user-context";
+
+const { setUser } = useUserContext();
 
 const form = reactive({
   phoneNumber: "",
@@ -176,7 +179,8 @@ async function handleLogin(): Promise<void> {
 
   submitting.value = true;
   try {
-    await login(phoneNumber, verificationCode);
+    const result = await login(phoneNumber, verificationCode);
+    setUser(result.user);
     uni.reLaunch({ url: "/pages/home/index" });
   } catch (error) {
     const message = error instanceof ApiRequestError ? error.message : "登录失败，请稍后再试";

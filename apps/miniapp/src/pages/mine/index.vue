@@ -36,22 +36,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { onShow } from "@dcloudio/uni-app";
+import { computed } from "vue";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
-import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
-import { ApiRequestError } from "../../services/http";
-import { getCurrentUser, type User } from "../../services/user";
+import { useUserContext } from "../../services/user-context";
 
-const user = ref<User | null>(null);
-const { currentFarm, refreshFromApi } = useFarmContext();
+const { currentUser } = useUserContext();
+const { currentFarm } = useFarmContext();
 const displayName = computed(
-  () => user.value?.nickname || maskPhone(user.value?.phoneNumber || "用户"),
+  () => currentUser.value?.nickname || maskPhone(currentUser.value?.phoneNumber || "用户"),
 );
-const maskedPhone = computed(() => maskPhone(user.value?.phoneNumber || ""));
+const maskedPhone = computed(() => maskPhone(currentUser.value?.phoneNumber || ""));
 const avatarText = computed(() => displayName.value.slice(0, 1));
 const currentFarmName = computed(() => currentFarm.value?.name || "未选择");
 const roleLabel = computed(() => {
@@ -81,20 +78,7 @@ function openFarmSettings(): void {
   uni.navigateTo({ url: `/pages/farms/detail?farmId=${currentFarm.value.id}` });
 }
 
-onShow(async () => {
-  try {
-    const [currentUser] = await Promise.all([
-      getCurrentUser(),
-      refreshFromApi(),
-    ]);
-    user.value = currentUser;
-  } catch (error) {
-    if (error instanceof ApiRequestError && error.statusCode === 401) {
-      clearAuthToken();
-      uni.reLaunch({ url: "/pages/auth/login" });
-    }
-  }
-});
+// 本页只读展示：用户与农场信息均由共享上下文维护，无需在展示时请求。
 </script>
 
 <style lang="scss" scoped>

@@ -44,7 +44,9 @@ import { onShow } from "@dcloudio/uni-app";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getCurrentUser, updateCurrentUser } from "../../services/user";
+import { useUserContext } from "../../services/user-context";
 
+const { setUser } = useUserContext();
 const form = reactive({ nickname: "" });
 const saving = ref(false);
 const inputFocused = ref(false);
@@ -75,7 +77,8 @@ async function handleSave(): Promise<void> {
 
   saving.value = true;
   try {
-    await updateCurrentUser(nickname || null);
+    const updated = await updateCurrentUser(nickname || null);
+    setUser(updated);
     toastRef.value?.success("保存成功");
     setTimeout(() => uni.navigateBack(), 500);
   } catch (error) {
