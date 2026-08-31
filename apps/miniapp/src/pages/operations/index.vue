@@ -1,97 +1,93 @@
 <template>
   <view class="pf-page operations-page">
-    <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#2F7D4A" />
-      <text>正在加载农事记录</text>
-    </view>
-
-    <view v-else-if="loadError" class="state-card pf-card">
-      <uv-icon name="warning" size="28" color="#C96A45" />
-      <text>{{ loadError }}</text>
-      <uv-button
-        type="primary"
-        size="small"
-        shape="square"
-        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
-        @click="loadOperations"
-      >
-        重试
-      </uv-button>
-    </view>
-
-    <template v-else-if="plot">
-      <view class="page-intro">
-        <view>
-          <text class="page-title">农事记录</text>
-          <text class="page-description">{{ plot.name }} · 共 {{ operations.length }} 条</text>
-        </view>
-        <text class="page-action" @click="openCreate">记农事</text>
+    <view class="pf-page-content">
+      <view v-if="loading" class="state-card pf-card">
+        <uv-loading-icon mode="circle" color="#2F7D4A" />
+        <text>正在加载农事记录</text>
       </view>
 
-      <view v-if="operations.length" class="operation-list">
-        <view
-          v-for="operation in operations"
-          :key="operation.id"
-          class="operation-card pf-card"
-          :class="{ 'operation-card--locked': isLocked(operation) }"
-          @click="openEdit(operation)"
-        >
-          <view class="operation-icon"><uv-icon :name="operationIcon(operation.operationType.code)" size="21" color="#2F7D4A" /></view>
-          <view class="operation-copy">
-            <view class="operation-title-line">
-              <text class="operation-name">{{ operation.operationType.name }}</text>
-              <text v-if="isLocked(operation)" class="operation-lock">已锁定</text>
-            </view>
-            <text class="operation-meta">{{ operationDateLabel(operation.operatedAt) }} · {{ productionLabel(operation) }}</text>
-            <text class="operation-meta">操作人：{{ memberName(operation.operatorId) }}{{ creatorLabel(operation) }}</text>
-          </view>
-          <view v-if="!isLocked(operation)" class="operation-delete" @click.stop="confirmDelete(operation)">
-            <uv-icon name="trash" size="18" color="#C96A45" />
-          </view>
-          <uv-icon v-else name="lock" size="17" color="#929A93" />
-        </view>
-      </view>
-      <view v-else class="empty-card pf-card">
-        <uv-icon name="calendar" size="30" color="#929A93" />
-        <text class="empty-card__title">还没有农事记录</text>
-        <text class="empty-card__description">从一次翻耕、施肥或灌溉开始记录生产现场。</text>
+      <view v-else-if="loadError" class="state-card pf-card">
+        <uv-icon name="warning" size="28" color="#C96A45" />
+        <text>{{ loadError }}</text>
         <uv-button
           type="primary"
           size="small"
           shape="square"
-          custom-style="margin-top: 24rpx; border-radius: 12rpx;"
-          @click="openCreate"
+          custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+          @click="loadOperations"
         >
-          记农事
+          重试
         </uv-button>
       </view>
-    </template>
 
-    <uv-toast ref="toastRef" />
+      <template v-else-if="plot">
+        <view class="page-toolbar">
+          <view class="page-context">
+            <view class="page-context__plot">
+              <text class="page-context__label">地块</text>
+              <text class="page-context__value">{{ plot.name }}</text>
+            </view>
+            <text class="page-context__separator">·</text>
+            <view class="page-context__count">
+              <text class="page-context__label">农事记录共</text>
+              <text class="page-context__value">{{ operations.length }}</text>
+              <text class="page-context__label">条</text>
+            </view>
+          </view>
+          <view class="page-action pf-tappable" @tap="openCreate">
+            <text>记农事</text>
+          </view>
+        </view>
+
+        <view v-if="operations.length" class="operation-list">
+          <view
+            v-for="operation in operations"
+            :key="operation.id"
+            class="operation-card pf-card pf-tappable"
+            @tap="openDetail(operation)"
+          >
+            <view class="operation-copy">
+              <view class="operation-title-line">
+                <text class="operation-name">{{ operation.operationType.name }}</text>
+                <text v-if="isLocked(operation)" class="operation-status">种养已结束</text>
+              </view>
+              <text class="operation-meta">{{ operationDateLabel(operation.operatedAt) }} · {{ productionLabel(operation) }}</text>
+              <text class="operation-meta">操作人：{{ memberName(operation.operatorId) }}{{ creatorLabel(operation) }}</text>
+            </view>
+            <PfRowChevron />
+          </view>
+        </view>
+        <view v-else class="empty-card pf-card">
+          <uv-icon name="calendar" size="30" color="#929A93" />
+          <text class="empty-card__title">还没有农事记录</text>
+          <uv-button
+            type="primary"
+            size="small"
+            shape="square"
+            custom-style="margin-top: 24rpx; border-radius: 12rpx;"
+            @click="openCreate"
+          >
+            记农事
+          </uv-button>
+        </view>
+      </template>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
 import {
-  deleteOperation,
   getPlotOperations,
   type FarmOperation,
 } from "../../services/operation";
 import { getPlot, type Plot } from "../../services/plot";
 import { getPlotProductions, type Production } from "../../services/production";
-
-const operationIcons: Record<string, string> = {
-  FERTILIZE: "bag",
-  IRRIGATE: "clock",
-  PESTICIDE: "warning",
-  DISINFECT: "shield",
-  CHANGE_WATER: "reload",
-};
 
 const plotId = ref(0);
 const plot = ref<Plot | null>(null);
@@ -100,17 +96,11 @@ const activeProductions = ref<Production[]>([]);
 const members = ref<FarmMember[]>([]);
 const loading = ref(true);
 const loadError = ref("");
-const deletingId = ref(0);
-const toastRef = ref<{ error: (message: string) => void } | null>(null);
 const activeProductionIds = computed(() => new Set(activeProductions.value.map((item) => item.id)));
 
 function handleUnauthorized(): void {
   clearAuthToken();
   uni.reLaunch({ url: "/pages/auth/login" });
-}
-
-function operationIcon(value: string): string {
-  return operationIcons[value] || "calendar";
 }
 
 function operationDateLabel(value: string): string {
@@ -171,35 +161,8 @@ function openCreate(): void {
   if (plot.value) uni.navigateTo({ url: `/pages/operations/form?plotId=${plot.value.id}&plotLocked=1` });
 }
 
-function openEdit(operation: FarmOperation): void {
-  if (isLocked(operation) || !plot.value) return;
-  uni.navigateTo({ url: `/pages/operations/form?plotId=${plot.value.id}&operationId=${operation.id}&plotLocked=1` });
-}
-
-function confirmDelete(operation: FarmOperation): void {
-  if (deletingId.value || isLocked(operation)) return;
-  uni.showModal({
-    title: "删除农事记录？",
-    content: "删除后无法恢复，确定要继续吗？",
-    confirmColor: "#C96A45",
-    success: async (result) => {
-      if (!result.confirm) return;
-      deletingId.value = operation.id;
-      try {
-        await deleteOperation(operation.id);
-        operations.value = operations.value.filter((item) => item.id !== operation.id);
-        uni.showToast({ title: "已删除", icon: "none" });
-      } catch (error) {
-        if (error instanceof ApiRequestError && error.statusCode === 401) {
-          handleUnauthorized();
-        } else {
-          toastRef.value?.error(error instanceof ApiRequestError ? error.message : "删除失败，请稍后再试");
-        }
-      } finally {
-        deletingId.value = 0;
-      }
-    },
-  });
+function openDetail(operation: FarmOperation): void {
+  uni.navigateTo({ url: `/pages/operations/detail?operationId=${operation.id}` });
 }
 
 onLoad((options) => {
@@ -207,116 +170,133 @@ onLoad((options) => {
 });
 
 onShow(() => {
-  if (plotId.value && !deletingId.value) loadOperations();
+  if (plotId.value) loadOperations();
 });
 </script>
 
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.operations-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
-}
-
-.page-intro {
+.page-toolbar {
   display: flex;
+  min-height: 96rpx;
   align-items: center;
   justify-content: space-between;
-  padding: 12rpx 4rpx 28rpx;
+  padding: 0 4rpx 10rpx;
 }
 
-.page-title,
-.page-description {
-  display: block;
-}
-
-.page-title {
-  color: $pf-color-text;
-  font-size: 38rpx;
-  font-weight: 700;
-}
-
-.page-description {
-  margin-top: 10rpx;
+.page-context {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
   color: $pf-color-text-secondary;
   font-size: 24rpx;
+  white-space: nowrap;
+}
+
+.page-context__plot {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+  overflow: hidden;
+}
+
+.page-context__value {
+  overflow: hidden;
+  margin: 0 $pf-space-1;
+  color: $pf-color-primary;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-context__plot .page-context__value {
+  min-width: 0;
+  flex: 1;
+}
+
+.page-context__separator {
+  flex-shrink: 0;
+  margin-right: $pf-space-1;
+  color: $pf-color-text-muted;
+}
+
+.page-context__count {
+  display: flex;
+  align-items: center;
+}
+
+.page-context__count,
+.page-context__label {
+  flex-shrink: 0;
 }
 
 .page-action {
+  display: flex;
+  min-height: 88rpx;
+  flex-shrink: 0;
+  align-items: center;
+  margin-left: $pf-space-3;
+  padding: 0 $pf-space-1;
   color: $pf-color-primary;
-  font-size: 26rpx;
+  font-size: 25rpx;
+  font-weight: 600;
 }
 
 .operation-list {
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
+  gap: $pf-space-2;
 }
 
 .operation-card {
   display: flex;
-  min-height: 126rpx;
   align-items: center;
-  padding: 16rpx 20rpx;
-}
-
-.operation-card--locked {
-  background: $pf-color-surface-muted;
-}
-
-.operation-icon {
-  display: flex;
-  width: 60rpx;
-  height: 60rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18rpx;
-  background: $pf-color-primary-soft;
+  padding: $pf-space-3;
 }
 
 .operation-copy {
   min-width: 0;
   flex: 1;
-  margin: 0 16rpx;
+  margin-right: $pf-space-2;
 }
 
 .operation-title-line {
   display: flex;
   align-items: center;
+  gap: 10rpx;
 }
 
 .operation-name {
   color: $pf-color-text;
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 650;
 }
 
-.operation-lock {
-  margin-left: 10rpx;
+.operation-status {
   padding: 3rpx 8rpx;
   border-radius: 8rpx;
-  background: #e2e6e0;
+  background: $pf-color-surface-muted;
   color: $pf-color-text-muted;
   font-size: 19rpx;
 }
 
 .operation-meta {
   display: block;
-  margin-top: 5rpx;
+  margin-top: $pf-space-1;
   overflow: hidden;
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: 22rpx;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.operation-delete {
-  display: flex;
-  width: 48rpx;
-  height: 48rpx;
-  align-items: center;
-  justify-content: center;
+.operation-title-line + .operation-meta {
+  margin-top: $pf-space-2;
 }
 
 .empty-card,
@@ -333,23 +313,12 @@ onShow(() => {
   text-align: center;
 }
 
-.empty-card__title,
-.empty-card__description {
-  display: block;
-}
-
 .empty-card__title {
+  display: block;
   margin-top: 14rpx;
   color: $pf-color-text;
   font-size: 27rpx;
   font-weight: 600;
-}
-
-.empty-card__description {
-  margin-top: 10rpx;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
-  line-height: 1.5;
 }
 
 .state-card text {

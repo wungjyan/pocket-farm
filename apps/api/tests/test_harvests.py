@@ -354,7 +354,7 @@ def test_harvest_derives_units_and_validates_quantity_and_time_boundaries() -> N
 
 def test_operator_can_change_but_creator_is_preserved_and_outsiders_are_hidden() -> None:
     owner_token = login(OWNER_PHONE)
-    login(MEMBER_PHONE)
+    member_token = login(MEMBER_PHONE)
     outsider_token = login(OUTSIDER_PHONE)
     farm = create_farm(owner_token)
     member = add_member(owner_token, farm["id"], MEMBER_PHONE)
@@ -405,8 +405,13 @@ def test_operator_can_change_but_creator_is_preserved_and_outsiders_are_hidden()
         method="patch",
         json={"remark": "越权修改"},
     )
+    member_detail = call(member_token, f"/api/v1/harvests/{created['id']}")
+    outsider_detail = call(outsider_token, f"/api/v1/harvests/{created['id']}")
     assert outsider_list.status_code == 404
     assert outsider_edit.status_code == 404
+    assert member_detail.status_code == 200
+    assert member_detail.json()["data"]["id"] == created["id"]
+    assert outsider_detail.status_code == 404
 
 
 def test_cross_farm_creation_is_hidden_and_harvest_blocks_core_production_changes() -> None:
@@ -520,8 +525,11 @@ def test_harvest_edit_and_delete_lock_after_production_ends() -> None:
         owner_token,
         f"/api/v1/productions/{production['id']}/harvests",
     )
+    ended_detail = call(owner_token, f"/api/v1/harvests/{locked['id']}")
     assert ended_create.status_code == 409
     assert ended_edit.status_code == 409
     assert ended_delete.status_code == 409
     assert ended_list.status_code == 200
     assert ended_list.json()["data"]["total"] == 1
+    assert ended_detail.status_code == 200
+    assert ended_detail.json()["data"]["id"] == locked["id"]

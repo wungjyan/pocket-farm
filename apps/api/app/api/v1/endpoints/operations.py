@@ -26,6 +26,7 @@ from app.services.operation import (
     create_operation,
     delete_operation,
     get_farm_operation_filter_options,
+    get_operation_with_member,
     list_farm_operations,
     list_operation_types,
     list_plot_operations,
@@ -184,6 +185,20 @@ async def create_plot_operation(
         operated_at=request.operated_at,
         operator_id=request.operator_id,
         remark=request.remark,
+    )
+    return ApiResponse.success_response(data=_operation_response(operation, operation_type))
+
+
+@router.get("/operations/{operation_id}", response_model=ApiResponse[OperationResponse])
+async def get_operation(
+    operation_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[OperationResponse]:
+    operation, _, _, operation_type = await get_operation_with_member(
+        session,
+        operation_id=operation_id,
+        user_id=current_user.id,
     )
     return ApiResponse.success_response(data=_operation_response(operation, operation_type))
 

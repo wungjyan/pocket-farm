@@ -97,6 +97,10 @@ export function getPlotOperations(
   });
 }
 
+export function getOperation(operationId: number): Promise<FarmOperation> {
+  return request<FarmOperation>({ url: `/operations/${operationId}` });
+}
+
 export function getFarmOperations(
   farmId: number,
   params: FarmOperationListParams = {},

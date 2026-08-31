@@ -64,6 +64,10 @@ export function getPlotHarvests(
   });
 }
 
+export function getHarvest(harvestId: number): Promise<HarvestRecord> {
+  return request<HarvestRecord>({ url: `/harvests/${harvestId}` });
+}
+
 export function createHarvest(
   productionId: number,
   input: HarvestInput,

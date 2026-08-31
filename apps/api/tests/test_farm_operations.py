@@ -90,7 +90,7 @@ def start_cucumber_production(token: str, plot_id: int) -> dict[str, Any]:
         method="post",
         json={
             "speciesId": species_id(token, "黄瓜"),
-            "startedOn": datetime.now(timezone.utc).date().isoformat(),
+            "startedOn": (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat(),
             "plantingStandard": "NORMAL",
             "plantingMethod": "TRANSPLANT",
             "workMethod": "MANUAL",

@@ -255,6 +255,7 @@ POST /api/v1/productions/{productionId}/end
 GET  /api/v1/operation-types
 GET  /api/v1/plots/{plotId}/operations
 POST /api/v1/plots/{plotId}/operations
+GET  /api/v1/operations/{operationId}
 PATCH  /api/v1/operations/{operationId}
 DELETE /api/v1/operations/{operationId}
 
@@ -264,6 +265,7 @@ DELETE /api/v1/operations/{operationId}
 
 GET  /api/v1/productions/{productionId}/harvests
 POST /api/v1/productions/{productionId}/harvests
+GET  /api/v1/harvests/{harvestId}
 PATCH  /api/v1/harvests/{harvestId}
 DELETE /api/v1/harvests/{harvestId}
 

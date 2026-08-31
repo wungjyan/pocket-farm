@@ -263,7 +263,7 @@ def test_operation_requires_explicit_matching_production_and_validates_dates() -
 
 def test_operator_access_and_production_correction_and_deletion_are_restricted() -> None:
     owner_token = login(OWNER_PHONE)
-    login(MEMBER_PHONE)
+    member_token = login(MEMBER_PHONE)
     outsider_token = login(OUTSIDER_PHONE)
     farm = create_farm(owner_token)
     member = add_member(owner_token, farm["id"], MEMBER_PHONE)
@@ -302,6 +302,8 @@ def test_operator_access_and_production_correction_and_deletion_are_restricted()
         method="patch",
         json={"remark": "越权修改"},
     )
+    member_detail = call(member_token, f"/api/v1/operations/{operation['id']}")
+    outsider_detail = call(outsider_token, f"/api/v1/operations/{operation['id']}")
     core_update = call(
         owner_token,
         f"/api/v1/productions/{production['id']}",
@@ -315,6 +317,9 @@ def test_operator_access_and_production_correction_and_deletion_are_restricted()
     )
     assert outsider_list.status_code == 404
     assert outsider_edit.status_code == 404
+    assert member_detail.status_code == 200
+    assert member_detail.json()["data"]["id"] == operation["id"]
+    assert outsider_detail.status_code == 404
     assert core_update.status_code == 409
     assert production_delete.status_code == 409
 
@@ -372,6 +377,9 @@ def test_operation_can_be_edited_or_deleted_when_active_but_locks_when_ended() -
         f"/api/v1/operations/{operation['id']}",
         method="delete",
     )
+    ended_detail = call(owner_token, f"/api/v1/operations/{operation['id']}")
     assert ended_create.status_code == 409
     assert ended_edit.status_code == 409
     assert ended_delete.status_code == 409
+    assert ended_detail.status_code == 200
+    assert ended_detail.json()["data"]["id"] == operation["id"]

@@ -132,6 +132,12 @@
       }
     },
     {
+      "path": "pages/operations/detail",
+      "style": {
+        "navigationBarTitleText": "农事详情"
+      }
+    },
+    {
       "path": "pages/operations/form",
       "style": {
         "navigationBarTitleText": "记录农事"
@@ -153,6 +159,12 @@
       "path": "pages/harvests/index",
       "style": {
         "navigationBarTitleText": "收获记录"
+      }
+    },
+    {
+      "path": "pages/harvests/detail",
+      "style": {
+        "navigationBarTitleText": "收获详情"
       }
     },
     {

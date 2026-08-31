@@ -18,6 +18,7 @@ from app.schemas.response import ApiResponse
 from app.services.harvest import (
     create_harvest,
     delete_harvest,
+    get_harvest_with_member,
     list_plot_harvests,
     list_production_harvests,
     update_harvest,
@@ -127,6 +128,20 @@ async def get_plot_harvests(
     return ApiResponse.success_response(
         data=_harvest_page(harvests, page=page, page_size=page_size, total=total)
     )
+
+
+@router.get("/harvests/{harvest_id}", response_model=ApiResponse[HarvestResponse])
+async def get_harvest(
+    harvest_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[HarvestResponse]:
+    harvest, _, _, _ = await get_harvest_with_member(
+        session,
+        harvest_id=harvest_id,
+        user_id=current_user.id,
+    )
+    return ApiResponse.success_response(data=_harvest_response(harvest))
 
 
 @router.patch("/harvests/{harvest_id}", response_model=ApiResponse[HarvestResponse])
