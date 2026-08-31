@@ -183,26 +183,6 @@ class PlotDetailResponse(BaseModel):
     harvest_total: int = Field(serialization_alias="harvestTotal")
 
 
-class DashboardOperationItem(BaseModel):
-    operation: OperationResponse
-    plot_id: int = Field(serialization_alias="plotId")
-    plot_name: str = Field(serialization_alias="plotName")
-
-
-class DashboardHarvestItem(BaseModel):
-    harvest: HarvestResponse
-    plot_id: int = Field(serialization_alias="plotId")
-    plot_name: str = Field(serialization_alias="plotName")
-    industry: str | None = None
-
-
-class FarmDashboardResponse(BaseModel):
-    recent_operations: list[DashboardOperationItem] = Field(serialization_alias="recentOperations")
-    recent_harvests: list[DashboardHarvestItem] = Field(serialization_alias="recentHarvests")
-    members: list[MemberResponse]
-    plots: list[PlotResponse]
-
-
 def _validate_boundary(boundary: dict[str, Any] | None) -> None:
     if boundary is not None and boundary.get("coordinateSystem") != "GCJ02":
         raise ValueError('boundary.coordinateSystem must be "GCJ02".')
