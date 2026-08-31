@@ -17,6 +17,7 @@ export interface Production {
   status: ProductionStatus;
   startedOn: string;
   endedOn: string | null;
+  endedAt: string | null;
   plantingStandard: PlantingStandard | null;
   plantingMethod: PlantingMethod | null;
   workMethod: WorkMethod | null;
