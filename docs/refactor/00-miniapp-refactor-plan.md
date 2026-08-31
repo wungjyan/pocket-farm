@@ -138,7 +138,7 @@ GET /api/v1/farms/{farmId}/productions?industry=&status=&page=1&pageSize=20
 接口要求：
 
 - `industry` 支持 `AGRICULTURE`、`FORESTRY`、`LIVESTOCK`、`FISHERY`，缺省不过滤；`status` 支持 `ACTIVE`、`ENDED`，缺省不过滤；分页默认 `page=1`、`pageSize=20`，最大 `pageSize=100`。
-- 返回轻量 Response DTO（含 `plotName`、种类、行业、个体单位、品种、状态、起止日期与初始数量），不直接返回 SQLAlchemy Model。
+- 返回轻量 Response DTO（含 `plotName`、`plotAreaValue`、`plotAreaUnit`、种类、行业、个体单位、品种、状态、起止日期与初始数量），不直接返回 SQLAlchemy Model。
 - 排序沿用 Production 口径：ACTIVE 优先、同状态按 `startedOn DESC`；筛选、计数和分页均在数据库完成。
 - 所有查询检查当前用户的 FarmMember 权限；未加入农场的用户返回 404。
 - 不引入新的基础设施或事件总线，无数据库结构变更。
@@ -148,6 +148,7 @@ GET /api/v1/farms/{farmId}/productions?industry=&status=&page=1&pageSize=20
 - 新增 `pages/records/index` 页面与路由；农场 Tab 的“生产记录”入口改为跳转该页，不再提示“生产记录待完成”。
 - 进入页面时携带当前 `farmId`，跟随当前农场上下文；农场切换后重新加载，不展示旧农场记录。
 - 复用现有 token、`PfBusinessIcon`、`PfRowChevron` 与空状态样式；业务数值统一使用 `formatNumber`。
+- 种养列表中的地块按“地块名（面积）”展示；面积缺失时仅展示地块名，与农事列表保持相同口径。
 
 ### 6.5 测试与验收
 
@@ -519,13 +520,13 @@ GET /api/v1/farms/{farmId}/productions?industry=&status=&page=1&pageSize=20
 
 ### 21.2 接口与数据口径
 
-- 新增 `GET /api/v1/farms/{farmId}/operations`，支持可选 `operationTypeId` 过滤，`page`、`pageSize` 分页（默认 20，最大 100）。返回轻量行（`plotName`、`plotAreaValue`、`plotAreaUnit`、`operationTypeId`、`operationTypeName`、`operatedAt`、`productionId`、`speciesName`）；`speciesName` 经 `FarmOperation → Production → Species` 外连接取回，仅在关联种养时有值。排序沿用农事口径：`operatedAt DESC, id DESC`。所有查询校验 FarmMember 权限，未加入农场返回 404。
+- 新增 `GET /api/v1/farms/{farmId}/operations`，支持可选 `operationTypeId` 过滤，`page`、`pageSize` 分页（默认 20，最大 100）。返回轻量行（`plotName`、`plotAreaValue`、`plotAreaUnit`、`operationTypeId`、`operationTypeName`、`operatedAt`、`productionId`、`speciesName`、`productionStatus`）；`speciesName` 与 `productionStatus` 经 `FarmOperation → Production → Species` 外连接取回，仅在关联种养时有值。排序沿用农事口径：`operatedAt DESC, id DESC`。所有查询校验 FarmMember 权限，未加入农场返回 404。
 - 新增 `GET /api/v1/farms/{farmId}/operation-filter-options`，返回当前农场进行过的农事类型去重列表（`id` + `name`），按 `sort_order`、`id` 升序；含其他农场已下架类型的历史记录名称。无数据库结构变更。
 
 ### 21.3 前端范围与验收
 
 - “农事”Tab 筛选栏为单个“农事类型”picker，默认“全部类型”，切换后重置分页重新加载。
-- 列表项自上而下分行展示：农事类型名（标题样式）；“地块：地块名（面积）”，面积缺失时只显示地块名；“操作日期：yyyy.mm.dd”；“品种：xxx”仅关联种养时显示。面积数值复用 `formatNumber`。
+- 列表项自上而下分行展示：农事类型名（标题样式）；关联 ENDED Production 时在标题后显示“种养已结束”；“地块：地块名（面积）”，面积缺失时只显示地块名；“操作时间：yyyy-mm-dd HH:mm”；“品种：xxx”仅关联种养时显示。面积数值复用 `formatNumber`，整行使用 `PfRowChevron` 进入农事详情。
 - 类型选项在进入页面、切到农事 Tab 和农场切换时刷新；农场切换重置类型选择；选项失效时回退“全部类型”并重载。
 - “收获”Tab 维持占位不变。
 - 后端覆盖权限 404、类型过滤、排序、作物带回、选项反查与农场隔离；通过 Alembic、Ruff、pytest、前端 TypeScript 检查和微信小程序构建。

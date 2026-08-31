@@ -5,7 +5,7 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from app.models.operation import OperationTypeStatus
 from app.models.plot import AreaUnit
-from app.models.production import WorkMethod
+from app.models.production import ProductionStatus, WorkMethod
 
 
 def _require_timezone(value: datetime | None) -> datetime | None:
@@ -134,6 +134,10 @@ class FarmOperationSummaryResponse(BaseModel):
     operation_type_name: str = Field(serialization_alias="operationTypeName")
     operated_at: datetime = Field(serialization_alias="operatedAt")
     species_name: str | None = Field(default=None, serialization_alias="speciesName")
+    production_status: ProductionStatus | None = Field(
+        default=None,
+        serialization_alias="productionStatus",
+    )
 
 
 class FarmOperationSummaryPage(BaseModel):

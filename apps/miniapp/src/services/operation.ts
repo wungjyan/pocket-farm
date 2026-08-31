@@ -1,5 +1,5 @@
 import { request } from "./http";
-import type { WorkMethod } from "./production";
+import type { ProductionStatus, WorkMethod } from "./production";
 
 export type OperationTypeStatus = "ACTIVE" | "DISABLED";
 
@@ -52,6 +52,7 @@ export interface FarmOperationSummary {
   operationTypeName: string;
   operatedAt: string;
   speciesName: string | null;
+  productionStatus: ProductionStatus | null;
 }
 
 export interface FarmOperationSummaryPage {

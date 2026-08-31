@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
+from app.models.plot import AreaUnit
 from app.models.production import (
     PlantingMethod,
     PlantingStandard,
@@ -131,6 +132,8 @@ async def get_farm_productions(
                     id=production.id,
                     plot_id=plot.id,
                     plot_name=plot.name,
+                    plot_area_value=plot.area_value,
+                    plot_area_unit=AreaUnit(plot.area_unit) if plot.area_unit else None,
                     species_id=species.id,
                     species_name=species.name,
                     industry=Industry(species.industry),

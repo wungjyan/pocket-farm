@@ -1,12 +1,13 @@
 import asyncio
 from collections.abc import Mapping
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import httpx
 
-from app.db.session import engine
+from app.db.session import async_session_factory, engine
 from app.main import app
+from app.models.production import Production, ProductionStatus
 
 OWNER_PHONE = "13800000001"
 OUTSIDER_PHONE = "13800000004"
@@ -146,6 +147,16 @@ def setup_farm() -> tuple[str, int, dict[str, int]]:
     return token, farm["id"], type_ids
 
 
+async def mark_production_ended(production_id: int) -> None:
+    async with async_session_factory() as session:
+        production = await session.get(Production, production_id)
+        assert production is not None
+        production.status = ProductionStatus.ENDED
+        production.ended_on = date.today()
+        await session.commit()
+    await engine.dispose()
+
+
 def test_farm_operations_requires_farm_membership() -> None:
     owner_token, farm_id, _ = setup_farm()
     outsider_token = login(OUTSIDER_PHONE)
@@ -184,6 +195,26 @@ def test_farm_operations_list_order_and_species() -> None:
     # 关联种养的农事带回作物名称。
     assert items[2]["speciesName"] == "黄瓜"
     assert items[2]["productionId"] is not None
+    assert items[2]["productionStatus"] == "ACTIVE"
+    assert items[0]["productionStatus"] is None
+
+
+def test_farm_operations_list_includes_ended_production_status() -> None:
+    token, farm_id, _ = setup_farm()
+    initial = call(token, f"/api/v1/farms/{farm_id}/operations?pageSize=100")
+    production_id = next(
+        item["productionId"]
+        for item in initial.json()["data"]["items"]
+        if item["productionId"] is not None
+    )
+
+    asyncio.run(mark_production_ended(production_id))
+
+    response = call(token, f"/api/v1/farms/{farm_id}/operations?pageSize=100")
+    ended_item = next(
+        item for item in response.json()["data"]["items"] if item["productionId"] == production_id
+    )
+    assert ended_item["productionStatus"] == "ENDED"
 
 
 def test_farm_operations_type_filter() -> None:

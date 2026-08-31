@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
+from app.models.plot import AreaUnit
 from app.models.production import (
     PlantingMethod,
     PlantingStandard,
@@ -201,6 +202,8 @@ class FarmProductionResponse(BaseModel):
     id: int
     plot_id: int = Field(serialization_alias="plotId")
     plot_name: str = Field(serialization_alias="plotName")
+    plot_area_value: Decimal | None = Field(default=None, serialization_alias="plotAreaValue")
+    plot_area_unit: AreaUnit | None = Field(default=None, serialization_alias="plotAreaUnit")
     species_id: int = Field(serialization_alias="speciesId")
     species_name: str = Field(serialization_alias="speciesName")
     industry: Industry

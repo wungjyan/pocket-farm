@@ -71,7 +71,7 @@
                 <text v-if="item.variety" class="variety-tag">{{ item.variety }}</text>
                 <text v-if="item.status === 'ENDED'" class="ended-tag">已结束</text>
               </view>
-              <text class="production-field">地块：{{ item.plotName }}</text>
+              <text class="production-field">地块：{{ plotLabel(item) }}</text>
               <text class="production-field">开始日期：{{ operationDateLabel(item.startedOn) }}</text>
               <text
                 v-if="item.status === 'ACTIVE' && item.initialQuantity !== null && item.initialQuantity !== undefined"
@@ -110,13 +110,22 @@
           <text>正在加载农事记录</text>
         </view>
         <view v-else-if="operations.length" class="operation-list">
-          <view v-for="item in operations" :key="item.id" class="operation-row pf-card">
+          <view
+            v-for="item in operations"
+            :key="item.id"
+            class="operation-row pf-card pf-tappable"
+            @tap="openOperation(item.id)"
+          >
             <view class="operation-copy">
-              <text class="operation-name">{{ item.operationTypeName }}</text>
-              <text class="operation-field">地块：{{ operationPlotLabel(item) }}</text>
-              <text class="operation-field">操作日期：{{ operationDateLabel(item.operatedAt) }}</text>
+              <view class="operation-title-line">
+                <text class="operation-name">{{ item.operationTypeName }}</text>
+                <text v-if="item.productionStatus === 'ENDED'" class="operation-status">种养已结束</text>
+              </view>
+              <text class="operation-field">地块：{{ plotLabel(item) }}</text>
+              <text class="operation-field">操作时间：{{ operationTimeLabel(item.operatedAt) }}</text>
               <text v-if="item.speciesName" class="operation-field">品种：{{ item.speciesName }}</text>
             </view>
+            <PfRowChevron />
           </view>
         </view>
         <PfEmptyState v-else />
@@ -250,7 +259,29 @@ function operationDateLabel(value: string): string {
   return `${year}.${month}.${day}`;
 }
 
-function operationPlotLabel(item: FarmOperationSummary): string {
+function operationTimeLabel(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+type PlotSummary = Pick<
+  FarmOperationSummary,
+  "plotName" | "plotAreaValue" | "plotAreaUnit"
+>;
+
+const plotAreaUnitLabels: Record<string, string> = {
+  MU: "亩",
+  SQUARE_METER: "平方米",
+  HECTARE: "公顷",
+};
+
+function plotLabel(item: PlotSummary): string {
   if (
     item.plotAreaValue === null ||
     item.plotAreaValue === undefined ||
@@ -258,8 +289,7 @@ function operationPlotLabel(item: FarmOperationSummary): string {
   ) {
     return item.plotName;
   }
-  const units: Record<string, string> = { MU: "亩", SQUARE_METER: "平方米", HECTARE: "公顷" };
-  return `${item.plotName}（${formatNumber(item.plotAreaValue)}${units[item.plotAreaUnit] || ""}）`;
+  return `${item.plotName}（${formatNumber(item.plotAreaValue)}${plotAreaUnitLabels[item.plotAreaUnit] || ""}）`;
 }
 
 function switchTab(tab: RecordsTab): void {
@@ -308,6 +338,10 @@ function handleOperationTypeChange(event: { detail: { value: number | string } }
 
 function openProduction(productionId: number): void {
   uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
+}
+
+function openOperation(operationId: number): void {
+  uni.navigateTo({ url: `/pages/operations/detail?operationId=${operationId}` });
 }
 
 function handleUnauthorized(): void {
@@ -623,15 +657,27 @@ onShow(() => loadPageData());
 }
 
 .operation-row {
+  display: flex;
+  align-items: center;
   padding: $pf-space-3;
 }
 
 .operation-copy {
   min-width: 0;
   flex: 1;
+  margin-right: 16rpx;
+}
+
+.operation-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
 }
 
 .operation-name {
+  min-width: 0;
+  flex: 0 1 auto;
   display: block;
   overflow: hidden;
   color: $pf-color-text;
@@ -639,6 +685,15 @@ onShow(() => loadPageData());
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.operation-status {
+  flex-shrink: 0;
+  padding: 3rpx 8rpx;
+  border-radius: 8rpx;
+  background: $pf-color-surface-muted;
+  color: $pf-color-text-muted;
+  font-size: 19rpx;
 }
 
 .operation-field {
@@ -652,7 +707,7 @@ onShow(() => loadPageData());
   white-space: nowrap;
 }
 
-.operation-name + .operation-field {
+.operation-title-line + .operation-field {
   margin-top: $pf-space-2;
 }
 

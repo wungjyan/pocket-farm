@@ -146,7 +146,7 @@ async def list_farm_operations(
     operation_type_id: int | None,
     page: int,
     page_size: int,
-) -> tuple[list[tuple[FarmOperation, Plot, OperationType, Species | None]], int]:
+) -> tuple[list[tuple[FarmOperation, Plot, OperationType, str | None, Species | None]], int]:
     await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
     filters = [Plot.farm_id == farm_id]
     if operation_type_id is not None:
@@ -159,7 +159,7 @@ async def list_farm_operations(
         .where(*filters)
     )
     result = await session.execute(
-        select(FarmOperation, Plot, OperationType, Species)
+        select(FarmOperation, Plot, OperationType, Production.status, Species)
         .join(Plot, Plot.id == FarmOperation.plot_id)
         .join(OperationType, OperationType.id == FarmOperation.operation_type_id)
         .outerjoin(Production, Production.id == FarmOperation.production_id)

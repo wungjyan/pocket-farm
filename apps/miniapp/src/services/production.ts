@@ -41,6 +41,8 @@ export interface FarmProduction {
   id: number;
   plotId: number;
   plotName: string;
+  plotAreaValue: number | string | null;
+  plotAreaUnit: "MU" | "SQUARE_METER" | "HECTARE" | null;
   speciesId: number;
   speciesName: string;
   industry: Industry;

@@ -213,6 +213,8 @@ def test_farm_productions_default_lists_all_with_active_first() -> None:
     ]
     first = items[0]
     assert first["plotName"] == "1号大棚"
+    assert float(first["plotAreaValue"]) == 1
+    assert first["plotAreaUnit"] == "MU"
     assert first["industry"] == "AGRICULTURE"
     assert first["individualUnit"] == "PLANT"
     fish = items[1]

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_db_session
 from app.models.operation import OperationType
 from app.models.plot import AreaUnit
-from app.models.production import WorkMethod
+from app.models.production import ProductionStatus, WorkMethod
 from app.models.user import User
 from app.schemas.operation import (
     CreateOperationRequest,
@@ -130,8 +130,11 @@ async def get_farm_operations(
                     operation_type_name=operation_type.name,
                     operated_at=_as_utc(operation.operated_at),
                     species_name=species.name if species else None,
+                    production_status=(
+                        ProductionStatus(production_status) if production_status else None
+                    ),
                 )
-                for operation, plot, operation_type, species in operations
+                for operation, plot, operation_type, production_status, species in operations
             ],
             page=page,
             page_size=page_size,
