@@ -408,4 +408,5 @@ def test_production_can_end_once_with_valid_business_dates() -> None:
     assert ended.status_code == 200
     assert ended.json()["data"]["status"] == "ENDED"
     assert ended.json()["data"]["endedOn"] == date.today().isoformat()
+    assert ended.json()["data"]["endedAt"] is not None
     assert repeated_end.status_code == 409

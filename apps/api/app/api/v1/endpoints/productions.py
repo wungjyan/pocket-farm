@@ -51,6 +51,7 @@ def _production_response(production, species) -> ProductionResponse:
         status=ProductionStatus(production.status),
         started_on=production.started_on,
         ended_on=production.ended_on,
+        ended_at=production.ended_at,
         planting_standard=(
             PlantingStandard(production.planting_standard)
             if production.planting_standard is not None

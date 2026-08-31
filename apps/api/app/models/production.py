@@ -68,6 +68,7 @@ class Production(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ProductionStatus.ACTIVE)
     started_on: Mapped[date] = mapped_column(Date, nullable=False)
     ended_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     planting_standard: Mapped[str | None] = mapped_column(String(20), nullable=True)
     planting_method: Mapped[str | None] = mapped_column(String(20), nullable=True)
     work_method: Mapped[str | None] = mapped_column(String(20), nullable=True)

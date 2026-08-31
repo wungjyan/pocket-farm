@@ -20,6 +20,7 @@ from app.models.production import (
     WorkMethod,
 )
 from app.models.species import Industry, Species
+from app.models.user import utc_now_naive
 from app.services.farm import get_farm_with_member
 from app.services.plot import get_plot_with_member
 
@@ -505,6 +506,7 @@ async def end_production(
 
     production.status = ProductionStatus.ENDED
     production.ended_on = actual_ended_on
+    production.ended_at = utc_now_naive()
     await session.commit()
     await session.refresh(production)
     return production, species

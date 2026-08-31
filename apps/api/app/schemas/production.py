@@ -163,6 +163,7 @@ class ProductionResponse(BaseModel):
     status: ProductionStatus
     started_on: date = Field(serialization_alias="startedOn")
     ended_on: date | None = Field(default=None, serialization_alias="endedOn")
+    ended_at: datetime | None = Field(default=None, serialization_alias="endedAt")
     planting_standard: PlantingStandard | None = Field(
         default=None,
         serialization_alias="plantingStandard",
