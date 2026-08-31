@@ -2,12 +2,14 @@
   <view class="pf-page farms-page">
     <view class="pf-page-content">
       <view v-if="loading" class="state-card pf-card">
-        <uv-loading-icon mode="circle" color="#2F7D4A" />
+        <!-- uv-loading-icon 的 color 只接受字符串，取值对应 $pf-color-primary -->
+        <uv-loading-icon mode="circle" color="#286B46" />
         <text>正在加载农场</text>
       </view>
 
       <view v-else-if="loadError" class="state-card pf-card">
-        <uv-icon name="warning" size="28" color="#C96A45" />
+        <!-- 取值对应 $pf-color-danger -->
+        <uv-icon name="warning" size="28" color="#A9433B" />
         <text>{{ loadError }}</text>
         <uv-button
           type="primary"
@@ -24,34 +26,29 @@
         <view
           v-for="farm in farms"
           :key="farm.id"
-          class="farm-row pf-card"
+          class="farm-row pf-card pf-tappable"
+          :class="{ 'farm-row--selected': currentFarm?.id === farm.id }"
           @tap="selectCurrentFarm(farm)"
         >
-          <view class="farm-row__main">
-            <view class="farm-row__copy">
-              <view class="farm-row__name-line">
-                <text class="farm-row__name">{{ farm.name }}</text>
-                <text v-if="currentFarm?.id === farm.id" class="current-badge">当前</text>
-              </view>
-              <text class="farm-row__meta">{{ roleLabel(farm.myRole) }}</text>
-            </view>
-            <uv-icon name="arrow-right" size="17" color="#929A93" />
+          <view class="farm-row__copy">
+            <text class="farm-row__name">{{ farm.name }}</text>
+            <text class="farm-row__meta">{{ roleLabel(farm.myRole) }}</text>
           </view>
-
+          <view class="farm-row__selection" :class="{ 'farm-row__selection--selected': currentFarm?.id === farm.id }">
+            <uv-icon v-if="currentFarm?.id === farm.id" name="checkmark" size="13" color="#FFFFFF" />
+          </view>
         </view>
       </view>
 
-      <view v-else class="empty-state pf-card">
-        <PfBusinessIcon name="land-plot" size="empty" />
-        <text class="empty-state__title">还没有可用农场</text>
-      </view>
+      <PfEmptyState v-else icon="land-plot" text="还没有可用农场" />
 
       <view
         v-if="!loading && !loadError"
-        class="create-action"
+        class="create-action pf-tappable"
         @click="openCreateFarm"
       >
-        <text>＋ 创建农场</text>
+        <uv-icon name="plus" size="14" color="#286B46" />
+        <text>创建农场</text>
       </view>
     </view>
 
@@ -61,7 +58,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
-import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getMyFarms, type Farm } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
@@ -116,92 +113,83 @@ onShow(loadFarms);
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.farm-list {
-  margin-top: 8rpx;
-}
-
 .farm-row {
-  padding: 22rpx 24rpx 18rpx;
+  display: flex;
+  min-height: 132rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 24rpx;
+  transition: background $pf-duration-fast ease;
 }
 
 .farm-row + .farm-row {
   margin-top: 12rpx;
 }
 
-.farm-row__main,
-.farm-row__name-line {
-  display: flex;
-  align-items: center;
-}
-
-.farm-row__main {
-  justify-content: space-between;
+.farm-row--selected {
+  border-color: $pf-color-primary;
+  background: $pf-color-surface-accent;
 }
 
 .farm-row__copy {
   min-width: 0;
-}
-
-.farm-row__name-line {
-  min-width: 0;
+  flex: 1;
+  margin-right: 18rpx;
 }
 
 .farm-row__name {
-  max-width: 390rpx;
+  display: block;
   overflow: hidden;
+  max-width: 100%;
   color: $pf-color-text;
-  font-size: 29rpx;
-  font-weight: 600;
+  font-size: 31rpx;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.current-badge {
-  margin-left: 10rpx;
-  padding: 4rpx 10rpx;
-  border-radius: 8rpx;
-  background: $pf-color-primary-soft;
-  color: $pf-color-primary;
-  font-size: 20rpx;
 }
 
 .farm-row__meta {
   display: block;
   margin-top: 8rpx;
   color: $pf-color-text-muted;
-  font-size: 23rpx;
+  font-size: 22rpx;
+}
+
+.farm-row__selection {
+  display: flex;
+  width: 40rpx;
+  height: 40rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid $pf-color-border;
+  border-radius: 50%;
+  background: $pf-color-surface;
+}
+
+.farm-row__selection--selected {
+  border-color: $pf-color-primary;
+  background: $pf-color-primary;
 }
 
 .create-action {
   display: flex;
-  min-height: 72rpx;
+  min-height: 96rpx;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  margin-top: 20rpx;
-  border: 1rpx solid $pf-color-border;
-  border-radius: $pf-radius-control;
+  margin-top: 24rpx;
+  border: 2rpx dashed $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
   color: $pf-color-primary;
-  font-size: 24rpx;
+  font-size: 27rpx;
+  font-weight: 650;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 28rpx;
-  padding: 32rpx 28rpx 28rpx;
-  text-align: center;
-}
-
-.empty-state__title {
-  display: block;
-}
-
-.empty-state__title {
-  margin-top: 22rpx;
-  color: $pf-color-text;
-  font-size: 30rpx;
-  font-weight: 600;
+.create-action text {
+  margin-left: 10rpx;
 }
 
 .state-card {
