@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
@@ -12,6 +13,7 @@ from app.models.plot import Plot
 from app.models.production import Production, ProductionStatus, QuantityUnit, WorkMethod
 from app.models.species import Industry, Species
 from app.models.user import User, utc_now_naive
+from app.services.farm import get_farm_with_member
 from app.services.plot import get_plot_with_member
 from app.services.production import get_production_with_member
 
@@ -129,6 +131,78 @@ async def list_plot_harvests(
         .limit(page_size)
     )
     return list(result.scalars()), int(total or 0)
+
+
+async def list_farm_harvests(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+    industry: Industry,
+    species_id: int | None,
+    page: int,
+    page_size: int,
+) -> tuple[
+    list[
+        tuple[
+            HarvestRecord,
+            Production,
+            Plot,
+            Species,
+            User | None,
+            User | None,
+        ]
+    ],
+    int,
+]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    filters = [Plot.farm_id == farm_id, Species.industry == industry]
+    if species_id is not None:
+        filters.append(Production.species_id == species_id)
+
+    total = await session.scalar(
+        select(func.count())
+        .select_from(HarvestRecord)
+        .join(Production, Production.id == HarvestRecord.production_id)
+        .join(Plot, Plot.id == Production.plot_id)
+        .join(Species, Species.id == Production.species_id)
+        .where(*filters)
+    )
+    operator = aliased(User)
+    creator = aliased(User)
+    result = await session.execute(
+        select(HarvestRecord, Production, Plot, Species, operator, creator)
+        .join(Production, Production.id == HarvestRecord.production_id)
+        .join(Plot, Plot.id == Production.plot_id)
+        .join(Species, Species.id == Production.species_id)
+        .outerjoin(operator, operator.id == HarvestRecord.operator_id)
+        .outerjoin(creator, creator.id == HarvestRecord.created_by)
+        .where(*filters)
+        .order_by(HarvestRecord.harvested_at.desc(), HarvestRecord.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return list(result.all()), int(total or 0)
+
+
+async def get_farm_harvest_filter_options(
+    session: AsyncSession,
+    *,
+    farm_id: int,
+    user_id: int,
+    industry: Industry,
+) -> list[tuple[int, str]]:
+    await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    result = await session.execute(
+        select(Species.id, Species.name)
+        .join(Production, Production.species_id == Species.id)
+        .join(HarvestRecord, HarvestRecord.production_id == Production.id)
+        .join(Plot, Plot.id == Production.plot_id)
+        .where(Plot.farm_id == farm_id, Species.industry == industry)
+        .distinct()
+        .order_by(Species.name.asc(), Species.id.asc())
+    )
+    return list(result.all())
 
 
 async def create_harvest(

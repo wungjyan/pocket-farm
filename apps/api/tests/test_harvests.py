@@ -246,6 +246,107 @@ def test_multiple_harvests_use_defaults_and_both_lists_sort_by_time() -> None:
     assert production_detail.json()["data"]["status"] == "ACTIVE"
 
 
+def test_farm_harvests_filter_by_industry_and_species_with_summary_context() -> None:
+    owner_token = login(OWNER_PHONE)
+    outsider_token = login(OUTSIDER_PHONE)
+    farm = create_farm(owner_token, "收获汇总农场")
+    greenhouse = create_plot(owner_token, farm["id"], "1号大棚")
+    pond = create_plot(owner_token, farm["id"], "东鱼塘")
+    cucumber = species_by_name(owner_token, "黄瓜")
+    tomato = species_by_name(owner_token, "番茄")
+    carp = species_by_name(owner_token, "鲤鱼")
+    cucumber_production = start_agriculture_production(
+        owner_token,
+        greenhouse["id"],
+        cucumber["id"],
+    )
+    start_agriculture_production(owner_token, greenhouse["id"], tomato["id"])
+    carp_production = start_industry_production(
+        owner_token,
+        pond["id"],
+        carp["id"],
+        industry="FISHERY",
+    )
+    cucumber_harvest = create_harvest(
+        owner_token,
+        cucumber_production["id"],
+        {"quantity": 12, "productName": "精品黄瓜"},
+    )
+    carp_harvest = create_harvest(owner_token, carp_production["id"], {"quantity": 5})
+    assert cucumber_harvest.status_code == 201
+    assert carp_harvest.status_code == 201
+
+    agriculture_options = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/harvest-filter-options?industry=AGRICULTURE",
+    )
+    assert agriculture_options.status_code == 200
+    assert agriculture_options.json()["data"]["species"] == [{"id": cucumber["id"], "name": "黄瓜"}]
+
+    agriculture_list = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/harvests?industry=AGRICULTURE&pageSize=100",
+    )
+    assert agriculture_list.status_code == 200
+    data = agriculture_list.json()["data"]
+    assert data["total"] == 1
+    item = data["items"][0]
+    assert item["id"] == cucumber_harvest.json()["data"]["id"]
+    assert item["productName"] == "精品黄瓜"
+    assert item["speciesName"] == "黄瓜"
+    assert item["industry"] == "AGRICULTURE"
+    assert item["plotName"] == "1号大棚"
+    assert float(item["plotAreaValue"]) == 1
+    assert item["plotAreaUnit"] == "MU"
+    assert item["productionStatus"] == "ACTIVE"
+    assert "operatorName" in item
+
+    species_list = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/harvests?industry=AGRICULTURE&speciesId={cucumber['id']}",
+    )
+    assert species_list.status_code == 200
+    assert species_list.json()["data"]["total"] == 1
+
+    empty_species_list = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/harvests?industry=AGRICULTURE&speciesId={tomato['id']}",
+    )
+    assert empty_species_list.status_code == 200
+    assert empty_species_list.json()["data"]["total"] == 0
+
+    fishery_list = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/harvests?industry=FISHERY",
+    )
+    assert fishery_list.status_code == 200
+    assert fishery_list.json()["data"]["items"][0]["id"] == carp_harvest.json()["data"]["id"]
+
+    outsider_list = call(outsider_token, f"/api/v1/farms/{farm['id']}/harvests")
+    outsider_options = call(
+        outsider_token,
+        f"/api/v1/farms/{farm['id']}/harvest-filter-options",
+    )
+    assert outsider_list.status_code == 404
+    assert outsider_options.status_code == 404
+
+
+def test_farm_harvests_include_ended_production_status() -> None:
+    owner_token = login(OWNER_PHONE)
+    farm = create_farm(owner_token, "历史收获汇总农场")
+    plot = create_plot(owner_token, farm["id"], "历史地块")
+    cucumber = species_by_name(owner_token, "黄瓜")
+    production = start_agriculture_production(owner_token, plot["id"], cucumber["id"])
+    created = create_harvest(owner_token, production["id"], {"quantity": 8})
+    assert created.status_code == 201
+
+    asyncio.run(mark_production_ended(production["id"]))
+
+    response = call(owner_token, f"/api/v1/farms/{farm['id']}/harvests?industry=AGRICULTURE")
+    assert response.status_code == 200
+    assert response.json()["data"]["items"][0]["productionStatus"] == "ENDED"
+
+
 def test_harvest_derives_units_and_validates_quantity_and_time_boundaries() -> None:
     owner_token = login(OWNER_PHONE)
     farm = create_farm(owner_token)

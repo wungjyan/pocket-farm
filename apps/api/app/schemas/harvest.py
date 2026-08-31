@@ -3,7 +3,9 @@ from decimal import Decimal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
-from app.models.production import QuantityUnit, WorkMethod
+from app.models.plot import AreaUnit
+from app.models.production import ProductionStatus, QuantityUnit, WorkMethod
+from app.models.species import Industry
 
 
 def _require_timezone(value: datetime | None) -> datetime | None:
@@ -108,3 +110,40 @@ class HarvestPage(BaseModel):
     page: int
     page_size: int = Field(serialization_alias="pageSize")
     total: int
+
+
+class FarmHarvestSummaryResponse(BaseModel):
+    id: int
+    production_id: int = Field(serialization_alias="productionId")
+    production_status: ProductionStatus = Field(serialization_alias="productionStatus")
+    plot_id: int = Field(serialization_alias="plotId")
+    plot_name: str = Field(serialization_alias="plotName")
+    plot_area_value: Decimal | None = Field(default=None, serialization_alias="plotAreaValue")
+    plot_area_unit: AreaUnit | None = Field(default=None, serialization_alias="plotAreaUnit")
+    species_id: int = Field(serialization_alias="speciesId")
+    species_name: str = Field(serialization_alias="speciesName")
+    industry: Industry
+    quantity: Decimal
+    unit: QuantityUnit
+    harvested_at: datetime = Field(serialization_alias="harvestedAt")
+    product_name: str | None = Field(default=None, serialization_alias="productName")
+    operator_id: int = Field(serialization_alias="operatorId")
+    operator_name: str | None = Field(default=None, serialization_alias="operatorName")
+    created_by: int = Field(serialization_alias="createdBy")
+    creator_name: str | None = Field(default=None, serialization_alias="creatorName")
+
+
+class FarmHarvestSummaryPage(BaseModel):
+    items: list[FarmHarvestSummaryResponse]
+    page: int
+    page_size: int = Field(serialization_alias="pageSize")
+    total: int
+
+
+class HarvestSpeciesOption(BaseModel):
+    id: int
+    name: str
+
+
+class HarvestFilterOptionsResponse(BaseModel):
+    species: list[HarvestSpeciesOption]

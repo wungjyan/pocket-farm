@@ -131,10 +131,62 @@
         <PfEmptyState v-else />
       </template>
 
-      <view v-else class="placeholder-state pf-card">
-        <PfBusinessIcon name="clock-3" size="empty" />
-        <text class="placeholder-state__title">收获记录待上线</text>
-      </view>
+      <template v-else>
+        <view class="filter-toolbar">
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="industryOptions.map((item) => item.label)"
+            :value="harvestIndustryIndex"
+            @change="handleHarvestIndustryChange"
+          >
+            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedHarvestIndustryLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+            </view>
+          </picker>
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="harvestSpeciesPickerOptions"
+            :value="harvestSpeciesIndex"
+            @change="handleHarvestSpeciesChange"
+          >
+            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedHarvestSpeciesLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+            </view>
+          </picker>
+        </view>
+
+        <view v-if="harvestsLoading" class="state-card pf-card">
+          <uv-loading-icon mode="circle" color="#286B46" />
+          <text>正在加载收获记录</text>
+        </view>
+        <view v-else-if="harvests.length" class="harvest-list">
+          <view
+            v-for="item in harvests"
+            :key="item.id"
+            class="harvest-row pf-card pf-tappable"
+            @tap="openHarvest(item.id)"
+          >
+            <view class="harvest-copy">
+              <view class="harvest-title-line">
+                <text class="harvest-name">{{ item.productName || item.speciesName }}</text>
+                <text v-if="item.productionStatus === 'ENDED'" class="harvest-status">种养已结束</text>
+              </view>
+              <text class="harvest-field">
+                {{ harvestActionLabel(item.industry) }}：<text class="harvest-quantity">{{ formatNumber(item.quantity) }} {{ quantityUnitLabels[item.unit] }}</text>
+              </text>
+              <text class="harvest-field">地块：{{ plotLabel(item) }}</text>
+              <text class="harvest-field">操作时间：{{ operationTimeLabel(item.harvestedAt) }}</text>
+              <text class="harvest-field">操作人：{{ harvestOperatorLabel(item) }}</text>
+            </view>
+            <PfRowChevron />
+          </view>
+        </view>
+        <PfEmptyState v-else />
+      </template>
     </view>
 
     <uv-toast ref="toastRef" />
@@ -144,7 +196,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
-import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -156,6 +207,13 @@ import {
   type FarmOperationSummary,
   type OperationTypeOption,
 } from "../../services/operation";
+import {
+  getFarmHarvests,
+  getHarvestFilterOptions,
+  type FarmHarvestSummary,
+  type HarvestSpeciesOption,
+  type QuantityUnit,
+} from "../../services/harvest";
 import {
   getFarmProductions,
   getProductionFilterOptions,
@@ -195,6 +253,15 @@ const individualUnitLabels: Record<IndividualUnit, string> = {
   TAIL: "尾",
 };
 
+const quantityUnitLabels: Record<QuantityUnit, string> = {
+  KG: "公斤",
+  HEAD: "头",
+  FEATHER: "羽",
+  PIECE: "只/个",
+  PLANT: "株",
+  TAIL: "尾",
+};
+
 const farmId = ref(0);
 const activeTab = ref<RecordsTab>("PRODUCTION");
 const industryValue = ref<Industry>("AGRICULTURE");
@@ -205,6 +272,11 @@ const operations = ref<FarmOperationSummary[]>([]);
 const operationTypeOptions = ref<OperationTypeOption[]>([]);
 const operationTypeValue = ref(0);
 const operationsLoading = ref(false);
+const harvestIndustryValue = ref<Industry>("AGRICULTURE");
+const harvestSpeciesOptions = ref<HarvestSpeciesOption[]>([]);
+const harvestSpeciesValue = ref(0);
+const harvests = ref<FarmHarvestSummary[]>([]);
+const harvestsLoading = ref(false);
 const productions = ref<FarmProduction[]>([]);
 const loading = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
@@ -231,6 +303,27 @@ const varietyIndex = computed(() => {
 });
 const selectedVarietyLabel = computed(
   () => varietyOptions.value.find((item) => item.id === varietyValue.value)?.name || ALL_VARIETY_LABEL,
+);
+
+const harvestIndustryIndex = computed(() =>
+  Math.max(0, industryOptions.findIndex((item) => item.value === harvestIndustryValue.value)),
+);
+const selectedHarvestIndustryLabel = computed(
+  () => industryOptions[harvestIndustryIndex.value].label,
+);
+const harvestSpeciesPickerOptions = computed(() => [
+  ALL_VARIETY_LABEL,
+  ...harvestSpeciesOptions.value.map((item) => item.name),
+]);
+const harvestSpeciesIndex = computed(() => {
+  if (!harvestSpeciesValue.value) return 0;
+  const index = harvestSpeciesOptions.value.findIndex((item) => item.id === harvestSpeciesValue.value);
+  return index >= 0 ? index + 1 : 0;
+});
+const selectedHarvestSpeciesLabel = computed(
+  () =>
+    harvestSpeciesOptions.value.find((item) => item.id === harvestSpeciesValue.value)?.name ||
+    ALL_VARIETY_LABEL,
 );
 
 const ALL_TYPE_LABEL = "全部类型";
@@ -298,6 +391,9 @@ function switchTab(tab: RecordsTab): void {
   if (tab === "OPERATION") {
     loadOperationTypeOptions();
     loadOperations();
+  } else if (tab === "HARVEST") {
+    loadHarvestSpeciesOptions();
+    loadHarvests();
   }
 }
 
@@ -335,6 +431,24 @@ function handleOperationTypeChange(event: { detail: { value: number | string } }
   loadOperations();
 }
 
+function handleHarvestIndustryChange(event: { detail: { value: number | string } }): void {
+  const selected = industryOptions[Number(event.detail.value)];
+  if (!selected || selected.value === harvestIndustryValue.value) return;
+  harvestIndustryValue.value = selected.value;
+  harvestSpeciesValue.value = 0;
+  loadHarvestSpeciesOptions();
+  loadHarvests();
+}
+
+function handleHarvestSpeciesChange(event: { detail: { value: number | string } }): void {
+  const index = Number(event.detail.value);
+  const selected = harvestSpeciesOptions.value[index - 1];
+  const targetId = index > 0 && selected ? selected.id : 0;
+  if (targetId === harvestSpeciesValue.value) return;
+  harvestSpeciesValue.value = targetId;
+  loadHarvests();
+}
+
 
 function openProduction(productionId: number): void {
   uni.navigateTo({ url: `/pages/productions/detail?productionId=${productionId}` });
@@ -342,6 +456,22 @@ function openProduction(productionId: number): void {
 
 function openOperation(operationId: number): void {
   uni.navigateTo({ url: `/pages/operations/detail?operationId=${operationId}` });
+}
+
+function openHarvest(harvestId: number): void {
+  uni.navigateTo({ url: `/pages/harvests/detail?harvestId=${harvestId}` });
+}
+
+function harvestActionLabel(industry: Industry): string {
+  if (industry === "LIVESTOCK") return "出栏";
+  if (industry === "FISHERY") return "捕捞";
+  return "采收";
+}
+
+function harvestOperatorLabel(item: FarmHarvestSummary): string {
+  const operatorName = item.operatorName?.trim() || "未设置昵称";
+  if (item.createdBy === item.operatorId) return operatorName;
+  return `${operatorName} · 记录人：${item.creatorName?.trim() || "未设置昵称"}`;
 }
 
 function handleUnauthorized(): void {
@@ -464,6 +594,65 @@ async function loadOperationTypeOptions(): Promise<void> {
   }
 }
 
+async function loadHarvests(): Promise<void> {
+  const targetFarmId = farmId.value;
+  if (!targetFarmId) {
+    harvests.value = [];
+    return;
+  }
+  harvestsLoading.value = true;
+  try {
+    const page = await getFarmHarvests(targetFarmId, {
+      industry: harvestIndustryValue.value,
+      speciesId: harvestSpeciesValue.value || undefined,
+      page: 1,
+      pageSize: 100,
+    });
+    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+    harvests.value = page.items;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "收获记录加载失败",
+    });
+  } finally {
+    harvestsLoading.value = false;
+  }
+}
+
+async function loadHarvestSpeciesOptions(): Promise<void> {
+  const targetFarmId = farmId.value;
+  if (!targetFarmId) {
+    harvestSpeciesOptions.value = [];
+    return;
+  }
+  try {
+    const options = await getHarvestFilterOptions(targetFarmId, harvestIndustryValue.value);
+    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+    harvestSpeciesOptions.value = options.species;
+    if (
+      harvestSpeciesValue.value &&
+      !options.species.some((item) => item.id === harvestSpeciesValue.value)
+    ) {
+      harvestSpeciesValue.value = 0;
+      await loadHarvests();
+    }
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "筛选选项加载失败",
+    });
+  }
+}
+
 async function loadPageData(): Promise<void> {
   const currentFarmId = currentFarm.value?.id || 0;
   if (!currentFarmId) {
@@ -474,18 +663,24 @@ async function loadPageData(): Promise<void> {
     operationTypeOptions.value = [];
     productions.value = [];
     operations.value = [];
+    harvestSpeciesValue.value = 0;
+    harvestSpeciesOptions.value = [];
+    harvests.value = [];
     return;
   }
   if (currentFarmId !== farmId.value) {
     farmId.value = currentFarmId;
     varietyValue.value = 0;
     operationTypeValue.value = 0;
+    harvestSpeciesValue.value = 0;
   }
   await Promise.all([
     loadVarietyOptions(),
     loadProductions(),
     loadOperationTypeOptions(),
     loadOperations(),
+    loadHarvestSpeciesOptions(),
+    loadHarvests(),
   ]);
 }
 
@@ -709,6 +904,72 @@ onShow(() => loadPageData());
 
 .operation-title-line + .operation-field {
   margin-top: $pf-space-2;
+}
+
+.harvest-list {
+  display: flex;
+  flex-direction: column;
+  gap: $pf-space-2;
+}
+
+.harvest-row {
+  display: flex;
+  align-items: center;
+  padding: $pf-space-3;
+}
+
+.harvest-copy {
+  min-width: 0;
+  flex: 1;
+  margin-right: 16rpx;
+}
+
+.harvest-title-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.harvest-name {
+  min-width: 0;
+  flex: 0 1 auto;
+  display: block;
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: 28rpx;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.harvest-status {
+  flex-shrink: 0;
+  padding: 3rpx 8rpx;
+  border-radius: 8rpx;
+  background: $pf-color-surface-muted;
+  color: $pf-color-text-muted;
+  font-size: 19rpx;
+}
+
+.harvest-field {
+  display: block;
+  margin-top: $pf-space-1;
+  overflow: hidden;
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.harvest-title-line + .harvest-field {
+  margin-top: $pf-space-2;
+}
+
+.harvest-quantity {
+  color: $pf-color-harvest;
+  font-weight: 650;
 }
 
 .state-card {
