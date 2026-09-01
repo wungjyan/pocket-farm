@@ -44,19 +44,34 @@
           重试
         </uv-button>
       </view>
-      <view v-else-if="species.length" class="species-list pf-card">
-        <view v-for="item in species" :key="item.id" class="species-row" @click="chooseSpecies(item)">
-          <view class="species-copy">
-            <text class="species-name">{{ item.name }}</text>
-            <text class="species-industry">{{ industryLabel(item.industry) }}</text>
-          </view>
-          <uv-icon name="arrow-right" size="17" color="#929A93" />
+      <template v-else>
+        <view v-if="species.length" class="list-toolbar">
+          <text class="list-toolbar__count">共 {{ species.length }} 个种类</text>
         </view>
-      </view>
-      <view v-else class="state-card pf-card">
-        <uv-icon name="empty-search" size="30" color="#929A93" />
-        <text>没有找到相关种类</text>
-      </view>
+        <view v-if="species.length" class="species-list">
+          <view
+            v-for="item in species"
+            :key="item.id"
+            class="species-card pf-card pf-tappable"
+            :class="{ 'species-card--selected': item.id === selectedSpeciesId }"
+            @tap="chooseSpecies(item)"
+          >
+            <view class="species-copy">
+              <text class="species-name">{{ item.name }}</text>
+            </view>
+            <view
+              class="species-selection"
+              :class="{ 'species-selection--selected': item.id === selectedSpeciesId }"
+            >
+              <uv-icon v-if="item.id === selectedSpeciesId" name="checkmark" size="15" color="#286B46" />
+            </view>
+          </view>
+        </view>
+        <view v-else class="state-card pf-card">
+          <uv-icon name="empty-search" size="30" color="#929A93" />
+          <text>没有找到相关种类</text>
+        </view>
+      </template>
     </view>
   </view>
 </template>
@@ -72,10 +87,6 @@ interface OpenerEventChannel {
   emit: (eventName: string, data: Species) => void;
 }
 
-interface ProductionSetupEventChannel {
-  emit: (eventName: string, data: { species: Species; variety: string }) => void;
-}
-
 const industries: Array<{ label: string; value: Industry | null }> = [
   { label: "全部", value: null },
   { label: "农业", value: "AGRICULTURE" },
@@ -83,30 +94,17 @@ const industries: Array<{ label: string; value: Industry | null }> = [
   { label: "牧业", value: "LIVESTOCK" },
   { label: "渔业", value: "FISHERY" },
 ];
-const industryLabels: Record<Industry, string> = {
-  AGRICULTURE: "农业",
-  FORESTRY: "林业",
-  LIVESTOCK: "牧业",
-  FISHERY: "渔业",
-};
-
 const keyword = ref("");
 const selectedIndustry = ref<Industry | null>(null);
 const species = ref<Species[]>([]);
 const loading = ref(false);
 const loadError = ref("");
+const selectedSpeciesId = ref(0);
 let openerEventChannel: OpenerEventChannel | null = null;
-const purpose = ref("");
-const farmId = ref(0);
-const plotId = ref(0);
 
 function handleUnauthorized(): void {
   clearAuthToken();
   uni.reLaunch({ url: "/pages/auth/login" });
-}
-
-function industryLabel(industry: Industry): string {
-  return industryLabels[industry];
 }
 
 async function loadSpecies(): Promise<void> {
@@ -132,25 +130,13 @@ function selectIndustry(industry: Industry | null): void {
 }
 
 function chooseSpecies(item: Species): void {
-  if (purpose.value === "production" && farmId.value) {
-    const plotParameter = plotId.value ? `&plotId=${plotId.value}` : "";
-    uni.navigateTo({
-      url: `/pages/productions/form?farmId=${farmId.value}${plotParameter}`,
-      success: (result) => {
-        const eventChannel = result.eventChannel as unknown as ProductionSetupEventChannel;
-        eventChannel.emit("setup", { species: item, variety: "" });
-      },
-    });
-    return;
-  }
   openerEventChannel?.emit("selected", item);
   uni.navigateBack();
 }
 
 onLoad((options) => {
-  purpose.value = String(options?.purpose || "");
-  farmId.value = Number(options?.farmId || 0);
-  plotId.value = Number(options?.plotId || 0);
+  const currentSelection = Number(options?.selectedId || 0);
+  selectedSpeciesId.value = Number.isInteger(currentSelection) && currentSelection > 0 ? currentSelection : 0;
   const page = getCurrentInstance()?.proxy as unknown as {
     getOpenerEventChannel?: () => OpenerEventChannel;
   } | null;
@@ -206,38 +192,67 @@ onLoad((options) => {
   font-weight: 600;
 }
 
-.species-list {
-  overflow: hidden;
-}
-
-.species-row {
+.list-toolbar {
   display: flex;
-  min-height: 94rpx;
+  min-height: 48rpx;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24rpx;
+  justify-content: flex-end;
+  padding: 0 4rpx 12rpx;
 }
 
-.species-row + .species-row {
-  border-top: 1rpx solid $pf-color-divider;
+.list-toolbar__count {
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
 }
 
-.species-copy,
-.species-name,
-.species-industry {
-  display: block;
+.species-list {
+  display: flex;
+  flex-direction: column;
+  gap: $pf-space-2;
+}
+
+.species-card {
+  display: flex;
+  min-height: 112rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 22rpx;
+}
+
+.species-card--selected {
+  background: $pf-color-primary-soft;
+}
+
+.species-copy {
+  min-width: 0;
+  flex: 1;
 }
 
 .species-name {
+  overflow: hidden;
   color: $pf-color-text;
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.species-industry {
-  margin-top: 5rpx;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
+.species-selection {
+  display: flex;
+  width: 36rpx;
+  height: 36rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16rpx;
+  border: 2rpx solid $pf-color-border;
+  border-radius: 50%;
+  background: $pf-color-surface;
+}
+
+.species-selection--selected {
+  border-color: $pf-color-primary;
 }
 
 .state-card {
@@ -247,6 +262,7 @@ onLoad((options) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 28rpx;
   color: $pf-color-text-secondary;
   font-size: 24rpx;
 }

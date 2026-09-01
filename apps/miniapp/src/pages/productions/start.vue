@@ -5,10 +5,7 @@
         <view class="field-group">
           <text class="field-label">种类 <text class="field-required">*</text></text>
           <view class="select-shell" @tap="openSpeciesSelector">
-            <view v-if="selectedSpecies" class="species-select__copy">
-              <text class="species-select__name">{{ selectedSpecies.name }}</text>
-              <text class="species-select__industry">{{ industryLabel(selectedSpecies.industry) }}</text>
-            </view>
+            <text v-if="selectedSpecies" class="species-select__name">{{ selectedSpecies.name }}</text>
             <text v-else class="select-placeholder">选择种类</text>
             <uv-icon name="arrow-right" size="17" color="#7F8B82" />
           </view>
@@ -55,7 +52,7 @@
 import { ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { useFarmContext } from "../../services/farm-context";
-import type { Species, Industry } from "../../services/species";
+import type { Species } from "../../services/species";
 
 interface ProductionSetupEventChannel {
   emit: (eventName: string, data: { species: Species; variety: string }) => void;
@@ -68,24 +65,14 @@ const variety = ref("");
 const toastRef = ref<{ error: (message: string) => void } | null>(null);
 const { currentFarm } = useFarmContext();
 
-const industryLabels: Record<Industry, string> = {
-  AGRICULTURE: "农业",
-  FORESTRY: "林业",
-  LIVESTOCK: "牧业",
-  FISHERY: "渔业",
-};
-
-function industryLabel(industry: Industry): string {
-  return industryLabels[industry];
-}
-
 function openSpeciesSelector(): void {
   if (!farmId.value) {
     toastRef.value?.error("农场信息无效");
     return;
   }
+  const selectedParameter = selectedSpecies.value ? `&selectedId=${selectedSpecies.value.id}` : "";
   uni.navigateTo({
-    url: `/pages/species/index?purpose=start&farmId=${farmId.value}`,
+    url: `/pages/species/index?farmId=${farmId.value}${selectedParameter}`,
     events: {
       selected: (species: Species) => {
         if (selectedSpecies.value?.id !== species.id) variety.value = "";
@@ -183,22 +170,10 @@ onLoad((options) => {
   width: 100%;
 }
 
-.species-select__copy,
-.species-select__name,
-.species-select__industry {
-  display: block;
-}
-
 .species-select__name {
   color: $pf-color-text;
   font-size: 26rpx;
   font-weight: 650;
-}
-
-.species-select__industry {
-  margin-top: 5rpx;
-  color: $pf-color-text-muted;
-  font-size: 21rpx;
 }
 
 .select-placeholder {
