@@ -38,7 +38,7 @@
             <text class="menu-title">基本信息</text>
             <text class="menu-description">农场名称、所在地区</text>
           </view>
-          <uv-icon name="arrow-right" size="17" color="#929A93" />
+          <PfRowChevron />
         </view>
       </view>
 
@@ -52,7 +52,7 @@
             <text class="menu-title">成员管理</text>
             <text class="menu-description">添加成员并设置农场角色</text>
           </view>
-          <uv-icon name="arrow-right" size="17" color="#929A93" />
+          <PfRowChevron />
         </view>
       </view>
 
@@ -69,7 +69,7 @@
             <view class="danger-copy">
               <text class="danger-title">退出农场</text>
             </view>
-            <uv-icon name="arrow-right" size="17" color="#C96A45" />
+            <PfRowChevron />
           </view>
         </view>
       </view>
@@ -82,6 +82,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarm, getFarmMembers, leaveFarm, type Farm, type FarmRole } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";

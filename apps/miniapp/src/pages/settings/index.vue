@@ -6,7 +6,7 @@
         <view class="setting-row pf-tappable" @tap="openProfile">
           <text class="setting-label">昵称</text>
           <text class="setting-value">{{ nickname }}</text>
-          <uv-icon name="arrow-right" size="17" color="#7F8B82" />
+          <PfRowChevron />
         </view>
         <view class="setting-divider" />
         <view class="setting-row setting-row--readonly">
@@ -19,7 +19,7 @@
       <view class="settings-list">
         <view class="setting-row pf-tappable" @tap="showAbout">
           <text class="setting-label">关于掌上农场</text>
-          <uv-icon name="arrow-right" size="17" color="#7F8B82" />
+          <PfRowChevron />
         </view>
       </view>
 
@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getCurrentUser, type User } from "../../services/user";
