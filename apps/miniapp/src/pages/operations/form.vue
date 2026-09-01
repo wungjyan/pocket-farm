@@ -53,8 +53,8 @@ import { getFarmMembers, type FarmMember } from "../../services/farm";
 import { ApiRequestError } from "../../services/http";
 import {
   createOperation,
+  getOperation,
   getOperationTypes,
-  getPlotOperations,
   updateOperation,
   type FarmOperation,
   type OperationInput,
@@ -120,19 +120,19 @@ async function loadForm(): Promise<void> {
   try {
     const plotResult = await getPlot(plotId.value);
     farmId.value = plotResult.farmId;
-    const [productionPage, memberPage, user, operationPage, operationTypePage] = await Promise.all([
+    const [productionPage, memberPage, user, existingOperation, operationTypePage] = await Promise.all([
       getPlotProductions(plotResult.id, "ACTIVE"),
       getFarmMembers(plotResult.farmId),
       getCurrentUser(),
-      operationId.value ? getPlotOperations(plotResult.id) : Promise.resolve(null),
+      operationId.value ? getOperation(operationId.value) : Promise.resolve(null),
       getOperationTypes(),
     ]);
     if (operationId.value) {
-      operation.value = operationPage?.items.find((item) => item.id === operationId.value) || null;
-      if (operation.value === null) {
+      if (!existingOperation || existingOperation.plotId !== plotResult.id) {
         loadError.value = "农事记录不存在或无法编辑";
         return;
       }
+      operation.value = existingOperation;
       if (
         operation.value.productionId !== null &&
         !productionPage.items.some((item) => item.id === operation.value?.productionId)

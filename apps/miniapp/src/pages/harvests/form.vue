@@ -35,7 +35,7 @@ import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
 import {
   createHarvest,
-  getProductionHarvests,
+  getHarvest,
   updateHarvest,
   type HarvestInput,
   type HarvestProductionSelection,
@@ -99,17 +99,17 @@ async function loadForm(): Promise<void> {
     }
     const productionResult = await getProduction(productionId.value);
     const plotResult = await getPlot(productionResult.plotId);
-    const [memberPage, user, harvestPage] = await Promise.all([
+    const [memberPage, user, existingHarvest] = await Promise.all([
       getFarmMembers(plotResult.farmId),
       getCurrentUser(),
-      harvestId.value ? getProductionHarvests(productionResult.id) : Promise.resolve(null),
+      harvestId.value ? getHarvest(harvestId.value) : Promise.resolve(null),
     ]);
     if (harvestId.value) {
-      harvest.value = harvestPage?.items.find((item) => item.id === harvestId.value) || null;
-      if (!harvest.value) {
+      if (!existingHarvest || existingHarvest.productionId !== productionResult.id) {
         loadError.value = "收获记录不存在或无法编辑";
         return;
       }
+      harvest.value = existingHarvest;
       if (productionResult.status !== "ACTIVE") {
         loadError.value = "种养已结束，收获记录无法编辑";
         return;
