@@ -14,7 +14,12 @@
             <uv-icon name="arrow-down" size="15" color="#7F8B82" />
           </view>
         </picker>
-        <text class="list-toolbar__count">{{ loading ? "–" : `${plotTotal} 个地块` }}</text>
+        <view class="list-toolbar__right">
+          <text class="list-toolbar__count">{{ loading ? "–" : `${plotTotal} 个地块` }}</text>
+          <view v-if="canManagePlots" class="create-button pf-tappable" @tap="openCreatePlot">
+            <text>创建地块</text>
+          </view>
+        </view>
       </view>
 
       <view v-if="loading" class="state-card pf-card">
@@ -263,9 +268,27 @@ onShow(() => loadPageData());
   display: block;
 }
 
+.list-toolbar__right {
+  display: flex;
+  align-items: center;
+}
+
 .list-toolbar__count {
   color: $pf-color-text-muted;
   font-size: 22rpx;
+}
+
+.create-button {
+  display: flex;
+  min-height: 64rpx;
+  align-items: center;
+  margin-left: 16rpx;
+  padding: 0 18rpx;
+  border-radius: $pf-radius-control;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
 .plot-list {
