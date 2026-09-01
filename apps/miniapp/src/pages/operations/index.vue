@@ -30,7 +30,7 @@
             <text class="page-context__separator">·</text>
             <view class="page-context__count">
               <text class="page-context__label">农事记录共</text>
-              <text class="page-context__value">{{ operations.length }}</text>
+              <text class="page-context__value">{{ formatNumber(totalCount) }}</text>
               <text class="page-context__label">条</text>
             </view>
           </view>
@@ -56,6 +56,7 @@
             </view>
             <PfRowChevron />
           </view>
+          <uv-load-more v-if="hasMore || loadingMore" :status="loadingMore ? 'loading' : 'nomore'" icon-color="#2F7D4A" color="#7F8B82" />
         </view>
         <view v-else class="empty-card pf-card">
           <uv-icon name="calendar" size="30" color="#929A93" />
@@ -72,12 +73,13 @@
         </view>
       </template>
     </view>
+    <uv-toast ref="toastRef" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { onLoad, onReachBottom, onShow } from "@dcloudio/uni-app";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
@@ -88,7 +90,9 @@ import {
 } from "../../services/operation";
 import { getPlot, type Plot } from "../../services/plot";
 import { getPlotProductions, type Production } from "../../services/production";
+import { formatNumber } from "../../utils/number";
 
+const PAGE_SIZE = 20;
 const plotId = ref(0);
 const plot = ref<Plot | null>(null);
 const operations = ref<FarmOperation[]>([]);
@@ -96,6 +100,11 @@ const activeProductions = ref<Production[]>([]);
 const members = ref<FarmMember[]>([]);
 const loading = ref(true);
 const loadError = ref("");
+const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
+const totalCount = ref(0);
+const currentPage = ref(1);
+const hasMore = ref(false);
+const loadingMore = ref(false);
 const activeProductionIds = computed(() => new Set(activeProductions.value.map((item) => item.id)));
 
 function handleUnauthorized(): void {
@@ -127,6 +136,14 @@ function isLocked(operation: FarmOperation): boolean {
   return operation.productionId !== null && !activeProductionIds.value.has(operation.productionId);
 }
 
+async function fetchOperationPage(page: number): Promise<void> {
+  const operationPage = await getPlotOperations(plotId.value, page, PAGE_SIZE);
+  totalCount.value = operationPage.total;
+  operations.value = page === 1 ? operationPage.items : [...operations.value, ...operationPage.items];
+  currentPage.value = page;
+  hasMore.value = operations.value.length < operationPage.total;
+}
+
 async function loadOperations(): Promise<void> {
   if (!plotId.value) {
     loadError.value = "地块信息无效";
@@ -137,13 +154,12 @@ async function loadOperations(): Promise<void> {
   loadError.value = "";
   try {
     const plotResult = await getPlot(plotId.value);
-    const [operationPage, productionPage, memberPage] = await Promise.all([
-      getPlotOperations(plotResult.id),
+    plot.value = plotResult;
+    const [, productionPage, memberPage] = await Promise.all([
+      fetchOperationPage(1),
       getPlotProductions(plotResult.id, "ACTIVE"),
       getFarmMembers(plotResult.farmId),
     ]);
-    plot.value = plotResult;
-    operations.value = operationPage.items;
     activeProductions.value = productionPage.items;
     members.value = memberPage.items;
   } catch (error) {
@@ -154,6 +170,25 @@ async function loadOperations(): Promise<void> {
     loadError.value = error instanceof ApiRequestError ? error.message : "农事记录加载失败，请稍后再试";
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadMoreOperations(): Promise<void> {
+  if (loading.value || loadingMore.value || !hasMore.value || loadError.value) return;
+  loadingMore.value = true;
+  try {
+    await fetchOperationPage(currentPage.value + 1);
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "更多记录加载失败",
+    });
+  } finally {
+    loadingMore.value = false;
   }
 }
 
@@ -171,6 +206,10 @@ onLoad((options) => {
 
 onShow(() => {
   if (plotId.value) loadOperations();
+});
+
+onReachBottom(() => {
+  void loadMoreOperations();
 });
 </script>
 

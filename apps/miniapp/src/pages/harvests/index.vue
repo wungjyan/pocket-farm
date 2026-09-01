@@ -20,7 +20,7 @@
             <text class="page-context__separator">·</text>
             <view class="page-context__count">
               <text class="page-context__label">收获记录共</text>
-              <text class="page-context__value">{{ harvests.length }}</text>
+              <text class="page-context__value">{{ formatNumber(totalCount) }}</text>
               <text class="page-context__label">条</text>
             </view>
           </view>
@@ -49,6 +49,7 @@
             </view>
             <PfRowChevron />
           </view>
+          <uv-load-more v-if="hasMore || loadingMore" :status="loadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
         <view v-else class="empty-card pf-card">
           <uv-icon name="order" size="30" color="#286B46" />
@@ -57,12 +58,13 @@
         </view>
       </template>
     </view>
+    <uv-toast ref="toastRef" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { onLoad, onReachBottom, onShow } from "@dcloudio/uni-app";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
@@ -95,6 +97,12 @@ const harvests = ref<HarvestRecord[]>([]);
 const members = ref<FarmMember[]>([]);
 const loading = ref(true);
 const loadError = ref("");
+const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
+const PAGE_SIZE = 20;
+const totalCount = ref(0);
+const currentPage = ref(1);
+const hasMore = ref(false);
+const loadingMore = ref(false);
 const actionLabel = computed(() => {
   if (production.value?.industry === "LIVESTOCK") return "出栏";
   if (production.value?.industry === "FISHERY") return "捕捞";
@@ -147,6 +155,16 @@ function creatorLabel(harvest: HarvestRecord): string {
   return harvest.createdBy === harvest.operatorId ? "" : ` · 记录人：${memberName(harvest.createdBy)}`;
 }
 
+async function fetchHarvestPage(page: number): Promise<void> {
+  const harvestPage = productionId.value
+    ? await getProductionHarvests(productionId.value, page, PAGE_SIZE)
+    : await getPlotHarvests(plotId.value, page, PAGE_SIZE);
+  totalCount.value = harvestPage.total;
+  harvests.value = page === 1 ? harvestPage.items : [...harvests.value, ...harvestPage.items];
+  currentPage.value = page;
+  hasMore.value = harvests.value.length < harvestPage.total;
+}
+
 async function loadHarvests(): Promise<void> {
   if (!productionId.value && !plotId.value) {
     loadError.value = "收获记录信息无效";
@@ -159,26 +177,24 @@ async function loadHarvests(): Promise<void> {
     if (productionId.value) {
       const productionResult = await getProduction(productionId.value);
       const plotResult = await getPlot(productionResult.plotId);
-      const [harvestPage, memberPage] = await Promise.all([
-        getProductionHarvests(productionResult.id),
-        getFarmMembers(plotResult.farmId),
-      ]);
       production.value = productionResult;
       productions.value = [productionResult];
       plot.value = plotResult;
       plotId.value = plotResult.id;
-      harvests.value = harvestPage.items;
+      const [, memberPage] = await Promise.all([
+        fetchHarvestPage(1),
+        getFarmMembers(plotResult.farmId),
+      ]);
       members.value = memberPage.items;
       return;
     }
     const plotResult = await getPlot(plotId.value);
-    const [harvestPage, productionPage, memberPage] = await Promise.all([
-      getPlotHarvests(plotResult.id),
+    plot.value = plotResult;
+    const [, productionPage, memberPage] = await Promise.all([
+      fetchHarvestPage(1),
       getPlotProductions(plotResult.id),
       getFarmMembers(plotResult.farmId),
     ]);
-    plot.value = plotResult;
-    harvests.value = harvestPage.items;
     productions.value = productionPage.items;
     members.value = memberPage.items;
   } catch (error) {
@@ -189,6 +205,25 @@ async function loadHarvests(): Promise<void> {
     loadError.value = error instanceof ApiRequestError ? error.message : "收获记录加载失败，请稍后再试";
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadMoreHarvests(): Promise<void> {
+  if (loading.value || loadingMore.value || !hasMore.value || loadError.value) return;
+  loadingMore.value = true;
+  try {
+    await fetchHarvestPage(currentPage.value + 1);
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "更多记录加载失败",
+    });
+  } finally {
+    loadingMore.value = false;
   }
 }
 
@@ -211,6 +246,10 @@ onLoad((options) => {
 
 onShow(() => {
   if (productionId.value || plotId.value) loadHarvests();
+});
+
+onReachBottom(() => {
+  void loadMoreHarvests();
 });
 </script>
 

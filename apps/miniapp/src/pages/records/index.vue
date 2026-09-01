@@ -1,6 +1,7 @@
 <template>
   <view class="pf-page records-page">
     <view class="pf-page-content">
+      <view class="records-sticky-header">
       <view class="records-tabs">
         <view
           v-for="tab in tabs"
@@ -12,47 +13,87 @@
           <text>{{ tab.label }}</text>
         </view>
       </view>
+      <view v-if="activeTab === 'PRODUCTION'" class="filter-toolbar">
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="industryOptions.map((item) => item.label)"
+          :value="industryIndex"
+          @change="handleIndustryChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedIndustryLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="varietyPickerOptions"
+          :value="varietyIndex"
+          @change="handleVarietyChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedVarietyLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="statusOptions.map((item) => item.label)"
+          :value="statusIndex"
+          @change="handleStatusChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedStatusLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+      </view>
+      <view v-else-if="activeTab === 'OPERATION'" class="filter-toolbar">
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="operationTypePickerOptions"
+          :value="operationTypeIndex"
+          @change="handleOperationTypeChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedOperationTypeLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+      </view>
+      <view v-else class="filter-toolbar">
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="industryOptions.map((item) => item.label)"
+          :value="harvestIndustryIndex"
+          @change="handleHarvestIndustryChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedHarvestIndustryLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+        <picker
+          class="filter-picker-wrap"
+          mode="selector"
+          :range="harvestSpeciesPickerOptions"
+          :value="harvestSpeciesIndex"
+          @change="handleHarvestSpeciesChange"
+        >
+          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+            <text class="filter-picker__label">{{ selectedHarvestSpeciesLabel }}</text>
+            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+          </view>
+        </picker>
+      </view>
+      </view>
 
       <template v-if="activeTab === 'PRODUCTION'">
-        <view class="filter-toolbar">
-          <picker
-            class="filter-picker-wrap"
-            mode="selector"
-            :range="industryOptions.map((item) => item.label)"
-            :value="industryIndex"
-            @change="handleIndustryChange"
-          >
-            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-              <text class="filter-picker__label">{{ selectedIndustryLabel }}</text>
-              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-            </view>
-          </picker>
-          <picker
-            class="filter-picker-wrap"
-            mode="selector"
-            :range="varietyPickerOptions"
-            :value="varietyIndex"
-            @change="handleVarietyChange"
-          >
-            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-              <text class="filter-picker__label">{{ selectedVarietyLabel }}</text>
-              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-            </view>
-          </picker>
-          <picker
-            class="filter-picker-wrap"
-            mode="selector"
-            :range="statusOptions.map((item) => item.label)"
-            :value="statusIndex"
-            @change="handleStatusChange"
-          >
-            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-              <text class="filter-picker__label">{{ selectedStatusLabel }}</text>
-              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-            </view>
-          </picker>
-        </view>
-
         <view v-if="loading" class="state-card pf-card">
           <uv-loading-icon mode="circle" color="#286B46" />
           <text>正在加载种养记录</text>
@@ -85,26 +126,12 @@
             </view>
             <PfRowChevron />
           </view>
+          <uv-load-more v-if="productions.length && (productionHasMore || productionLoadingMore)" :status="productionLoadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
         <PfEmptyState v-else />
       </template>
 
       <template v-else-if="activeTab === 'OPERATION'">
-        <view class="filter-toolbar">
-          <picker
-            class="filter-picker-wrap"
-            mode="selector"
-            :range="operationTypePickerOptions"
-            :value="operationTypeIndex"
-            @change="handleOperationTypeChange"
-          >
-            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-              <text class="filter-picker__label">{{ selectedOperationTypeLabel }}</text>
-              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-            </view>
-          </picker>
-        </view>
-
         <view v-if="operationsLoading" class="state-card pf-card">
           <uv-loading-icon mode="circle" color="#286B46" />
           <text>正在加载农事记录</text>
@@ -127,38 +154,12 @@
             </view>
             <PfRowChevron />
           </view>
+          <uv-load-more v-if="operations.length && (operationHasMore || operationLoadingMore)" :status="operationLoadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
         <PfEmptyState v-else />
       </template>
 
       <template v-else>
-        <view class="filter-toolbar">
-          <picker
-            class="filter-picker-wrap"
-            mode="selector"
-            :range="industryOptions.map((item) => item.label)"
-            :value="harvestIndustryIndex"
-            @change="handleHarvestIndustryChange"
-          >
-            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-              <text class="filter-picker__label">{{ selectedHarvestIndustryLabel }}</text>
-              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-            </view>
-          </picker>
-          <picker
-            class="filter-picker-wrap"
-            mode="selector"
-            :range="harvestSpeciesPickerOptions"
-            :value="harvestSpeciesIndex"
-            @change="handleHarvestSpeciesChange"
-          >
-            <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-              <text class="filter-picker__label">{{ selectedHarvestSpeciesLabel }}</text>
-              <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-            </view>
-          </picker>
-        </view>
-
         <view v-if="harvestsLoading" class="state-card pf-card">
           <uv-loading-icon mode="circle" color="#286B46" />
           <text>正在加载收获记录</text>
@@ -184,6 +185,7 @@
             </view>
             <PfRowChevron />
           </view>
+          <uv-load-more v-if="harvests.length && (harvestHasMore || harvestLoadingMore)" :status="harvestLoadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
         <PfEmptyState v-else />
       </template>
@@ -195,7 +197,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { onLoad, onReachBottom, onShow } from "@dcloudio/uni-app";
 import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -225,6 +227,8 @@ import type { ProductionStatus } from "../../services/production";
 import { formatNumber } from "../../utils/number";
 
 type RecordsTab = "PRODUCTION" | "OPERATION" | "HARVEST";
+
+const PAGE_SIZE = 20;
 
 const tabs: { value: RecordsTab; label: string }[] = [
   { value: "PRODUCTION", label: "种养" },
@@ -272,13 +276,22 @@ const operations = ref<FarmOperationSummary[]>([]);
 const operationTypeOptions = ref<OperationTypeOption[]>([]);
 const operationTypeValue = ref(0);
 const operationsLoading = ref(false);
+const operationPage = ref(1);
+const operationHasMore = ref(false);
+const operationLoadingMore = ref(false);
 const harvestIndustryValue = ref<Industry>("AGRICULTURE");
 const harvestSpeciesOptions = ref<HarvestSpeciesOption[]>([]);
 const harvestSpeciesValue = ref(0);
 const harvests = ref<FarmHarvestSummary[]>([]);
 const harvestsLoading = ref(false);
+const harvestPage = ref(1);
+const harvestHasMore = ref(false);
+const harvestLoadingMore = ref(false);
 const productions = ref<FarmProduction[]>([]);
 const loading = ref(false);
+const productionPage = ref(1);
+const productionHasMore = ref(false);
+const productionLoadingMore = ref(false);
 const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
 const { currentFarm } = useFarmContext();
 
@@ -479,23 +492,30 @@ function handleUnauthorized(): void {
   uni.reLaunch({ url: "/pages/auth/login" });
 }
 
+async function fetchProductionPage(targetFarmId: number, page: number): Promise<void> {
+  const result = await getFarmProductions(targetFarmId, {
+    industry: industryValue.value || undefined,
+    status: statusValue.value || undefined,
+    speciesId: varietyValue.value || undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+  productions.value = page === 1 ? result.items : [...productions.value, ...result.items];
+  productionPage.value = page;
+  productionHasMore.value = productions.value.length < result.total;
+}
+
 async function loadProductions(): Promise<void> {
   const targetFarmId = farmId.value;
   if (!targetFarmId) {
     productions.value = [];
+    productionHasMore.value = false;
     return;
   }
   loading.value = true;
   try {
-    const page = await getFarmProductions(targetFarmId, {
-      industry: industryValue.value || undefined,
-      status: statusValue.value || undefined,
-      speciesId: varietyValue.value || undefined,
-      page: 1,
-      pageSize: 100,
-    });
-    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
-    productions.value = page.items;
+    await fetchProductionPage(targetFarmId, 1);
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -507,6 +527,26 @@ async function loadProductions(): Promise<void> {
     });
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadMoreProductions(): Promise<void> {
+  const targetFarmId = farmId.value;
+  if (!targetFarmId || loading.value || productionLoadingMore.value || !productionHasMore.value) return;
+  productionLoadingMore.value = true;
+  try {
+    await fetchProductionPage(targetFarmId, productionPage.value + 1);
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "更多记录加载失败",
+    });
+  } finally {
+    productionLoadingMore.value = false;
   }
 }
 
@@ -536,21 +576,28 @@ async function loadVarietyOptions(): Promise<void> {
   }
 }
 
+async function fetchOperationPage(targetFarmId: number, page: number): Promise<void> {
+  const result = await getFarmOperations(targetFarmId, {
+    operationTypeId: operationTypeValue.value || undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+  operations.value = page === 1 ? result.items : [...operations.value, ...result.items];
+  operationPage.value = page;
+  operationHasMore.value = operations.value.length < result.total;
+}
+
 async function loadOperations(): Promise<void> {
   const targetFarmId = farmId.value;
   if (!targetFarmId) {
     operations.value = [];
+    operationHasMore.value = false;
     return;
   }
   operationsLoading.value = true;
   try {
-    const page = await getFarmOperations(targetFarmId, {
-      operationTypeId: operationTypeValue.value || undefined,
-      page: 1,
-      pageSize: 100,
-    });
-    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
-    operations.value = page.items;
+    await fetchOperationPage(targetFarmId, 1);
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -562,6 +609,26 @@ async function loadOperations(): Promise<void> {
     });
   } finally {
     operationsLoading.value = false;
+  }
+}
+
+async function loadMoreOperations(): Promise<void> {
+  const targetFarmId = farmId.value;
+  if (!targetFarmId || operationsLoading.value || operationLoadingMore.value || !operationHasMore.value) return;
+  operationLoadingMore.value = true;
+  try {
+    await fetchOperationPage(targetFarmId, operationPage.value + 1);
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "更多记录加载失败",
+    });
+  } finally {
+    operationLoadingMore.value = false;
   }
 }
 
@@ -594,22 +661,29 @@ async function loadOperationTypeOptions(): Promise<void> {
   }
 }
 
+async function fetchHarvestPage(targetFarmId: number, page: number): Promise<void> {
+  const result = await getFarmHarvests(targetFarmId, {
+    industry: harvestIndustryValue.value,
+    speciesId: harvestSpeciesValue.value || undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
+  harvests.value = page === 1 ? result.items : [...harvests.value, ...result.items];
+  harvestPage.value = page;
+  harvestHasMore.value = harvests.value.length < result.total;
+}
+
 async function loadHarvests(): Promise<void> {
   const targetFarmId = farmId.value;
   if (!targetFarmId) {
     harvests.value = [];
+    harvestHasMore.value = false;
     return;
   }
   harvestsLoading.value = true;
   try {
-    const page = await getFarmHarvests(targetFarmId, {
-      industry: harvestIndustryValue.value,
-      speciesId: harvestSpeciesValue.value || undefined,
-      page: 1,
-      pageSize: 100,
-    });
-    if (currentFarm.value?.id && currentFarm.value.id !== targetFarmId) return;
-    harvests.value = page.items;
+    await fetchHarvestPage(targetFarmId, 1);
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -621,6 +695,26 @@ async function loadHarvests(): Promise<void> {
     });
   } finally {
     harvestsLoading.value = false;
+  }
+}
+
+async function loadMoreHarvests(): Promise<void> {
+  const targetFarmId = farmId.value;
+  if (!targetFarmId || harvestsLoading.value || harvestLoadingMore.value || !harvestHasMore.value) return;
+  harvestLoadingMore.value = true;
+  try {
+    await fetchHarvestPage(targetFarmId, harvestPage.value + 1);
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    toastRef.value?.show({
+      type: "default",
+      message: error instanceof ApiRequestError ? error.message : "更多记录加载失败",
+    });
+  } finally {
+    harvestLoadingMore.value = false;
   }
 }
 
@@ -690,6 +784,16 @@ onLoad((query) => {
 });
 
 onShow(() => loadPageData());
+
+onReachBottom(() => {
+  if (activeTab.value === "PRODUCTION") {
+    void loadMoreProductions();
+  } else if (activeTab.value === "OPERATION") {
+    void loadMoreOperations();
+  } else {
+    void loadMoreHarvests();
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -725,6 +829,16 @@ onShow(() => loadPageData());
   border-radius: 999rpx;
   background: $pf-color-primary;
   transform: translateX(50%);
+}
+
+.records-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-left: -$pf-space-page-x;
+  margin-right: -$pf-space-page-x;
+  padding: 0 $pf-space-page-x;
+  background: $pf-color-page;
 }
 
 .filter-toolbar {
