@@ -12,6 +12,9 @@ hero:
     - theme: alt
       text: 查看开发计划
       link: /mvp/05-development-plan
+    - theme: alt
+      text: 查看 AI Tab MVP 计划
+      link: /ai/02-ai-tab-delivery-plan
 
 features:
   - title: 清晰的领域边界

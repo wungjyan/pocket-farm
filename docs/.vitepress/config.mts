@@ -44,6 +44,15 @@ export default defineConfig({
           },
         ],
       },
+      {
+        text: "AI Tab",
+        items: [
+          { text: "AI Tab MVP 规格", link: "/ai/00-ai-tab-mvp-spec" },
+          { text: "AI Tab MVP 技术设计", link: "/ai/01-ai-tab-technical-design" },
+          { text: "AI Tab MVP 交付计划", link: "/ai/02-ai-tab-delivery-plan" },
+          { text: "AI 写入操作设计记录", link: "/ai/03-ai-write-action-design" },
+        ],
+      },
     ],
 
     sidebar: [
@@ -80,6 +89,15 @@ export default defineConfig({
             text: "小程序 UI 设计规范",
             link: "/refactor/01-miniapp-ui-design-guidelines",
           },
+        ],
+      },
+      {
+        text: "AI Tab",
+        items: [
+          { text: "AI Tab MVP 规格", link: "/ai/00-ai-tab-mvp-spec" },
+          { text: "AI Tab MVP 技术设计", link: "/ai/01-ai-tab-technical-design" },
+          { text: "AI Tab MVP 交付计划", link: "/ai/02-ai-tab-delivery-plan" },
+          { text: "AI 写入操作设计记录", link: "/ai/03-ai-write-action-design" },
         ],
       },
     ],
