@@ -13,7 +13,7 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-only-secret-at-least-32-bytes")
 
 async def remove_test_user() -> None:
     from app.db.session import async_session_factory, engine
-    from app.models.ai import AIDailyTurnUsage
+    from app.models.ai import AIConversation, AIDailyTurnUsage
     from app.models.farm import Farm, FarmMember
     from app.models.harvest import HarvestRecord
     from app.models.operation import FarmOperation
@@ -34,6 +34,14 @@ async def remove_test_user() -> None:
                 await session.execute(
                     delete(AIDailyTurnUsage).where(AIDailyTurnUsage.user_id.in_(user_ids))
                 )
+            await session.execute(
+                delete(AIConversation).where(
+                    or_(
+                        AIConversation.user_id.in_(user_ids),
+                        AIConversation.farm_id.in_(farm_ids),
+                    )
+                )
+            )
             await session.execute(
                 delete(FarmMember).where(
                     or_(

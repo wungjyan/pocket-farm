@@ -101,6 +101,17 @@ def create_plot(token: str, farm_id: int, name: str) -> dict[str, Any]:
     return response.json()["data"]
 
 
+def create_conversation(token: str, farm_id: int) -> dict[str, Any]:
+    response = call(
+        token,
+        "/api/v1/ai/conversations",
+        method="post",
+        json={"farmId": farm_id},
+    )
+    assert response.status_code == 201
+    return response.json()["data"]
+
+
 @pytest.fixture
 def fake_client(monkeypatch: pytest.MonkeyPatch) -> FakeAIClient:
     client = FakeAIClient([])
@@ -110,12 +121,12 @@ def fake_client(monkeypatch: pytest.MonkeyPatch) -> FakeAIClient:
     app.dependency_overrides.pop(get_ai_client, None)
 
 
-def turn(token: str, farm_id: int, message: str = "现在有什么？") -> httpx.Response:
+def turn(token: str, conversation_id: int, message: str = "现在有什么？") -> httpx.Response:
     return call(
         token,
         "/api/v1/ai/turn",
         method="post",
-        json={"farmId": farm_id, "message": message},
+        json={"conversationId": conversation_id, "message": message},
     )
 
 
@@ -125,6 +136,7 @@ def test_ai_turn_uses_read_only_tool_and_returns_verified_reference(
     owner_token = login(OWNER_PHONE)
     farm = create_farm(owner_token)
     plot = create_plot(owner_token, farm["id"], "1号大棚")
+    conversation = create_conversation(owner_token, farm["id"])
     fake_client.responses = [
         AICompletion(
             content=None,
@@ -135,7 +147,7 @@ def test_ai_turn_uses_read_only_tool_and_returns_verified_reference(
         AICompletion(content="当前农场有 1 个匹配地块：1号大棚。", tool_calls=[]),
     ]
 
-    response = turn(owner_token, farm["id"], "1号大棚有什么？")
+    response = turn(owner_token, conversation["id"], "1号大棚有什么？")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -156,8 +168,9 @@ def test_ai_turn_requires_member_and_honors_farm_ai_switch(fake_client: FakeAICl
     owner_token = login(OWNER_PHONE)
     outsider_token = login(OUTSIDER_PHONE)
     farm = create_farm(owner_token)
+    conversation = create_conversation(owner_token, farm["id"])
 
-    outsider_response = turn(outsider_token, farm["id"])
+    outsider_response = turn(outsider_token, conversation["id"])
     assert outsider_response.status_code == 404
     assert outsider_response.json()["error"]["code"] == "NOT_FOUND"
     assert not fake_client.calls
@@ -171,7 +184,7 @@ def test_ai_turn_requires_member_and_honors_farm_ai_switch(fake_client: FakeAICl
     assert disable_response.status_code == 200
     assert disable_response.json()["data"]["aiEnabled"] is False
 
-    disabled_response = turn(owner_token, farm["id"])
+    disabled_response = turn(owner_token, conversation["id"])
     assert disabled_response.status_code == 403
     assert disabled_response.json()["error"]["code"] == "AI_NOT_ENABLED"
     assert not fake_client.calls
@@ -182,6 +195,7 @@ def test_ai_turn_returns_candidates_for_ambiguous_plot_name(fake_client: FakeAIC
     farm = create_farm(owner_token)
     first_plot = create_plot(owner_token, farm["id"], "东区大棚")
     second_plot = create_plot(owner_token, farm["id"], "西区大棚")
+    conversation = create_conversation(owner_token, farm["id"])
     fake_client.responses = [
         AICompletion(
             content=None,
@@ -191,7 +205,7 @@ def test_ai_turn_returns_candidates_for_ambiguous_plot_name(fake_client: FakeAIC
         )
     ]
 
-    response = turn(owner_token, farm["id"], "大棚里种了什么？")
+    response = turn(owner_token, conversation["id"], "大棚里种了什么？")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -201,6 +215,15 @@ def test_ai_turn_returns_candidates_for_ambiguous_plot_name(fake_client: FakeAIC
         second_plot["id"],
     }
     assert len(fake_client.calls) == 1
+    messages_response = call(
+        owner_token,
+        f"/api/v1/ai/conversations/{conversation['id']}/messages",
+    )
+    stored_candidates = messages_response.json()["data"]["items"][1]["candidates"]
+    assert {candidate["id"] for candidate in stored_candidates} == {
+        first_plot["id"],
+        second_plot["id"],
+    }
 
 
 def test_ai_turn_does_not_expose_a_plot_from_another_current_farm(
@@ -210,6 +233,7 @@ def test_ai_turn_does_not_expose_a_plot_from_another_current_farm(
     first_farm = create_farm(owner_token, "第一个农场")
     second_farm = create_farm(owner_token, "第二个农场")
     private_plot = create_plot(owner_token, second_farm["id"], "不应泄露的地块")
+    conversation = create_conversation(owner_token, first_farm["id"])
     fake_client.responses = [
         AICompletion(
             content=None,
@@ -224,7 +248,7 @@ def test_ai_turn_does_not_expose_a_plot_from_another_current_farm(
         AICompletion(content="当前农场没有匹配地块。", tool_calls=[]),
     ]
 
-    response = turn(owner_token, first_farm["id"])
+    response = turn(owner_token, conversation["id"])
 
     assert response.status_code == 200
     assert response.json()["data"]["references"] == []
@@ -238,10 +262,11 @@ def test_ai_turn_enforces_quota_and_handles_provider_timeout(
     monkeypatch.setattr(settings, "ai_daily_turn_limit", 1)
     owner_token = login(OWNER_PHONE)
     farm = create_farm(owner_token)
+    conversation = create_conversation(owner_token, farm["id"])
     fake_client.responses = [AICompletion(content="没有记录。", tool_calls=[])]
 
-    first_response = turn(owner_token, farm["id"])
-    quota_response = turn(owner_token, farm["id"])
+    first_response = turn(owner_token, conversation["id"])
+    quota_response = turn(owner_token, conversation["id"])
 
     assert first_response.status_code == 200
     assert quota_response.status_code == 429
@@ -249,8 +274,9 @@ def test_ai_turn_enforces_quota_and_handles_provider_timeout(
 
     monkeypatch.setattr(settings, "ai_daily_turn_limit", 20)
     second_farm = create_farm(owner_token, "超时农场")
+    second_conversation = create_conversation(owner_token, second_farm["id"])
     fake_client.responses = [AIProviderTimeout()]
-    timeout_response = turn(owner_token, second_farm["id"])
+    timeout_response = turn(owner_token, second_conversation["id"])
 
     assert timeout_response.status_code == 504
     assert timeout_response.json()["error"]["code"] == "AI_UPSTREAM_TIMEOUT"
@@ -261,8 +287,11 @@ def test_ai_turn_validation_and_tool_limit(
 ) -> None:
     owner_token = login(OWNER_PHONE)
     farm = create_farm(owner_token)
-    invalid_response = turn(owner_token, farm["id"], " " * 3)
-    too_long_response = turn(owner_token, farm["id"], "a" * (settings.ai_max_message_chars + 1))
+    conversation = create_conversation(owner_token, farm["id"])
+    invalid_response = turn(owner_token, conversation["id"], " " * 3)
+    too_long_response = turn(
+        owner_token, conversation["id"], "a" * (settings.ai_max_message_chars + 1)
+    )
     assert invalid_response.status_code == 422
     assert too_long_response.status_code == 422
 
@@ -276,8 +305,95 @@ def test_ai_turn_validation_and_tool_limit(
             ],
         )
     ]
-    limit_response = turn(owner_token, farm["id"])
+    limit_response = turn(owner_token, conversation["id"])
 
     assert limit_response.status_code == 200
     assert "查询步骤较多" in limit_response.json()["data"]["answer"]
     assert len(fake_client.calls) == 1
+
+
+def test_ai_conversation_persists_messages_and_can_be_deleted(
+    fake_client: FakeAIClient,
+) -> None:
+    owner_token = login(OWNER_PHONE)
+    farm = create_farm(owner_token)
+    conversation = create_conversation(owner_token, farm["id"])
+    fake_client.responses = [AICompletion(content="当前没有记录。", tool_calls=[])]
+
+    turn_response = turn(owner_token, conversation["id"], "现在有哪些记录？")
+    messages_response = call(owner_token, f"/api/v1/ai/conversations/{conversation['id']}/messages")
+    conversations_response = call(owner_token, "/api/v1/ai/conversations")
+
+    assert turn_response.status_code == 200
+    assert messages_response.status_code == 200
+    messages = messages_response.json()["data"]
+    assert [item["role"] for item in messages["items"]] == ["user", "assistant"]
+    assert messages["items"][0]["content"] == "现在有哪些记录？"
+    assert messages["items"][1]["content"] == "当前没有记录。"
+    assert conversations_response.json()["data"]["items"][0]["title"] == "现在有哪些记录？"
+
+    delete_response = call(
+        owner_token,
+        f"/api/v1/ai/conversations/{conversation['id']}",
+        method="delete",
+    )
+    missing_response = call(owner_token, f"/api/v1/ai/conversations/{conversation['id']}/messages")
+
+    assert delete_response.status_code == 204
+    assert missing_response.status_code == 404
+
+
+def test_ai_turn_uses_server_persisted_history(fake_client: FakeAIClient) -> None:
+    owner_token = login(OWNER_PHONE)
+    farm = create_farm(owner_token)
+    conversation = create_conversation(owner_token, farm["id"])
+    fake_client.responses = [
+        AICompletion(content="第一条回答。", tool_calls=[]),
+        AICompletion(content="第二条回答。", tool_calls=[]),
+    ]
+
+    first_response = turn(owner_token, conversation["id"], "第一条问题？")
+    second_response = turn(owner_token, conversation["id"], "第二条问题？")
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    second_messages = fake_client.calls[1]["messages"]
+    assert {"role": "user", "content": "第一条问题？"} in second_messages
+    assert {"role": "assistant", "content": "第一条回答。"} in second_messages
+
+
+def test_removing_member_deletes_their_ai_conversations() -> None:
+    owner_token = login(OWNER_PHONE)
+    member_token = login(OUTSIDER_PHONE)
+    farm = create_farm(owner_token)
+    add_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/members",
+        method="post",
+        json={"phoneNumber": OUTSIDER_PHONE, "role": "MEMBER"},
+    )
+    assert add_response.status_code == 201
+    member = add_response.json()["data"]
+    conversation = create_conversation(member_token, farm["id"])
+
+    remove_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/members/{member['id']}",
+        method="delete",
+    )
+    readd_response = call(
+        owner_token,
+        f"/api/v1/farms/{farm['id']}/members",
+        method="post",
+        json={"phoneNumber": OUTSIDER_PHONE, "role": "MEMBER"},
+    )
+    messages_response = call(
+        member_token,
+        f"/api/v1/ai/conversations/{conversation['id']}/messages",
+    )
+    list_response = call(member_token, "/api/v1/ai/conversations")
+
+    assert remove_response.status_code == 204
+    assert readd_response.status_code == 201
+    assert messages_response.status_code == 404
+    assert list_response.json()["data"]["items"] == []

@@ -1,6 +1,6 @@
 """SQLAlchemy models."""
 
-from app.models.ai import AIDailyTurnUsage
+from app.models.ai import AIConversation, AIDailyTurnUsage, AIMessage
 from app.models.farm import Farm, FarmMember, FarmMemberRole
 from app.models.harvest import HarvestRecord
 from app.models.operation import FarmOperation, OperationType, OperationTypeStatus
@@ -19,6 +19,8 @@ from app.models.user import User
 __all__ = [
     "AreaUnit",
     "AIDailyTurnUsage",
+    "AIConversation",
+    "AIMessage",
     "Farm",
     "FarmMember",
     "FarmMemberRole",

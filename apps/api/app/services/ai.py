@@ -7,16 +7,25 @@ from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
-from app.models.ai import AIDailyTurnUsage
+from app.models.ai import AIConversation, AIDailyTurnUsage, AIMessage
+from app.models.farm import Farm, FarmMember
 from app.models.user import User, utc_now_naive
-from app.schemas.ai import AIHistoryMessage, AIReference, AITurnResponse
+from app.schemas.ai import (
+    MAX_HISTORY_MESSAGES,
+    AIConversationPage,
+    AIConversationResponse,
+    AIMessagePage,
+    AIMessageResponse,
+    AIReference,
+    AITurnResponse,
+)
 from app.services.ai_client import (
     AIClient,
     AIProviderTimeout,
@@ -104,7 +113,7 @@ async def _consume_daily_turn(session: AsyncSession, *, user_id: int) -> None:
     )
 
 
-def _messages(history: list[AIHistoryMessage], message: str) -> list[dict[str, Any]]:
+def _messages(history: list[AIMessage], message: str) -> list[dict[str, Any]]:
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
         *[{"role": item.role, "content": item.content} for item in history],
@@ -137,16 +146,203 @@ def _deduplicate_references(references: list[AIReference]) -> list[AIReference]:
     return unique
 
 
+def _conversation_response(conversation: AIConversation, farm: Farm) -> AIConversationResponse:
+    return AIConversationResponse(
+        id=conversation.id,
+        farm_id=conversation.farm_id,
+        farm_name=farm.name,
+        title=conversation.title or "新对话",
+        created_at=conversation.created_at,
+        updated_at=conversation.updated_at,
+    )
+
+
+def _message_response(message: AIMessage) -> AIMessageResponse:
+    return AIMessageResponse(
+        id=message.id,
+        role=message.role,  # type: ignore[arg-type]
+        content=message.content,
+        references=[AIReference.model_validate(item) for item in message.references or []],
+        candidates=[AIReference.model_validate(item) for item in message.candidates or []],
+        created_at=message.created_at,
+    )
+
+
+async def _get_conversation_with_member(
+    session: AsyncSession,
+    *,
+    conversation_id: int,
+    user_id: int,
+) -> tuple[AIConversation, Farm]:
+    result = await session.execute(
+        select(AIConversation, Farm)
+        .join(Farm, Farm.id == AIConversation.farm_id)
+        .join(
+            FarmMember,
+            (FarmMember.farm_id == AIConversation.farm_id) & (FarmMember.user_id == user_id),
+        )
+        .where(AIConversation.id == conversation_id, AIConversation.user_id == user_id)
+    )
+    conversation_and_farm = result.one_or_none()
+    if conversation_and_farm is None:
+        raise _app_error(
+            status_code=404,
+            code=ErrorCode.NOT_FOUND,
+            message="AI conversation not found.",
+        )
+    return conversation_and_farm
+
+
+async def create_ai_conversation(
+    session: AsyncSession,
+    *,
+    current_user: User,
+    farm_id: int,
+) -> AIConversationResponse:
+    farm, _ = await get_farm_with_member(session, farm_id=farm_id, user_id=current_user.id)
+    conversation = AIConversation(user_id=current_user.id, farm_id=farm.id)
+    session.add(conversation)
+    await session.commit()
+    await session.refresh(conversation)
+    return _conversation_response(conversation, farm)
+
+
+async def list_ai_conversations(
+    session: AsyncSession,
+    *,
+    current_user: User,
+    page: int,
+    page_size: int,
+) -> AIConversationPage:
+    filters = [AIConversation.user_id == current_user.id, FarmMember.user_id == current_user.id]
+    total = await session.scalar(
+        select(func.count())
+        .select_from(AIConversation)
+        .join(FarmMember, FarmMember.farm_id == AIConversation.farm_id)
+        .where(*filters)
+    )
+    result = await session.execute(
+        select(AIConversation, Farm)
+        .join(Farm, Farm.id == AIConversation.farm_id)
+        .join(FarmMember, FarmMember.farm_id == AIConversation.farm_id)
+        .where(*filters)
+        .order_by(AIConversation.updated_at.desc(), AIConversation.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    return AIConversationPage(
+        items=[_conversation_response(conversation, farm) for conversation, farm in result.all()],
+        page=page,
+        page_size=page_size,
+        total=int(total or 0),
+    )
+
+
+async def list_ai_messages(
+    session: AsyncSession,
+    *,
+    current_user: User,
+    conversation_id: int,
+    page: int,
+    page_size: int,
+) -> AIMessagePage:
+    await _get_conversation_with_member(
+        session, conversation_id=conversation_id, user_id=current_user.id
+    )
+    total = await session.scalar(
+        select(func.count())
+        .select_from(AIMessage)
+        .where(AIMessage.conversation_id == conversation_id)
+    )
+    result = await session.execute(
+        select(AIMessage)
+        .where(AIMessage.conversation_id == conversation_id)
+        .order_by(AIMessage.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    messages = list(reversed(list(result.scalars())))
+    return AIMessagePage(
+        items=[_message_response(message) for message in messages],
+        page=page,
+        page_size=page_size,
+        total=int(total or 0),
+    )
+
+
+async def delete_ai_conversation(
+    session: AsyncSession,
+    *,
+    current_user: User,
+    conversation_id: int,
+) -> None:
+    conversation, _ = await _get_conversation_with_member(
+        session, conversation_id=conversation_id, user_id=current_user.id
+    )
+    await session.delete(conversation)
+    await session.commit()
+
+
+async def _recent_messages(
+    session: AsyncSession, *, conversation_id: int
+) -> list[AIMessage]:
+    result = await session.execute(
+        select(AIMessage)
+        .where(AIMessage.conversation_id == conversation_id)
+        .order_by(AIMessage.id.desc())
+        .limit(MAX_HISTORY_MESSAGES)
+    )
+    return list(reversed(list(result.scalars())))
+
+
+def _conversation_title(message: str) -> str:
+    return " ".join(message.split())[:100]
+
+
+async def _store_turn(
+    session: AsyncSession,
+    *,
+    conversation: AIConversation,
+    message: str,
+    response: AITurnResponse,
+) -> None:
+    now = utc_now_naive()
+    session.add_all(
+        [
+            AIMessage(
+                conversation_id=conversation.id,
+                role="user",
+                content=message,
+                created_at=now,
+            ),
+            AIMessage(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=response.answer,
+                references=[item.model_dump() for item in response.references] or None,
+                candidates=[item.model_dump() for item in response.candidates] or None,
+                created_at=now,
+            ),
+        ]
+    )
+    if conversation.title is None:
+        conversation.title = _conversation_title(message)
+    conversation.updated_at = now
+    await session.commit()
+
+
 async def run_ai_turn(
     session: AsyncSession,
     *,
     client: AIClient,
     current_user: User,
-    farm_id: int,
+    conversation_id: int,
     message: str,
-    history: list[AIHistoryMessage],
 ) -> AITurnResponse:
-    farm, _ = await get_farm_with_member(session, farm_id=farm_id, user_id=current_user.id)
+    conversation, farm = await _get_conversation_with_member(
+        session, conversation_id=conversation_id, user_id=current_user.id
+    )
+    farm_id = farm.id
     if not farm.ai_enabled:
         raise _app_error(
             status_code=403,
@@ -154,6 +350,7 @@ async def run_ai_turn(
             message="AI is disabled for this farm.",
         )
 
+    history = await _recent_messages(session, conversation_id=conversation.id)
     await _consume_daily_turn(session, user_id=current_user.id)
     request_id = str(uuid4())
     started_at = datetime.now()
@@ -178,7 +375,13 @@ async def run_ai_turn(
                     farm_id=farm_id,
                     started_at=started_at,
                 )
-                return AITurnResponse(answer=answer, references=_deduplicate_references(references))
+                response = AITurnResponse(
+                    answer=answer, references=_deduplicate_references(references)
+                )
+                await _store_turn(
+                    session, conversation=conversation, message=message, response=response
+                )
+                return response
 
             messages.append(
                 {
@@ -203,10 +406,14 @@ async def run_ai_turn(
                         started_at=started_at,
                         outcome="tool_limit",
                     )
-                    return AITurnResponse(
+                    response = AITurnResponse(
                         answer="这个问题需要的查询步骤较多，请缩小查询范围后再试。",
                         references=_deduplicate_references(references),
                     )
+                    await _store_turn(
+                        session, conversation=conversation, message=message, response=response
+                    )
+                    return response
 
                 tool_count += 1
                 execution: ToolExecution | None = None
@@ -234,11 +441,15 @@ async def run_ai_turn(
                             started_at=started_at,
                             outcome="needs_selection",
                         )
-                        return AITurnResponse(
+                        response = AITurnResponse(
                             answer="找到多个匹配项，请先选择具体对象。",
                             needs_selection=True,
                             candidates=execution.candidates,
                         )
+                        await _store_turn(
+                            session, conversation=conversation, message=message, response=response
+                        )
+                        return response
                     references.extend(execution.references)
                 messages.append(_tool_message(call.id, execution, error))
     except AIProviderTimeout as exc:

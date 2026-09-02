@@ -1,11 +1,12 @@
 import secrets
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
+from app.models.ai import AIConversation
 from app.models.farm import Farm, FarmMember, FarmMemberRole
 from app.models.user import User
 
@@ -299,6 +300,12 @@ async def remove_member(
         and sum(member.role == FarmMemberRole.OWNER for member in members) <= 1
     ):
         raise _conflict("A farm must always have at least one OWNER.")
+    await session.execute(
+        delete(AIConversation).where(
+            AIConversation.farm_id == farm_id,
+            AIConversation.user_id == target.user_id,
+        )
+    )
     await session.delete(target)
     await session.commit()
 
@@ -310,5 +317,11 @@ async def leave_farm(session: AsyncSession, *, farm_id: int, user_id: int) -> No
         and sum(member.role == FarmMemberRole.OWNER for member in members) <= 1
     ):
         raise _conflict("An OWNER cannot leave while they are the last OWNER.")
+    await session.execute(
+        delete(AIConversation).where(
+            AIConversation.farm_id == farm_id,
+            AIConversation.user_id == user_id,
+        )
+    )
     await session.delete(current_member)
     await session.commit()
