@@ -5,7 +5,7 @@
         <view class="about-brand__mark">
           <uv-icon name="home-fill" size="30" color="#FFFFFF" />
         </view>
-        <text class="about-brand__name">掌上农场</text>
+        <text class="about-brand__name">掌农记</text>
         <text class="about-brand__version">版本 1.0.0</text>
       </view>
 

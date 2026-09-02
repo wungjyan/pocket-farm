@@ -23,7 +23,7 @@
     {
       "path": "pages/about/index",
       "style": {
-        "navigationBarTitleText": "关于掌上农场"
+        "navigationBarTitleText": "关于掌农记"
       }
     },
     {
@@ -231,7 +231,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "掌上农场",
+    "navigationBarTitleText": "掌农记",
     "navigationBarBackgroundColor": "#F6F8F5",
     "backgroundColor": "#F6F8F5",
     "backgroundTextStyle": "light"

@@ -2,10 +2,10 @@
   <view class="login-page">
     <view class="login-content">
       <view class="brand-block">
-        <view class="brand-mark" aria-label="掌上农场">
+        <view class="brand-mark" aria-label="掌农记">
           <uv-icon name="home-fill" size="32" color="#FFFFFF" />
         </view>
-        <text class="brand-title">掌上农场</text>
+        <text class="brand-title">掌农记</text>
         <text class="brand-subtitle">记录种养与农事</text>
       </view>
 

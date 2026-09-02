@@ -18,7 +18,7 @@
       <text class="group-title group-title--spaced">其他</text>
       <view class="settings-list">
         <view class="setting-row pf-tappable" @tap="showAbout">
-          <text class="setting-label">关于掌上农场</text>
+          <text class="setting-label">关于掌农记</text>
           <PfRowChevron />
         </view>
       </view>

@@ -4,7 +4,7 @@
       <text class="legal-updated-at">更新日期：2026 年 9 月 2 日</text>
 
       <text class="legal-paragraph">
-        掌上农场重视你的个人信息和农场业务数据。本隐私政策说明我们收集的信息、使用方式及你可行使的权利。
+        掌农记重视你的个人信息和农场业务数据。本隐私政策说明我们收集的信息、使用方式及你可行使的权利。
       </text>
 
       <text class="legal-heading">一、我们收集的信息</text>
