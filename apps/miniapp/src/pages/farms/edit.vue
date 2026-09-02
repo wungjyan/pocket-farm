@@ -23,6 +23,7 @@
       <FarmForm
         :initial-name="farm.name"
         :initial-region="farm.region"
+        :framed="false"
         submit-label="保存修改"
         loading-text="保存中"
         :submitting="saving"
@@ -127,7 +128,7 @@ onShow(() => {
 .edit-farm-page {
   min-height: 100vh;
   box-sizing: border-box;
-  padding-bottom: $pf-space-page-bottom;
+  padding: 40rpx $pf-space-page-x $pf-space-page-bottom;
 }
 
 .state-card {

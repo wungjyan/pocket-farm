@@ -1,7 +1,7 @@
 <template>
-  <view class="form-card pf-card">
+  <view class="farm-form" :class="{ 'farm-form--card pf-card': framed }">
     <view class="field-group">
-      <text class="field-label">农场名称</text>
+      <text class="field-label">农场名称<text class="field-required"> *</text></text>
       <view class="input-shell" :class="{ 'input-shell--focused': nameFocused }">
         <uv-input
           v-model="form.name"
@@ -57,6 +57,7 @@ const props = withDefaults(
   defineProps<{
     initialName?: string;
     initialRegion?: string | null;
+    framed?: boolean;
     submitLabel?: string;
     loadingText?: string;
     submitting?: boolean;
@@ -64,6 +65,7 @@ const props = withDefaults(
   {
     initialName: "",
     initialRegion: "",
+    framed: true,
     submitLabel: "保存修改",
     loadingText: "保存中",
     submitting: false,
@@ -106,7 +108,7 @@ function notifyChange(): void {
 <style lang="scss" scoped>
 @import "../styles/design-tokens.scss";
 
-.form-card {
+.farm-form--card {
   padding: 28rpx 24rpx;
 }
 
@@ -120,6 +122,10 @@ function notifyChange(): void {
   color: $pf-color-text;
   font-size: 27rpx;
   font-weight: 600;
+}
+
+.field-required {
+  color: $pf-color-danger;
 }
 
 .field-optional {
