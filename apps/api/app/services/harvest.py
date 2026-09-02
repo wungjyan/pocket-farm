@@ -138,7 +138,7 @@ async def list_farm_harvests(
     *,
     farm_id: int,
     user_id: int,
-    industry: Industry,
+    industry: Industry | None,
     species_id: int | None,
     page: int,
     page_size: int,
@@ -156,7 +156,9 @@ async def list_farm_harvests(
     int,
 ]:
     await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
-    filters = [Plot.farm_id == farm_id, Species.industry == industry]
+    filters = [Plot.farm_id == farm_id]
+    if industry is not None:
+        filters.append(Species.industry == industry)
     if species_id is not None:
         filters.append(Production.species_id == species_id)
 

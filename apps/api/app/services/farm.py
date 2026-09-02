@@ -141,6 +141,7 @@ async def update_farm(
     user_id: int,
     name: str | None,
     region: str | None,
+    ai_enabled: bool | None,
     fields_set: set[str],
 ) -> tuple[Farm, FarmMemberRole]:
     farm, member, _ = await _lock_farm_members(session, farm_id=farm_id, user_id=user_id)
@@ -150,6 +151,8 @@ async def update_farm(
         farm.name = name  # type: ignore[assignment]
     if "region" in fields_set:
         farm.region = region
+    if "ai_enabled" in fields_set:
+        farm.ai_enabled = ai_enabled  # type: ignore[assignment]
     await session.commit()
     await session.refresh(farm)
     return farm, FarmMemberRole(member.role)

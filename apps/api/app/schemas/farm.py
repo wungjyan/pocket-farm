@@ -20,6 +20,17 @@ class CreateFarmRequest(BaseModel):
 class UpdateFarmRequest(BaseModel):
     name: Annotated[str | None, Field(default=None, min_length=1, max_length=100)]
     region: Annotated[str | None, Field(default=None, max_length=100)]
+    ai_enabled: bool | None = Field(
+        default=None,
+        validation_alias=AliasChoices("aiEnabled", "ai_enabled"),
+        serialization_alias="aiEnabled",
+    )
+
+    @model_validator(mode="after")
+    def validate_ai_enabled(self) -> "UpdateFarmRequest":
+        if "ai_enabled" in self.model_fields_set and self.ai_enabled is None:
+            raise ValueError("aiEnabled cannot be null.")
+        return self
 
 
 class FarmResponse(BaseModel):
@@ -29,6 +40,7 @@ class FarmResponse(BaseModel):
     farm_code: str = Field(serialization_alias="farmCode")
     name: str
     region: str | None = None
+    ai_enabled: bool = Field(serialization_alias="aiEnabled")
     created_by: int = Field(serialization_alias="createdBy")
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")

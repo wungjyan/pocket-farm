@@ -43,6 +43,7 @@ def _farm_response(farm, role: FarmMemberRole | str | None) -> FarmResponse:
         farm_code=farm.farm_code,
         name=farm.name,
         region=farm.region,
+        ai_enabled=farm.ai_enabled,
         created_by=farm.created_by,
         created_at=farm.created_at,
         updated_at=farm.updated_at,
@@ -137,6 +138,7 @@ async def edit_farm(
         user_id=current_user.id,
         name=request.name,
         region=request.region,
+        ai_enabled=request.ai_enabled,
         fields_set=request.model_fields_set,
     )
     return ApiResponse.success_response(data=_farm_response(farm, role))

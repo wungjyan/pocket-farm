@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CHAR, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import BOOLEAN, CHAR, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,6 +22,12 @@ class Farm(Base):
     farm_code: Mapped[str] = mapped_column(CHAR(6), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     region: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    ai_enabled: Mapped[bool] = mapped_column(
+        BOOLEAN,
+        nullable=False,
+        default=True,
+        server_default="1",
+    )
     created_by: Mapped[int] = mapped_column(
         BIGINT(unsigned=True),
         ForeignKey("users.id", ondelete="RESTRICT"),

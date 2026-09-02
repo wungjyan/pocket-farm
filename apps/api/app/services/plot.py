@@ -79,14 +79,18 @@ async def list_plots(
     user_id: int,
     page: int,
     page_size: int,
+    keyword: str | None = None,
 ) -> tuple[list[Plot], int]:
     await get_farm_with_member(session, farm_id=farm_id, user_id=user_id)
+    filters = [Plot.farm_id == farm_id]
+    if keyword:
+        filters.append(Plot.name.like(f"%{keyword}%"))
     total = await session.scalar(
-        select(func.count()).select_from(Plot).where(Plot.farm_id == farm_id)
+        select(func.count()).select_from(Plot).where(*filters)
     )
     result = await session.execute(
         select(Plot)
-        .where(Plot.farm_id == farm_id)
+        .where(*filters)
         .order_by(Plot.created_at.desc(), Plot.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
