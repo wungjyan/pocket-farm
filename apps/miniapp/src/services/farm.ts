@@ -7,6 +7,7 @@ export interface Farm {
   farmCode: string;
   name: string;
   region: string | null;
+  aiEnabled: boolean;
   createdBy: number;
   createdAt: string;
   updatedAt: string;
@@ -47,6 +48,7 @@ export interface CreateFarmInput {
 export interface UpdateFarmInput {
   name?: string;
   region?: string | null;
+  aiEnabled?: boolean;
 }
 
 export function getMyFarms(page = 1, pageSize = 100): Promise<FarmPage> {

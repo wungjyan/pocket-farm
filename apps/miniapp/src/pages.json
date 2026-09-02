@@ -16,6 +16,19 @@
       }
     },
     {
+      "path": "pages/ai/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "AI助手"
+      }
+    },
+    {
+      "path": "pages/ai/conversations",
+      "style": {
+        "navigationBarTitleText": "对话管理"
+      }
+    },
+    {
       "path": "pages/farm/index",
       "style": {
         "navigationStyle": "custom",
@@ -216,6 +229,12 @@
         "text": "首页",
         "iconPath": "static/tabbar/home.png",
         "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/ai/index",
+        "text": "AI",
+        "iconPath": "static/tabbar/ai.png",
+        "selectedIconPath": "static/tabbar/ai-active.png"
       },
       {
         "pagePath": "pages/farm/index",

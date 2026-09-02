@@ -8,6 +8,7 @@ export interface FarmSummary {
   farmCode?: string;
   name: string;
   region?: string | null;
+  aiEnabled?: boolean;
   role?: "OWNER" | "ADMIN" | "MEMBER";
   plotCount?: number;
   activeProductionCount?: number;
@@ -98,6 +99,7 @@ export function toFarmSummary(farm: Farm): FarmSummary {
     farmCode: farm.farmCode,
     name: farm.name,
     region: farm.region,
+    aiEnabled: farm.aiEnabled,
     role: farm.myRole || undefined,
   };
 }

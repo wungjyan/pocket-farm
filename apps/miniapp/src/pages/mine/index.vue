@@ -31,6 +31,17 @@
           <PfRowChevron />
         </view>
       </view>
+
+      <view class="pf-section-heading">
+        <text class="pf-section-title">AI</text>
+      </view>
+      <view class="menu-list">
+        <view class="menu-row pf-card pf-tappable" @tap="openAIConversations">
+          <PfBusinessIcon name="list" />
+          <text class="menu-row__title">AI 对话</text>
+          <PfRowChevron />
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -76,6 +87,10 @@ function openFarmSettings(): void {
     return;
   }
   uni.navigateTo({ url: `/pages/farms/detail?farmId=${currentFarm.value.id}` });
+}
+
+function openAIConversations(): void {
+  uni.navigateTo({ url: "/pages/ai/conversations" });
 }
 
 // 本页只读展示：用户与农场信息均由共享上下文维护，无需在展示时请求。
