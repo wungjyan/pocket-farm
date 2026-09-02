@@ -54,6 +54,19 @@ def test_repeated_login_returns_same_user() -> None:
     assert first == second
 
 
+def test_any_valid_phone_can_use_the_configured_test_code() -> None:
+    response = asyncio.run(
+        request_api(
+            "/api/v1/auth/login",
+            method="post",
+            json={"phoneNumber": "19900000001", "verificationCode": "8888"},
+        )
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["user"]["phoneNumber"] == "19900000001"
+
+
 def test_invalid_code_returns_unauthorized() -> None:
     response = asyncio.run(
         request_api(

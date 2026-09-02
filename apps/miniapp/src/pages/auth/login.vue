@@ -76,17 +76,19 @@
           登录
         </uv-button>
 
-        <text v-if="isDevelopment" class="development-tip">
-          开发环境可使用配置的测试验证码
-        </text>
       </view>
     </view>
 
     <view class="agreement">
-      <text>登录即表示同意</text>
-      <text class="agreement-link" @tap="handleAgreementTap('user')">《用户协议》</text>
+      <view class="agreement-check pf-tappable" @tap="toggleAgreement">
+        <view class="agreement-check__icon" :class="{ 'agreement-check__icon--checked': agreementAccepted }">
+          <uv-icon v-if="agreementAccepted" name="checkbox-mark" size="16" color="#FFFFFF" />
+        </view>
+      </view>
+      <text>我已阅读并同意</text>
+      <text class="agreement-link" @tap.stop="openAgreement('user')">《用户协议》</text>
       <text>和</text>
-      <text class="agreement-link" @tap="handleAgreementTap('privacy')">《隐私政策》</text>
+      <text class="agreement-link" @tap.stop="openAgreement('privacy')">《隐私政策》</text>
     </view>
 
     <uv-toast ref="toastRef" />
@@ -112,16 +114,23 @@ const countdown = ref(0);
 const verificationPhone = ref("");
 const phoneFocused = ref(false);
 const codeFocused = ref(false);
-const isDevelopment = import.meta.env.DEV;
-const toastRef = ref<{ error: (message: string) => void; show: (options: { message: string }) => void } | null>(null);
+const agreementAccepted = ref(false);
+const toastRef = ref<{
+  show: (options: {
+    message: string;
+    type?: "error" | "success" | "warning" | "primary" | "default";
+    overlay?: boolean;
+    position?: "top" | "center" | "bottom";
+  }) => void;
+} | null>(null);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 function showError(message: string): void {
-  toastRef.value?.error(message);
+  toastRef.value?.show({ message, type: "error", overlay: false, position: "top" });
 }
 
 function showMessage(message: string): void {
-  toastRef.value?.show({ message });
+  toastRef.value?.show({ message, overlay: false, position: "top" });
 }
 
 function isValidPhoneNumber(phoneNumber: string): boolean {
@@ -153,11 +162,17 @@ function handleGetCode(): void {
     countdown.value -= 1;
   }, 1000);
 
-  showMessage(isDevelopment ? "测试验证码已准备" : "验证码已发送");
+  showMessage("演示模式，使用验证码 8888 登录");
 }
 
-function handleAgreementTap(type: "user" | "privacy"): void {
-  showMessage(type === "user" ? "用户协议将在后续开放" : "隐私政策将在后续开放");
+function toggleAgreement(): void {
+  agreementAccepted.value = !agreementAccepted.value;
+}
+
+function openAgreement(type: "user" | "privacy"): void {
+  uni.navigateTo({
+    url: type === "user" ? "/pages/legal/user-agreement" : "/pages/legal/privacy-policy",
+  });
 }
 
 async function handleLogin(): Promise<void> {
@@ -176,6 +191,11 @@ async function handleLogin(): Promise<void> {
 
   if (!verificationCode) {
     showError("请输入验证码");
+    return;
+  }
+
+  if (!agreementAccepted.value) {
+    showError("请先阅读并同意用户协议和隐私政策");
     return;
   }
 
@@ -338,15 +358,6 @@ onUnmounted(() => {
   color: #929a93;
 }
 
-.development-tip {
-  display: block;
-  margin-top: 22rpx;
-  color: #929a93;
-  font-size: 23rpx;
-  line-height: 1.5;
-  text-align: center;
-}
-
 .agreement {
   display: flex;
   align-items: center;
@@ -357,6 +368,32 @@ onUnmounted(() => {
   font-size: 23rpx;
   line-height: 1.6;
   text-align: center;
+}
+
+.agreement-check {
+  display: flex;
+  width: 36rpx;
+  height: 36rpx;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4rpx;
+}
+
+.agreement-check__icon {
+  display: flex;
+  width: 28rpx;
+  height: 28rpx;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #7f8b82;
+  border-radius: 6rpx;
+  background: #ffffff;
+}
+
+.agreement-check__icon--checked {
+  border-color: #286b46;
+  background: #286b46;
 }
 
 .agreement-link {
