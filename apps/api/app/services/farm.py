@@ -134,6 +134,54 @@ async def list_my_farms(
     return farms, int(total or 0)
 
 
+async def resolve_current_farm(
+    session: AsyncSession,
+    *,
+    user: User,
+) -> tuple[Farm, FarmMemberRole] | None:
+    """Return the user's valid preferred farm, or persist the list's first farm as fallback."""
+    if user.preferred_farm_id is not None:
+        preferred_result = await session.execute(
+            select(Farm, FarmMember.role)
+            .join(FarmMember, FarmMember.farm_id == Farm.id)
+            .where(Farm.id == user.preferred_farm_id, FarmMember.user_id == user.id)
+        )
+        preferred = preferred_result.one_or_none()
+        if preferred is not None:
+            farm, role = preferred
+            return farm, FarmMemberRole(role)
+
+    fallback_result = await session.execute(
+        select(Farm, FarmMember.role)
+        .join(FarmMember, FarmMember.farm_id == Farm.id)
+        .where(FarmMember.user_id == user.id)
+        .order_by(Farm.created_at.desc(), Farm.id.desc())
+        .limit(1)
+    )
+    fallback = fallback_result.one_or_none()
+    fallback_farm_id = fallback[0].id if fallback is not None else None
+    if user.preferred_farm_id != fallback_farm_id:
+        user.preferred_farm_id = fallback_farm_id
+        await session.commit()
+
+    if fallback is None:
+        return None
+    farm, role = fallback
+    return farm, FarmMemberRole(role)
+
+
+async def set_current_farm(
+    session: AsyncSession,
+    *,
+    user: User,
+    farm_id: int,
+) -> tuple[Farm, FarmMemberRole]:
+    farm, member = await get_farm_with_member(session, farm_id=farm_id, user_id=user.id)
+    user.preferred_farm_id = farm.id
+    await session.commit()
+    return farm, FarmMemberRole(member.role)
+
+
 async def update_farm(
     session: AsyncSession,
     *,

@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { hasAuthToken } from "./services/auth";
+import { useFarmContext } from "./services/farm-context";
 import { useUserContext } from "./services/user-context";
 
 onLaunch(() => {
   if (hasAuthToken()) {
-    // 老会话本地无用户缓存时兜底拉一次，之后由登录/改昵称写入点维护。
-    // 失败静默忽略，不影响启动流程。
-    useUserContext().ensureCurrentUser().catch(() => {});
-    uni.reLaunch({ url: "/pages/home/index" });
+    void (async () => {
+      try {
+        const user = await useUserContext().ensureCurrentUser();
+        if (!user) return;
+        await useFarmContext().initializeFarmSession();
+        uni.reLaunch({ url: "/pages/home/index" });
+      } catch {
+        uni.reLaunch({ url: "/pages/home/index" });
+      }
+    })();
   }
 });
 onShow(() => {

@@ -94,7 +94,7 @@ const ownerCount = ref(0);
 const loading = ref(true);
 const loadError = ref("");
 const toastRef = ref<{ error: (message: string) => void } | null>(null);
-const { currentFarm, clearFarm } = useFarmContext();
+const { currentFarm, clearFarm, initializeFarmSession } = useFarmContext();
 
 const canEdit = computed(() => farm.value?.myRole === "OWNER");
 const canManageMembers = computed(
@@ -169,7 +169,10 @@ function handleLeave(): void {
       if (!result.confirm) return;
       try {
         await leaveFarm(farmId.value);
-        if (currentFarm.value?.id === farmId.value) clearFarm();
+        if (currentFarm.value?.id === farmId.value) {
+          clearFarm();
+          await initializeFarmSession();
+        }
         uni.showToast({ title: "已退出农场", icon: "none" });
         setTimeout(() => uni.navigateBack(), 500);
       } catch (error) {

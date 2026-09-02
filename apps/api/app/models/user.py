@@ -18,6 +18,11 @@ class User(Base):
     id: Mapped[int] = mapped_column(BIGINT(unsigned=True), primary_key=True, autoincrement=True)
     phone_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     nickname: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    preferred_farm_id: Mapped[int | None] = mapped_column(
+        BIGINT(unsigned=True),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

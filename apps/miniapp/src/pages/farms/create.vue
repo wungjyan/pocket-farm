@@ -23,7 +23,7 @@ const toastRef = ref<{
   error: (message: string) => void;
   success: (message: string) => void;
 } | null>(null);
-const { currentFarm, selectFarm } = useFarmContext();
+const { currentFarm, selectFarmAndPersist } = useFarmContext();
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -37,10 +37,12 @@ async function handleCreate(input: { name: string; region: string | null }): Pro
   }
 
   submitting.value = true;
+  let created = false;
   try {
     const farm = await createFarm(input);
+    created = true;
     if (!currentFarm.value) {
-      selectFarm(toFarmSummary(farm));
+      await selectFarmAndPersist(toFarmSummary(farm));
     }
     toastRef.value?.success("农场创建成功");
     setTimeout(() => uni.redirectTo({ url: "/pages/farms/index" }), 400);
@@ -48,7 +50,13 @@ async function handleCreate(input: { name: string; region: string | null }): Pro
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
     } else {
-      toastRef.value?.error(error instanceof ApiRequestError ? error.message : "创建失败，请稍后再试");
+      toastRef.value?.error(
+        created
+          ? "农场已创建，请在农场列表选择当前农场"
+          : error instanceof ApiRequestError
+            ? error.message
+            : "创建失败，请稍后再试",
+      );
     }
   } finally {
     submitting.value = false;

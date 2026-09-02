@@ -105,6 +105,79 @@ def test_create_farm_creates_owner_and_lists_farm() -> None:
     assert owner["nickname"] is None
 
 
+def test_current_farm_uses_and_persists_manual_selection() -> None:
+    token = login(OWNER_PHONE)
+    older_farm = create_farm(token, "较早创建的农场")
+    newer_farm = create_farm(token, "较晚创建的农场")
+
+    initial_response = call(token, "/api/v1/farms/current")
+    assert initial_response.status_code == 200
+    assert initial_response.json()["data"]["currentFarm"]["id"] == newer_farm["id"]
+
+    select_response = call(
+        token,
+        "/api/v1/farms/current",
+        method="put",
+        json={"farmId": older_farm["id"]},
+    )
+    assert select_response.status_code == 200
+    assert select_response.json()["data"]["id"] == older_farm["id"]
+
+    restored_response = call(token, "/api/v1/farms/current")
+    assert restored_response.status_code == 200
+    assert restored_response.json()["data"]["currentFarm"]["id"] == older_farm["id"]
+
+    list_response = call(token, "/api/v1/farms")
+    assert list_response.status_code == 200
+    assert list_response.json()["data"]["items"][0]["id"] == newer_farm["id"]
+
+
+def test_current_farm_falls_back_when_preferred_farm_is_no_longer_available() -> None:
+    owner_token = login(OWNER_PHONE)
+    login(SECOND_OWNER_PHONE)
+    preferred_farm = create_farm(owner_token, "原农场")
+    fallback_farm = create_farm(owner_token, "备用农场")
+    add_member(owner_token, preferred_farm["id"], SECOND_OWNER_PHONE, "OWNER")
+
+    select_response = call(
+        owner_token,
+        "/api/v1/farms/current",
+        method="put",
+        json={"farmId": preferred_farm["id"]},
+    )
+    assert select_response.status_code == 200
+
+    leave_response = call(
+        owner_token,
+        f"/api/v1/farms/{preferred_farm['id']}/members/me",
+        method="delete",
+    )
+    assert leave_response.status_code == 204
+
+    current_response = call(owner_token, "/api/v1/farms/current")
+    assert current_response.status_code == 200
+    assert current_response.json()["data"]["currentFarm"]["id"] == fallback_farm["id"]
+
+
+def test_current_farm_is_empty_without_farms_and_cannot_select_an_unavailable_farm() -> None:
+    owner_token = login(OWNER_PHONE)
+    outsider_token = login(ADMIN_PHONE)
+    farm = create_farm(owner_token)
+
+    empty_response = call(outsider_token, "/api/v1/farms/current")
+    assert empty_response.status_code == 200
+    assert empty_response.json()["data"]["currentFarm"] is None
+
+    unavailable_response = call(
+        outsider_token,
+        "/api/v1/farms/current",
+        method="put",
+        json={"farmId": farm["id"]},
+    )
+    assert unavailable_response.status_code == 404
+    assert unavailable_response.json()["error"]["code"] == "NOT_FOUND"
+
+
 def test_non_member_cannot_access_or_edit_farm() -> None:
     owner_token = login(OWNER_PHONE)
     outsider_token = login(ADMIN_PHONE)

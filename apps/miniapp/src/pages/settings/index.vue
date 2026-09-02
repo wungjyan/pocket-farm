@@ -35,10 +35,12 @@ import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
+import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
 import { getCurrentUser, type User } from "../../services/user";
 
 const user = ref<User | null>(null);
+const { endFarmSession } = useFarmContext();
 const nickname = computed(() => user.value?.nickname?.trim() || "未设置");
 const maskedPhone = computed(() => maskPhone(user.value?.phoneNumber || ""));
 
@@ -77,6 +79,7 @@ function handleLogout(): void {
     confirmColor: "#A9433B",
     success: ({ confirm }) => {
       if (!confirm) return;
+      endFarmSession();
       clearAuthToken();
       uni.reLaunch({ url: "/pages/auth/login" });
     },

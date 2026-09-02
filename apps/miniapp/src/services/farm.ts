@@ -20,6 +20,10 @@ export interface FarmPage {
   total: number;
 }
 
+interface CurrentFarmPayload {
+  currentFarm: Farm | null;
+}
+
 export interface FarmMember {
   id: number;
   userId: number;
@@ -48,6 +52,19 @@ export interface UpdateFarmInput {
 export function getMyFarms(page = 1, pageSize = 100): Promise<FarmPage> {
   return request<FarmPage>({
     url: `/farms?page=${page}&pageSize=${pageSize}`,
+  });
+}
+
+export async function getCurrentFarm(): Promise<Farm | null> {
+  const payload = await request<CurrentFarmPayload>({ url: "/farms/current" });
+  return payload.currentFarm;
+}
+
+export function setCurrentFarm(farmId: number): Promise<Farm> {
+  return request<Farm>({
+    url: "/farms/current",
+    method: "PUT",
+    data: { farmId },
   });
 }
 

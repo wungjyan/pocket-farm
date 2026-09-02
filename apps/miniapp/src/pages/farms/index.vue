@@ -67,7 +67,8 @@ import { toFarmSummary, useFarmContext } from "../../services/farm-context";
 const farms = ref<Farm[]>([]);
 const loading = ref(false);
 const loadError = ref("");
-const { currentFarm, selectFarm, syncAvailableFarms } = useFarmContext();
+const selectingFarmId = ref<number | null>(null);
+const { currentFarm, selectFarmAndPersist, syncAvailableFarms } = useFarmContext();
 
 function handleUnauthorized(): void {
   clearAuthToken();
@@ -92,9 +93,24 @@ async function loadFarms(): Promise<void> {
   }
 }
 
-function selectCurrentFarm(farm: Farm): void {
-  selectFarm(toFarmSummary(farm));
-  uni.navigateBack();
+async function selectCurrentFarm(farm: Farm): Promise<void> {
+  if (selectingFarmId.value !== null) return;
+  selectingFarmId.value = farm.id;
+  try {
+    await selectFarmAndPersist(toFarmSummary(farm));
+    uni.navigateBack();
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.statusCode === 401) {
+      handleUnauthorized();
+      return;
+    }
+    uni.showToast({
+      title: error instanceof ApiRequestError ? error.message : "农场切换失败，请稍后重试",
+      icon: "none",
+    });
+  } finally {
+    selectingFarmId.value = null;
+  }
 }
 
 function openCreateFarm(): void {

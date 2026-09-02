@@ -1,7 +1,7 @@
 import { computed, ref } from "vue";
-import { getMyFarms, type Farm } from "./farm";
+import { getCurrentFarm, setCurrentFarm, type Farm } from "./farm";
 
-const CURRENT_FARM_KEY = "pocket_farm_current_farm";
+const LEGACY_CURRENT_FARM_KEY = "pocket_farm_current_farm";
 
 export interface FarmSummary {
   id: number;
@@ -13,29 +13,16 @@ export interface FarmSummary {
   activeProductionCount?: number;
 }
 
-function readStoredFarm(): FarmSummary | null {
-  const value = uni.getStorageSync(CURRENT_FARM_KEY);
-  if (!value) return null;
+export type FarmSessionStatus = "SELECTED" | "NO_FARMS";
 
-  try {
-    const parsed = typeof value === "string" ? JSON.parse(value) : value;
-    if (typeof parsed?.id !== "number" || typeof parsed?.name !== "string") {
-      return null;
-    }
-    return parsed as FarmSummary;
-  } catch {
-    return null;
-  }
-}
+const currentFarm = ref<FarmSummary | null>(null);
 
-const currentFarm = ref<FarmSummary | null>(readStoredFarm());
-
-function persistFarm(farm: FarmSummary | null): void {
-  if (farm) {
-    uni.setStorageSync(CURRENT_FARM_KEY, JSON.stringify(farm));
-  } else {
-    uni.removeStorageSync(CURRENT_FARM_KEY);
-  }
+function clearLegacyFarmCache(): void {
+  uni.removeStorageSync(LEGACY_CURRENT_FARM_KEY);
+  uni
+    .getStorageInfoSync()
+    .keys.filter((key) => key.startsWith("pocket_farm_last_farm_"))
+    .forEach((key) => uni.removeStorageSync(key));
 }
 
 export function useFarmContext() {
@@ -44,31 +31,52 @@ export function useFarmContext() {
 
   function selectFarm(farm: FarmSummary): void {
     currentFarm.value = farm;
-    persistFarm(farm);
+  }
+
+  async function selectFarmAndPersist(farm: FarmSummary): Promise<FarmSummary> {
+    const selectedFarm = await setCurrentFarm(farm.id);
+    const summary = toFarmSummary(selectedFarm);
+    selectFarm(summary);
+    return summary;
   }
 
   /**
-   * 在成功获取当前用户可访问农场后调用。
-   * 已保存的农场仍可访问则继续使用，否则回退到第一个有效农场；列表为空则清除上下文。
+   * 仅同步当前会话已有选择的农场快照；当前农场的自动解析由服务端负责。
    */
   function syncAvailableFarms(farms: FarmSummary[]): FarmSummary | null {
-    const matched = currentFarm.value
-      ? farms.find((farm) => farm.id === currentFarm.value?.id)
-      : undefined;
-    const nextFarm = matched || farms[0] || null;
-    currentFarm.value = nextFarm;
-    persistFarm(nextFarm);
-    return nextFarm;
+    const selectedFarm = currentFarm.value;
+    if (!selectedFarm) return null;
+
+    const matched = farms.find((farm) => farm.id === selectedFarm.id);
+    if (matched) {
+      currentFarm.value = matched;
+      return matched;
+    }
+
+    currentFarm.value = null;
+    return null;
   }
 
+  /** 登录后或持久会话启动时调用，仅从服务端解析当前农场。 */
+  async function initializeFarmSession(): Promise<FarmSessionStatus> {
+    currentFarm.value = null;
+    clearLegacyFarmCache();
+
+    const farm = await getCurrentFarm();
+    if (!farm) return "NO_FARMS";
+    selectFarm(toFarmSummary(farm));
+    return "SELECTED";
+  }
+
+  /** 结束当前账号会话；服务端持久化的农场偏好会保留。 */
+  function endFarmSession(): void {
+    currentFarm.value = null;
+    clearLegacyFarmCache();
+  }
+
+  /** 当前农场已不可访问时清空活动上下文。 */
   function clearFarm(): void {
     currentFarm.value = null;
-    persistFarm(null);
-  }
-
-  async function refreshFromApi(): Promise<FarmSummary | null> {
-    const page = await getMyFarms();
-    return syncAvailableFarms(page.items.map(toFarmSummary));
   }
 
   return {
@@ -76,8 +84,10 @@ export function useFarmContext() {
     currentFarmName,
     hasCurrentFarm,
     selectFarm,
+    selectFarmAndPersist,
     syncAvailableFarms,
-    refreshFromApi,
+    initializeFarmSession,
+    endFarmSession,
     clearFarm,
   };
 }

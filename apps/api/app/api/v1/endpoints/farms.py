@@ -12,11 +12,13 @@ from app.schemas.activity import FarmActivityListResponse, FarmActivityResponse
 from app.schemas.farm import (
     CreateFarmRequest,
     CreateMemberRequest,
+    CurrentFarmResponse,
     FarmPage,
     FarmResponse,
     MemberPage,
     MemberResponse,
     PlotResponse,
+    SetCurrentFarmRequest,
     UpdateFarmRequest,
     UpdateMemberRequest,
 )
@@ -30,6 +32,8 @@ from app.services.farm import (
     list_members,
     list_my_farms,
     remove_member,
+    resolve_current_farm,
+    set_current_farm,
     update_farm,
     update_member_role,
 )
@@ -98,6 +102,34 @@ async def get_my_farms(
             total=total,
         )
     )
+
+
+@router.get("/current", response_model=ApiResponse[CurrentFarmResponse])
+async def get_current_farm(
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[CurrentFarmResponse]:
+    current_farm = await resolve_current_farm(session, user=current_user)
+    response_farm = (
+        _farm_response(current_farm[0], current_farm[1]) if current_farm is not None else None
+    )
+    return ApiResponse.success_response(
+        data=CurrentFarmResponse(current_farm=response_farm)
+    )
+
+
+@router.put("/current", response_model=ApiResponse[FarmResponse])
+async def select_current_farm(
+    request: SetCurrentFarmRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ApiResponse[FarmResponse]:
+    farm, role = await set_current_farm(
+        session,
+        user=current_user,
+        farm_id=request.farm_id,
+    )
+    return ApiResponse.success_response(data=_farm_response(farm, role))
 
 
 @router.post("", response_model=ApiResponse[FarmResponse], status_code=status.HTTP_201_CREATED)

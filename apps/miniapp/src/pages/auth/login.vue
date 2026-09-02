@@ -95,11 +95,13 @@
 
 <script setup lang="ts">
 import { onUnmounted, reactive, ref, watch } from "vue";
+import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
 import { login } from "../../services/user";
 import { useUserContext } from "../../services/user-context";
 
 const { setUser } = useUserContext();
+const { initializeFarmSession } = useFarmContext();
 
 const form = reactive({
   phoneNumber: "",
@@ -181,6 +183,7 @@ async function handleLogin(): Promise<void> {
   try {
     const result = await login(phoneNumber, verificationCode);
     setUser(result.user);
+    await initializeFarmSession();
     uni.reLaunch({ url: "/pages/home/index" });
   } catch (error) {
     const message = error instanceof ApiRequestError ? error.message : "登录失败，请稍后再试";

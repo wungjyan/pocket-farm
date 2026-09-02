@@ -54,6 +54,17 @@ class FarmPage(BaseModel):
     total: int
 
 
+class CurrentFarmResponse(BaseModel):
+    current_farm: FarmResponse | None = Field(serialization_alias="currentFarm")
+
+
+class SetCurrentFarmRequest(BaseModel):
+    farm_id: int = Field(
+        validation_alias=AliasChoices("farmId", "farm_id"),
+        gt=0,
+    )
+
+
 class CreateMemberRequest(BaseModel):
     phone_number: str = Field(
         validation_alias=AliasChoices("phoneNumber", "phone_number"),
