@@ -68,7 +68,7 @@ function openProfile(): void {
 }
 
 function showAbout(): void {
-  uni.showToast({ title: "关于功能暂未开放", icon: "none" });
+  uni.navigateTo({ url: "/pages/about/index" });
 }
 
 function handleLogout(): void {
