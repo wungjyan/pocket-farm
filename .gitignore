@@ -15,6 +15,11 @@ docs/.vitepress/dist/
 .env
 .env.*
 !.env.example
+/deploy/api.env
+/deploy/mysql.env
+
+# Locally exported container images
+/artifacts/
 
 # Local operating-system files
 .DS_Store

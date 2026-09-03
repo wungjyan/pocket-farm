@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file:
+      - mysql.env
+    volumes:
+      - pocket_farm_mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  api:
+    image: ${API_IMAGE:-pocket-farm-api:local}
+    build:
+      context: ../apps/api
+    restart: unless-stopped
+    env_file:
+      - api.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8887:8000"
+    healthcheck:
+      test:
+        ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  migrate:
+    image: ${API_IMAGE:-pocket-farm-api:local}
+    build:
+      context: ../apps/api
+    env_file:
+      - api.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+    profiles: ["migration"]
+
+volumes:
+  pocket_farm_mysql_data:
