@@ -287,6 +287,10 @@ function startNewConversation(): void {
   if (isSending.value) {
     return;
   }
+  if (!activeConversation.value && !messages.value.length) {
+    showToast("已经是新对话");
+    return;
+  }
   resetConversation();
   clearAIConversation();
 }
@@ -308,6 +312,22 @@ function errorText(error: unknown): string {
     return "AI 服务暂不可用，请稍后重试";
   if (error.code === "AI_NOT_CONFIGURED") return "AI 暂未配置";
   return error.message || "发送失败，请稍后重试";
+}
+
+function canRetryTurn(error: unknown): boolean {
+  if (!(error instanceof ApiRequestError)) return true;
+  if (
+    error.code === "AI_QUOTA_EXCEEDED" ||
+    error.code === "AI_NOT_CONFIGURED"
+  ) {
+    return false;
+  }
+  return (
+    error.code === "AI_UPSTREAM_TIMEOUT" ||
+    error.code === "AI_UPSTREAM_UNAVAILABLE" ||
+    error.statusCode === 0 ||
+    error.statusCode >= 500
+  );
 }
 
 async function loadFarmStatus(): Promise<void> {
@@ -540,7 +560,9 @@ async function sendTurn(
       role: "error",
       content: errorText(error),
     });
-    lastFailedTurn.value = { messageId, requestMessage, displayMessage };
+    if (canRetryTurn(error)) {
+      lastFailedTurn.value = { messageId, requestMessage, displayMessage };
+    }
     scrollToMessage(errorId);
   } finally {
     if (turn === activeTurn && currentFarm.value?.id === farm.id)
