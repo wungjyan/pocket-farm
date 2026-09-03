@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     deepseek_model: str = "deepseek-v4-flash"
     ai_request_timeout_seconds: Annotated[int, Field(ge=1, le=120)] = 30
     ai_daily_turn_limit: Annotated[int, Field(ge=1, le=1000)] = 20
+    ai_unlimited_phone_numbers: str = ""
     ai_max_message_chars: Annotated[int, Field(ge=1, le=10_000)] = 1000
     ai_max_history_turns: Annotated[int, Field(ge=0, le=50)] = 8
     ai_max_tool_calls_per_turn: Annotated[int, Field(ge=1, le=20)] = 6

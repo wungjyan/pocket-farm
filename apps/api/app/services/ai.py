@@ -67,6 +67,15 @@ def _provider_user_id(user_id: int) -> str:
     ).hexdigest()
 
 
+def _has_unlimited_ai_quota(phone_number: str) -> bool:
+    unlimited_phone_numbers = {
+        phone.strip()
+        for phone in settings.ai_unlimited_phone_numbers.split(",")
+        if phone.strip()
+    }
+    return phone_number in unlimited_phone_numbers
+
+
 async def _consume_daily_turn(session: AsyncSession, *, user_id: int) -> None:
     usage_date = datetime.now(ZoneInfo(settings.app_timezone)).date()
     limit = settings.ai_daily_turn_limit
@@ -351,7 +360,8 @@ async def run_ai_turn(
         )
 
     history = await _recent_messages(session, conversation_id=conversation.id)
-    await _consume_daily_turn(session, user_id=current_user.id)
+    if not _has_unlimited_ai_quota(current_user.phone_number):
+        await _consume_daily_turn(session, user_id=current_user.id)
     request_id = str(uuid4())
     started_at = datetime.now()
     messages = _messages(history, message)

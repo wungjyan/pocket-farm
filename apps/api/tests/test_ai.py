@@ -282,6 +282,27 @@ def test_ai_turn_enforces_quota_and_handles_provider_timeout(
     assert timeout_response.json()["error"]["code"] == "AI_UPSTREAM_TIMEOUT"
 
 
+def test_ai_turn_skips_quota_for_unlimited_phone_number(
+    fake_client: FakeAIClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "ai_daily_turn_limit", 1)
+    monkeypatch.setattr(settings, "ai_unlimited_phone_numbers", f" {OWNER_PHONE} ")
+    owner_token = login(OWNER_PHONE)
+    farm = create_farm(owner_token)
+    conversation = create_conversation(owner_token, farm["id"])
+    fake_client.responses = [
+        AICompletion(content="第一条回答。", tool_calls=[]),
+        AICompletion(content="第二条回答。", tool_calls=[]),
+    ]
+
+    first_response = turn(owner_token, conversation["id"], "第一个问题？")
+    second_response = turn(owner_token, conversation["id"], "第二个问题？")
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+
+
 def test_ai_turn_validation_and_tool_limit(
     fake_client: FakeAIClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
