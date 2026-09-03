@@ -2,9 +2,12 @@
   <view class="login-page">
     <view class="login-content">
       <view class="brand-block">
-        <view class="brand-mark" aria-label="掌农记">
-          <uv-icon name="home-fill" size="32" color="#FFFFFF" />
-        </view>
+        <image
+          class="brand-mark"
+          src="/static/brand/pocket-farm-logo.png"
+          mode="aspectFill"
+          aria-label="掌农记"
+        />
         <text class="brand-title">掌农记</text>
         <text class="brand-subtitle">记录种养与农事</text>
       </view>
@@ -250,13 +253,9 @@ onUnmounted(() => {
 }
 
 .brand-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background: #2f7d4a;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 22rpx;
 }
 
 .brand-title {

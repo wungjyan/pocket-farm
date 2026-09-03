@@ -2,9 +2,12 @@
   <view class="pf-page about-page">
     <view class="about-content">
       <view class="about-brand">
-        <view class="about-brand__mark">
-          <uv-icon name="home-fill" size="30" color="#FFFFFF" />
-        </view>
+        <image
+          class="about-brand__mark"
+          src="/static/brand/pocket-farm-logo.png"
+          mode="aspectFill"
+          aria-label="掌农记"
+        />
         <text class="about-brand__name">掌农记</text>
         <text class="about-brand__version">版本 1.0.0</text>
       </view>
@@ -52,13 +55,9 @@ function openAgreement(type: "user" | "privacy"): void {
 }
 
 .about-brand__mark {
-  display: flex;
-  width: 96rpx;
-  height: 96rpx;
-  align-items: center;
-  justify-content: center;
+  width: 112rpx;
+  height: 112rpx;
   border-radius: $pf-radius-list;
-  background: $pf-color-primary;
 }
 
 .about-brand__name {
