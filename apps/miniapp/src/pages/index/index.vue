@@ -1,41 +1,47 @@
 <template>
-  <view class="content">
-    <image class="logo" src="/static/logo.png" />
-    <view class="text-area">
-      <text class="title">{{ title }}</text>
-    </view>
-  </view>
+  <view class="entry-page" />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-const title = ref('Hello')
+import { onLoad } from "@dcloudio/uni-app";
+import { clearAuthToken, hasAuthToken } from "../../services/auth";
+import { useFarmContext } from "../../services/farm-context";
+import { useUserContext } from "../../services/user-context";
+
+function navigateToLogin(): void {
+  uni.reLaunch({ url: "/pages/auth/login" });
+}
+
+async function resolveEntry(): Promise<void> {
+  if (!hasAuthToken()) {
+    navigateToLogin();
+    return;
+  }
+
+  try {
+    const user = await useUserContext().ensureCurrentUser();
+    if (!user) {
+      throw new Error("当前用户信息不可用");
+    }
+    await useFarmContext().initializeFarmSession();
+    uni.reLaunch({ url: "/pages/home/index" });
+  } catch {
+    clearAuthToken();
+    useFarmContext().endFarmSession();
+    navigateToLogin();
+  }
+}
+
+onLoad(() => {
+  void resolveEntry();
+});
 </script>
 
-<style>
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+<style lang="scss" scoped>
+@import "../../styles/design-tokens.scss";
 
-.logo {
-  height: 200rpx;
-  width: 200rpx;
-  margin-top: 200rpx;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 50rpx;
-}
-
-.text-area {
-  display: flex;
-  justify-content: center;
-}
-
-.title {
-  font-size: 36rpx;
-  color: #8f8f94;
+.entry-page {
+  min-height: 100vh;
+  background: $pf-color-page;
 }
 </style>
