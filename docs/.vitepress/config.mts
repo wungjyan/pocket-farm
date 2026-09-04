@@ -45,6 +45,12 @@ export default defineConfig({
         ],
       },
       {
+        text: "新 UI 系统",
+        items: [
+          { text: "新 UI 设计系统", link: "/ui-system/" },
+        ],
+      },
+      {
         text: "AI Tab",
         items: [
           { text: "AI Tab MVP 规格", link: "/ai/00-ai-tab-mvp-spec" },
@@ -89,6 +95,12 @@ export default defineConfig({
             text: "小程序 UI 设计规范",
             link: "/refactor/01-miniapp-ui-design-guidelines",
           },
+        ],
+      },
+      {
+        text: "新 UI 系统",
+        items: [
+          { text: "新 UI 设计系统", link: "/ui-system/" },
         ],
       },
       {
