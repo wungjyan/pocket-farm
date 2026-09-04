@@ -1,5 +1,11 @@
 <template>
-  <view class="pf-page-header" :class="`pf-page-header--${variant}`">
+  <view
+    class="pf-page-header"
+    :class="[
+      `pf-page-header--${variant}`,
+      { 'pf-page-header--with-actions': $slots.actions },
+    ]"
+  >
     <view class="pf-page-header__spacer" :style="headerStyle">
       <view :style="headerInnerStyle" />
     </view>
@@ -11,6 +17,13 @@
         <view v-if="showTitle" class="pf-page-header__copy">
           <text class="pf-page-header__title">{{ title }}</text>
           <text v-if="subtitle" class="pf-page-header__subtitle">{{ subtitle }}</text>
+        </view>
+        <view
+          v-if="$slots.actions"
+          class="pf-page-header__actions"
+          :style="headerActionsStyle"
+        >
+          <slot name="actions" />
         </view>
       </view>
     </view>
@@ -32,7 +45,7 @@ const props = withDefaults(
   { subtitle: "", variant: "center", showBack: false, showTitle: true, backHandler: undefined },
 );
 
-const { headerStyle, headerInnerStyle } = useCustomHeader();
+const { headerStyle, headerInnerStyle, headerActionsStyle } = useCustomHeader();
 
 function handleBack(): void {
   if (props.backHandler) {
@@ -113,6 +126,16 @@ function handleBack(): void {
 
 .pf-page-header--tab .pf-page-header__title {
   font-size: 35rpx;
+}
+
+.pf-page-header--tab.pf-page-header--with-actions .pf-page-header__copy {
+  right: 330rpx;
+}
+
+.pf-page-header__actions {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .pf-page-header__back {

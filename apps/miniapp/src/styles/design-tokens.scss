@@ -1,57 +1,80 @@
 /*
- * 掌农记视觉 token。
- * 原始色阶 -> 语义色 -> 组件尺寸，页面不直接使用原始色值。
+ * 掌上农场新 UI 设计 token。
+ * 基于首页、AI、农场、我的四个 Tab 的已验证界面沉淀。
+ * 结构：原始值 -> 语义 token -> 组件 token；页面不得重新定义同义色值。
  */
 
-/* Primitive */
-$pf-green-800: #1f5638;
-$pf-green-700: #286b46;
-$pf-green-100: #e8f2eb;
-$pf-green-50: #f2f7f3;
+/* Primitive: forest and mint */
+$pf-forest-800: #00583c;
+$pf-forest-700: #006445;
+$pf-forest-650: #087251;
+$pf-forest-600: #006c49;
+$pf-forest-500: #007853;
+$pf-forest-400: #0a8a5f;
+$pf-mint-300: #b7d8c9;
+$pf-mint-200: #c9f1dd;
+$pf-mint-100: #edf8f1;
 
-$pf-neutral-950: #17231b;
-$pf-neutral-700: #536158;
-$pf-neutral-500: #7f8b82;
-$pf-neutral-300: #dce3dc;
-$pf-neutral-200: #e8ede8;
-$pf-neutral-100: #f0f3ef;
-$pf-neutral-50: #f6f8f5;
+/* Primitive: neutral surfaces and text */
+$pf-ink-950: #17261f;
+$pf-ink-700: #53645a;
+$pf-ink-500: #748178;
+$pf-neutral-300: #d3e1d8;
+$pf-neutral-200: #e0e9e3;
+$pf-neutral-100: #f1f4f2;
+$pf-neutral-75: #f8faf8;
+$pf-neutral-50: #f6f8f6;
 $pf-white: #ffffff;
 
+/* Primitive: feedback */
 $pf-red-700: #a9433b;
+$pf-red-300: #e0aaa5;
 $pf-red-100: #f8eae8;
-$pf-amber-700: #8b5a16;
+$pf-amber-700: #8b641c;
+$pf-amber-300: #e3c28e;
 $pf-amber-100: #f8f0df;
-$pf-blue-700: #3e6872;
-$pf-blue-100: #e7f0f1;
+$pf-teal-700: #3e7464;
+$pf-teal-300: #a9c8ce;
+$pf-teal-100: #e5f3ec;
 
-/* Semantic */
+/* Semantic: color */
 $pf-color-page: $pf-neutral-50;
 $pf-color-surface: $pf-white;
 $pf-color-surface-muted: $pf-neutral-100;
-$pf-color-surface-accent: $pf-green-50;
-$pf-color-primary: $pf-green-700;
-$pf-color-primary-pressed: $pf-green-800;
-$pf-color-primary-soft: $pf-green-100;
-$pf-color-text: $pf-neutral-950;
-$pf-color-text-secondary: $pf-neutral-700;
-$pf-color-text-muted: $pf-neutral-500;
-$pf-color-border: $pf-neutral-300;
+$pf-color-surface-subtle: $pf-neutral-75;
+$pf-color-surface-accent: $pf-mint-100;
+$pf-color-primary: $pf-forest-600;
+$pf-color-primary-strong: $pf-forest-700;
+$pf-color-primary-bright: $pf-forest-400;
+$pf-color-primary-pressed: $pf-forest-800;
+$pf-color-primary-disabled: $pf-mint-300;
+$pf-color-primary-soft: $pf-mint-100;
+$pf-color-on-primary: $pf-white;
+$pf-color-text: $pf-ink-950;
+$pf-color-text-secondary: $pf-ink-700;
+$pf-color-text-muted: $pf-ink-500;
+$pf-color-text-inverse: $pf-white;
+$pf-color-border: $pf-neutral-200;
 $pf-color-divider: $pf-neutral-200;
+$pf-color-outline: $pf-neutral-300;
 $pf-color-danger: $pf-red-700;
 $pf-color-danger-soft: $pf-red-100;
 $pf-color-warning: $pf-amber-700;
+$pf-color-warning-disabled: $pf-amber-300;
 $pf-color-warning-soft: $pf-amber-100;
-$pf-color-info: $pf-blue-700;
-$pf-color-info-soft: $pf-blue-100;
+$pf-color-info: $pf-teal-700;
+$pf-color-info-disabled: $pf-teal-300;
+$pf-color-info-soft: $pf-teal-100;
+$pf-color-danger-disabled: $pf-red-300;
+$pf-color-overlay: rgba(23, 38, 31, 0.38);
 
-/* 兼容旧页面：收获与农事都是主流程，交互态统一使用品牌绿。 */
+/* 业务别名：保留既有调用点，语义统一到新设计系统。 */
 $pf-color-harvest: $pf-color-primary;
 $pf-color-harvest-soft: $pf-color-primary-soft;
 $pf-color-water: $pf-color-info;
 $pf-color-water-soft: $pf-color-info-soft;
 
-/* Spacing */
+/* Primitive and semantic: spacing */
 $pf-space-1: 8rpx;
 $pf-space-2: 16rpx;
 $pf-space-3: 24rpx;
@@ -63,11 +86,28 @@ $pf-space-page-x: $pf-space-4;
 $pf-space-page-bottom: 80rpx;
 $pf-space-section: $pf-space-6;
 
-/* Shape & motion */
+/* Semantic: typography scale */
+$pf-font-size-caption: 20rpx;
+$pf-font-size-label: 22rpx;
+$pf-font-size-body: 24rpx;
+$pf-font-size-title: 26rpx;
+$pf-font-size-section: 30rpx;
+$pf-font-size-display: 46rpx;
+$pf-font-weight-medium: 500;
+$pf-font-weight-semibold: 650;
+$pf-font-weight-bold: 720;
+
+/* Component: shape, elevation and action surfaces */
 $pf-radius-control: 16rpx;
+$pf-radius-card-compact: 20rpx;
 $pf-radius-list: 24rpx;
 $pf-radius-card: 24rpx;
-$pf-radius-card-lg: 32rpx;
-$pf-shadow-card: 0 8rpx 28rpx rgba(23, 35, 27, 0.045);
-$pf-shadow-raised: 0 14rpx 38rpx rgba(23, 35, 27, 0.08);
+$pf-radius-card-lg: 28rpx;
+$pf-radius-pill: 999rpx;
+$pf-shadow-card: 0 4rpx 14rpx rgba(0, 72, 47, 0.025);
+$pf-shadow-action: 0 12rpx 28rpx rgba(0, 91, 60, 0.16);
+$pf-shadow-raised: 0 10rpx 24rpx rgba(0, 91, 60, 0.12);
+$pf-gradient-action: linear-gradient(120deg, $pf-color-primary 0%, $pf-forest-500 60%, $pf-color-primary-bright 100%);
+$pf-gradient-emphasis: linear-gradient(135deg, $pf-color-primary 0%, $pf-color-primary-bright 100%);
+$pf-gradient-data: linear-gradient(135deg, $pf-forest-650 0%, $pf-color-primary-strong 100%);
 $pf-duration-fast: 160ms;

@@ -41,6 +41,7 @@ import {
   type HarvestProductionSelection,
   type HarvestRecord,
 } from "../../services/harvest";
+import { notifyFarmActivitiesChanged } from "../../services/home";
 import { ApiRequestError } from "../../services/http";
 import { getPlot, type Plot } from "../../services/plot";
 import { getProduction, type Production } from "../../services/production";
@@ -159,6 +160,7 @@ async function handleSubmit(input: HarvestInput): Promise<void> {
       await updateHarvest(harvestId.value, input);
     } else {
       await createHarvest(production.value.id, input);
+      notifyFarmActivitiesChanged(farmId.value);
     }
     uni.showToast({ title: harvestId.value ? "已保存" : `${actionLabel.value}记录成功`, icon: "none" });
     setTimeout(() => uni.navigateBack(), 400);

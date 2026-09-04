@@ -1,51 +1,85 @@
 <template>
   <view class="pf-page home-page">
-    <PfPageHeader :title="hasFarm ? currentFarmName : '未选择农场'" variant="tab" />
+    <PfPageHeader
+      :title="hasFarm ? currentFarmName : '未选择农场'"
+      variant="tab"
+    />
 
     <view class="pf-page-content">
       <view class="welcome-panel">
-        <text class="welcome-eyebrow">{{ dateLabel }}</text>
+        <view class="welcome-date">
+          <uv-icon name="calendar" size="14" color="#006C49" />
+          <text>{{ dateLabel }}</text>
+        </view>
         <text class="welcome-title">{{ greeting }}，{{ displayName }}</text>
       </view>
 
       <template v-if="hasFarm">
-        <view class="action-grid">
-          <view class="action-card pf-tappable" @tap="openCreateProduction">
-            <PfBusinessIcon name="sprout" />
-            <text class="action-title">开始种养</text>
+        <view class="hero-action pf-tappable" @tap="openCreateProduction">
+          <view class="hero-action__copy">
+            <text class="hero-action__title">开始种养</text>
+            <text class="hero-action__description">开始新的种养</text>
           </view>
-          <view class="action-card pf-tappable" @tap="openCreateOperation">
+          <view class="hero-action__icon">
+            <PfBusinessIcon name="sprout" size="empty" variant="plain" />
+          </view>
+        </view>
+
+        <view class="quick-actions">
+          <view class="quick-action pf-tappable" @tap="openCreateOperation">
             <PfBusinessIcon name="shovel" />
-            <text class="action-title">记农事</text>
+            <view class="quick-action__copy">
+              <text class="quick-action__title">记农事</text>
+              <text class="quick-action__description">记录作业过程</text>
+            </view>
           </view>
-          <view class="action-card pf-tappable" @tap="openCreateHarvest">
+          <view class="quick-action pf-tappable" @tap="openCreateHarvest">
             <PfBusinessIcon name="shopping-basket" />
-            <text class="action-title">记收获</text>
+            <view class="quick-action__copy">
+              <text class="quick-action__title">记收获</text>
+              <text class="quick-action__description">产量录入</text>
+            </view>
           </view>
-          <view class="action-card pf-tappable" @tap="openPlotList">
+          <view class="quick-action pf-tappable" @tap="openPlotList">
             <PfBusinessIcon name="land-plot" />
-            <text class="action-title">地块管理</text>
+            <view class="quick-action__copy">
+              <text class="quick-action__title">地块管理</text>
+              <text class="quick-action__description">规划分区</text>
+            </view>
           </view>
         </view>
 
         <view class="pf-section-heading activity-heading">
-          <text class="pf-section-title">最近动态</text>
-          <view v-if="activityGroups.length" class="activity-heading__more pf-tappable" @tap="openAllActivities">
+          <view class="activity-heading__left">
+            <text class="pf-section-title">最近动态</text>
+            <text class="activity-heading__hint">
+              仅展示 {{ ACTIVITY_LIMIT }} 条
+            </text>
+          </view>
+          <view
+            v-if="activityGroups.length"
+            class="activity-heading__more pf-tappable"
+            @tap="openAllActivities"
+          >
             <text>查看全部</text>
             <PfRowChevron />
           </view>
         </view>
-        <view v-if="loadingActivities" class="state-card pf-card">
-          <uv-loading-icon mode="circle" color="#286B46" />
+        <view v-if="loadingActivities" class="state-card">
+          <uv-loading-icon mode="circle" color="#006C49" />
           <text>正在整理最近工作</text>
         </view>
-        <view v-else-if="activitiesError" class="state-card pf-card">
+        <view v-else-if="activitiesError" class="state-card">
           <uv-icon name="warning" size="25" color="#A9433B" />
           <text>{{ activitiesError }}</text>
           <text class="retry-action" @tap="loadActivities">重新加载</text>
         </view>
         <view v-else-if="activityGroups.length" class="activity-feed">
-          <view v-for="group in activityGroups" :key="group.key" class="feed-day">
+          <view
+            v-for="group in activityGroups"
+            :key="group.key"
+            class="feed-day"
+          >
             <view class="feed-day__head">
               <view class="feed-day__dot" />
               <text class="feed-day__label">{{ group.label }}</text>
@@ -57,9 +91,20 @@
                 class="feed-item pf-tappable"
                 @tap="openActivity(item)"
               >
-                <text class="feed-time">{{ formatActivityTime(item.occurredAt) }}</text>
+                <view
+                  class="feed-item__icon"
+                  :class="{
+                    'feed-item__icon--operation':
+                      item.type === 'OPERATION_CREATED',
+                  }"
+                >
+                  <PfBusinessIcon :name="activityIcon(item)" />
+                </view>
                 <view class="feed-body">
-                  <text class="feed-title">{{ activityTitle(item) }}</text>
+                  <view class="feed-title-line">
+                    <text class="feed-time">{{ formatActivityTime(item.occurredAt) }}</text>
+                    <text class="feed-title">{{ activityTitle(item) }}</text>
+                  </view>
                   <text class="feed-meta">{{ plotContextLabel(item.plotName) }}</text>
                 </view>
                 <view class="feed-chevron"><PfRowChevron /></view>
@@ -73,10 +118,16 @@
         </view>
       </template>
 
-      <view v-else class="empty-state pf-card">
+      <view v-else class="empty-state">
         <PfBusinessIcon name="map" size="empty" />
         <text class="empty-state__title">先创建一个农场</text>
-        <uv-button type="primary" shape="square" custom-style="width: 100%; height: 88rpx; margin-top: 32rpx; border-radius: 16rpx;" @click="openCreateFarm">创建农场</uv-button>
+        <uv-button
+          type="primary"
+          shape="square"
+          custom-style="width: 100%; height: 96rpx; margin-top: 32rpx; border-radius: 16rpx;"
+          @click="openCreateFarm"
+          >创建农场</uv-button
+        >
       </view>
     </view>
 
@@ -86,13 +137,17 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onShow } from "@dcloudio/uni-app";
+import { onLoad, onShow, onUnload } from "@dcloudio/uni-app";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
-import { getFarmActivities, type FarmActivity } from "../../services/home";
+import {
+  FARM_ACTIVITIES_CHANGED_EVENT,
+  getFarmActivities,
+  type FarmActivity,
+} from "../../services/home";
 import { ApiRequestError } from "../../services/http";
 import { useUserContext } from "../../services/user-context";
 import { formatNumber } from "../../utils/number";
@@ -105,14 +160,24 @@ interface ActivityDayGroup {
   items: FarmActivity[];
 }
 
+// 首页最近动态最多展示的条数，与标题旁提示文案联动。
+const ACTIVITY_LIMIT = 10;
+
 const { currentUser } = useUserContext();
 const { currentFarm, currentFarmName, hasCurrentFarm } = useFarmContext();
 const hasFarm = hasCurrentFarm;
 const activities = ref<FarmActivity[]>([]);
 const loadingActivities = ref(false);
 const activitiesError = ref("");
-const toastRef = ref<{ show: (options: { type?: string; message: string }) => void } | null>(null);
-const displayName = computed(() => currentUser.value?.nickname || maskPhone(currentUser.value?.phoneNumber || "用户"));
+let activityRequestId = 0;
+const toastRef = ref<{
+  show: (options: { type?: string; message: string }) => void;
+} | null>(null);
+const displayName = computed(
+  () =>
+    currentUser.value?.nickname ||
+    maskPhone(currentUser.value?.phoneNumber || "用户"),
+);
 const greeting = computed(() => {
   const hour = new Date().getHours();
   if (hour < 11) return "早上好";
@@ -142,7 +207,9 @@ const activityGroups = computed<ActivityDayGroup[]>(() => {
 });
 
 function maskPhone(phone: string): string {
-  return phone.length === 11 ? `${phone.slice(0, 3)}****${phone.slice(-4)}` : phone;
+  return phone.length === 11
+    ? `${phone.slice(0, 3)}****${phone.slice(-4)}`
+    : phone;
 }
 
 function formatActivityTime(value: string): string {
@@ -166,26 +233,35 @@ function handleUnauthorized(): void {
 }
 
 async function loadActivities(): Promise<void> {
+  const requestId = ++activityRequestId;
   const farm = currentFarm.value;
   if (!farm) {
-    activities.value = [];
+    if (requestId === activityRequestId) activities.value = [];
     return;
   }
   loadingActivities.value = true;
   activitiesError.value = "";
   try {
-    const response = await getFarmActivities(farm.id, 5);
-    if (currentFarm.value?.id !== farm.id) return;
+    const response = await getFarmActivities(farm.id, ACTIVITY_LIMIT);
+    if (requestId !== activityRequestId || currentFarm.value?.id !== farm.id) return;
     activities.value = response.items;
   } catch (error) {
+    if (requestId !== activityRequestId) return;
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
       return;
     }
-    activitiesError.value = error instanceof ApiRequestError ? error.message : "首页数据加载失败，请稍后重试";
+    activitiesError.value =
+      error instanceof ApiRequestError
+        ? error.message
+        : "首页数据加载失败，请稍后重试";
   } finally {
-    loadingActivities.value = false;
+    if (requestId === activityRequestId) loadingActivities.value = false;
   }
+}
+
+function handleFarmActivitiesChanged(farmId: number): void {
+  if (currentFarm.value?.id === farmId) void loadActivities();
 }
 
 function openCreateFarm(): void {
@@ -194,20 +270,31 @@ function openCreateFarm(): void {
 
 function openCreateProduction(): void {
   if (currentFarm.value) {
-    uni.navigateTo({ url: `/pages/productions/start?farmId=${currentFarm.value.id}` });
+    uni.navigateTo({
+      url: `/pages/productions/start?farmId=${currentFarm.value.id}`,
+    });
   }
 }
 
 function openCreateOperation(): void {
-  if (currentFarm.value) uni.navigateTo({ url: `/pages/operations/form?farmId=${currentFarm.value.id}` });
+  if (currentFarm.value)
+    uni.navigateTo({
+      url: `/pages/operations/form?farmId=${currentFarm.value.id}`,
+    });
 }
 
 function openCreateHarvest(): void {
-  if (currentFarm.value) uni.navigateTo({ url: `/pages/harvests/form?farmId=${currentFarm.value.id}` });
+  if (currentFarm.value)
+    uni.navigateTo({
+      url: `/pages/harvests/form?farmId=${currentFarm.value.id}`,
+    });
 }
 
 function openPlotList(): void {
-  if (currentFarm.value) uni.navigateTo({ url: `/pages/farm-plots/index?farmId=${currentFarm.value.id}&filter=ALL` });
+  if (currentFarm.value)
+    uni.navigateTo({
+      url: `/pages/farm-plots/index?farmId=${currentFarm.value.id}&filter=ALL`,
+    });
 }
 
 function openAllActivities(): void {
@@ -221,19 +308,36 @@ function harvestActionLabel(industry?: Industry | null): string {
 }
 
 function quantityUnitLabel(unit: QuantityUnit): string {
-  const labels: Record<QuantityUnit, string> = { KG: "公斤", HEAD: "头", FEATHER: "羽", PIECE: "只/个", PLANT: "株", TAIL: "尾" };
+  const labels: Record<QuantityUnit, string> = {
+    KG: "公斤",
+    HEAD: "头",
+    FEATHER: "羽",
+    PIECE: "只/个",
+    PLANT: "株",
+    TAIL: "尾",
+  };
   return labels[unit];
 }
 
-function productionActionLabel(industry: Industry | null, isEnding: boolean): string {
-  const action = industry === "LIVESTOCK" || industry === "FISHERY" ? "养殖" : "种植";
+function productionActionLabel(
+  industry: Industry | null,
+  isEnding: boolean,
+): string {
+  const action =
+    industry === "LIVESTOCK" || industry === "FISHERY" ? "养殖" : "种植";
   return `${isEnding ? "结束" : "开始"}${action}`;
 }
 
 function activityTitle(activity: FarmActivity): string {
   const species = activity.speciesName || "";
-  if (activity.type === "PRODUCTION_STARTED" || activity.type === "PRODUCTION_ENDED") {
-    const action = productionActionLabel(activity.industry, activity.type === "PRODUCTION_ENDED");
+  if (
+    activity.type === "PRODUCTION_STARTED" ||
+    activity.type === "PRODUCTION_ENDED"
+  ) {
+    const action = productionActionLabel(
+      activity.industry,
+      activity.type === "PRODUCTION_ENDED",
+    );
     return species ? `${action} · ${species}` : action;
   }
   if (activity.type === "OPERATION_CREATED") {
@@ -254,62 +358,426 @@ function plotContextLabel(plotName: string): string {
   return `地块：${name || "未命名"}`;
 }
 
+function activityIcon(
+  activity: FarmActivity,
+): "sprout" | "shovel" | "shopping-basket" {
+  if (activity.type === "OPERATION_CREATED") return "shovel";
+  if (activity.type === "HARVEST_CREATED") return "shopping-basket";
+  return "sprout";
+}
+
 function activityKey(activity: FarmActivity): string {
   return `${activity.type}-${activity.productionId || activity.operationId || activity.harvestId}`;
 }
 
 function openActivity(activity: FarmActivity): void {
   if (activity.type === "OPERATION_CREATED" && activity.operationId) {
-    uni.navigateTo({ url: `/pages/operations/detail?operationId=${activity.operationId}` });
+    uni.navigateTo({
+      url: `/pages/operations/detail?operationId=${activity.operationId}`,
+    });
     return;
   }
   if (activity.type === "HARVEST_CREATED" && activity.harvestId) {
-    uni.navigateTo({ url: `/pages/harvests/detail?harvestId=${activity.harvestId}` });
+    uni.navigateTo({
+      url: `/pages/harvests/detail?harvestId=${activity.harvestId}`,
+    });
     return;
   }
   if (activity.productionId) {
-    uni.navigateTo({ url: `/pages/productions/detail?productionId=${activity.productionId}` });
+    uni.navigateTo({
+      url: `/pages/productions/detail?productionId=${activity.productionId}`,
+    });
   }
 }
 
-// 用户信息与农场上下文由共享上下文维护（登录/改名/农场变更时本地更新），
-// 首页展示时只需刷新真正会变化的最近动态。
+onLoad(() => {
+  uni.$on(FARM_ACTIVITIES_CHANGED_EVENT, handleFarmActivitiesChanged);
+});
+
+onUnload(() => {
+  uni.$off(FARM_ACTIVITIES_CHANGED_EVENT, handleFarmActivitiesChanged);
+});
+
 onShow(() => {
-  loadActivities();
+  void loadActivities();
 });
 </script>
 
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.welcome-panel { padding: 30rpx 4rpx 26rpx; }
-.welcome-eyebrow, .welcome-title, .action-title, .feed-day__label, .feed-time, .feed-title, .feed-meta, .empty-activity__title, .empty-state__title { display: block; }
-.welcome-eyebrow { color: $pf-color-primary; font-size: 22rpx; font-weight: 600; }
-.welcome-title { margin-top: 10rpx; color: $pf-color-text; font-size: 43rpx; font-weight: 720; letter-spacing: -1rpx; }
-.action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16rpx; }
-.action-card { display: flex; min-height: 112rpx; box-sizing: border-box; align-items: center; padding: 20rpx 22rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
-.action-title { min-width: 0; margin-left: 16rpx; overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.activity-heading__more { display: flex; align-items: center; color: $pf-color-primary; font-size: 23rpx; font-weight: 550; }
-.activity-heading__more .pf-row-chevron { width: 26rpx; height: 26rpx; margin-left: 2rpx; opacity: 0.7; }
-.activity-feed { display: flex; flex-direction: column; }
-.feed-day + .feed-day { margin-top: 30rpx; }
-.feed-day__head { display: flex; align-items: center; padding: 0 6rpx; margin-bottom: 14rpx; }
-.feed-day__dot { width: 10rpx; height: 10rpx; margin-right: 10rpx; border-radius: 999rpx; background: $pf-color-primary; }
-.feed-day__label { color: $pf-color-text; font-size: 24rpx; font-weight: 650; }
-.feed-card { overflow: hidden; border-radius: $pf-radius-card; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
-.feed-item { display: flex; align-items: center; padding: 24rpx 24rpx 24rpx 26rpx; transition: background $pf-duration-fast ease; }
-.feed-item:active { background: $pf-color-surface-muted; }
-.feed-item + .feed-item { border-top: 1rpx solid $pf-color-divider; }
-.feed-time { flex-shrink: 0; width: 82rpx; color: $pf-color-text-muted; font-size: 23rpx; font-weight: 500; }
-.feed-body { min-width: 0; flex: 1; margin-left: 6rpx; }
-.feed-title { overflow: hidden; color: $pf-color-text; font-size: 27rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.feed-meta { margin-top: 6rpx; overflow: hidden; color: $pf-color-text-secondary; font-size: 21rpx; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
-.feed-chevron { margin-left: 12rpx; opacity: 0.35; }
-.state-card { display: flex; min-height: 144rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 24rpx; border: none; color: $pf-color-text-secondary; font-size: 23rpx; }
-.state-card text { margin-top: 12rpx; }
-.retry-action { color: $pf-color-primary; font-weight: 600; }
-.empty-activity { display: flex; min-height: 112rpx; align-items: center; padding: 0 24rpx; border-radius: 20rpx; background: $pf-color-surface; box-shadow: $pf-shadow-card; }
-.empty-activity__title { margin-left: 16rpx; color: $pf-color-text; font-size: 25rpx; font-weight: 600; }
-.empty-state { display: flex; flex-direction: column; align-items: center; margin-top: 32rpx; padding: 40rpx 28rpx 30rpx; border: none; text-align: center; }
-.empty-state__title { margin-top: 24rpx; color: $pf-color-text; font-size: 31rpx; font-weight: 650; }
+.home-page {
+  background: $pf-color-page;
+}
+
+.home-page .pf-page-content {
+  padding: 24rpx 32rpx 128rpx;
+}
+
+.welcome-panel {
+  padding: 12rpx 0 30rpx;
+}
+
+.welcome-date {
+  display: inline-flex;
+  min-height: 44rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 14rpx;
+  border: 1rpx solid rgba($pf-color-primary, 0.16);
+  border-radius: 999rpx;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 21rpx;
+  font-weight: 650;
+}
+
+.welcome-date text {
+  margin-left: 8rpx;
+}
+
+.welcome-title,
+.feed-day__label,
+.feed-title,
+.feed-meta,
+.empty-activity__title,
+.empty-state__title {
+  display: block;
+}
+
+.welcome-title {
+  margin-top: 18rpx;
+  color: $pf-color-text;
+  font-size: 46rpx;
+  font-weight: 720;
+  letter-spacing: -1.2rpx;
+  line-height: 1.2;
+}
+
+.hero-action {
+  position: relative;
+  display: flex;
+  min-height: 176rpx;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 28rpx 32rpx;
+  border-radius: 28rpx;
+  background: $pf-gradient-action;
+  box-shadow: $pf-shadow-action;
+}
+
+.hero-action::after {
+  position: absolute;
+  top: -80rpx;
+  right: -48rpx;
+  width: 250rpx;
+  height: 250rpx;
+  border-radius: 50%;
+  background: rgba($pf-mint-200, 0.12);
+  content: "";
+}
+
+.hero-action__copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.hero-action__title {
+  display: block;
+  color: $pf-color-on-primary;
+  font-size: 36rpx;
+  font-weight: 750;
+  letter-spacing: 0.5rpx;
+}
+
+.hero-action__description {
+  display: block;
+  margin-top: 10rpx;
+  color: rgba($pf-color-on-primary, 0.75);
+  font-size: 23rpx;
+  font-weight: 500;
+}
+
+.hero-action__icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 96rpx;
+  height: 96rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: 24rpx;
+  border-radius: 30rpx;
+  background: rgba($pf-color-on-primary, 0.14);
+}
+
+.hero-action__icon :deep(.pf-business-icon__image) {
+  width: 52rpx;
+  height: 52rpx;
+  filter: brightness(0) invert(1);
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.quick-action {
+  display: flex;
+  min-height: 184rpx;
+  box-sizing: border-box;
+  flex-direction: column;
+  padding: 22rpx;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 24rpx;
+  background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
+}
+
+.quick-action :deep(.pf-business-icon) {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 18rpx;
+  background: $pf-color-primary-soft;
+}
+
+.quick-action__copy {
+  min-width: 0;
+  margin-top: 16rpx;
+}
+
+.quick-action__title {
+  display: block;
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: 27rpx;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-action__description {
+  display: block;
+  margin-top: 6rpx;
+  overflow: hidden;
+  color: $pf-color-text-muted;
+  font-size: 21rpx;
+  font-weight: 500;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-heading {
+  margin-top: 52rpx;
+  margin-bottom: 20rpx;
+}
+
+.activity-heading :deep(.pf-section-title) {
+  color: $pf-color-text;
+  font-size: 32rpx;
+  font-weight: 720;
+}
+
+.activity-heading__left {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+}
+
+.activity-heading__hint {
+  overflow: hidden;
+  margin-left: 12rpx;
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-heading__more {
+  display: flex;
+  min-height: 56rpx;
+  align-items: center;
+  color: $pf-color-primary;
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.activity-heading__more .pf-row-chevron {
+  width: 26rpx;
+  height: 26rpx;
+  margin-left: 2rpx;
+  opacity: 0.7;
+}
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+}
+.feed-day + .feed-day {
+  margin-top: 34rpx;
+}
+.feed-day__head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+.feed-day__dot {
+  width: 10rpx;
+  height: 10rpx;
+  margin-right: 10rpx;
+  border: 3rpx solid $pf-mint-200;
+  border-radius: 50%;
+  background: $pf-color-primary;
+}
+.feed-day__label {
+  color: $pf-color-text;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+.feed-card {
+  overflow: hidden;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 24rpx;
+  background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
+}
+.feed-item {
+  display: flex;
+  min-height: 112rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 18rpx 22rpx;
+  transition: background 160ms ease;
+}
+.feed-item:active {
+  background: $pf-color-primary-soft;
+}
+.feed-item + .feed-item {
+  border-top: 1rpx solid $pf-color-divider;
+}
+.feed-item__icon {
+  flex-shrink: 0;
+}
+.feed-item__icon :deep(.pf-business-icon) {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  background: $pf-color-primary-soft;
+}
+.feed-item__icon :deep(.pf-business-icon__image) {
+  width: 36rpx;
+  height: 36rpx;
+}
+.feed-item__icon--operation :deep(.pf-business-icon__image) {
+  width: 30rpx;
+  height: 30rpx;
+}
+.feed-body {
+  min-width: 0;
+  flex: 1;
+  margin-left: 18rpx;
+}
+.feed-title-line {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+}
+.feed-time {
+  flex-shrink: 0;
+  margin-right: 12rpx;
+  color: $pf-color-text-muted;
+  font-size: 21rpx;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.feed-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: 27rpx;
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-meta {
+  margin-top: 5rpx;
+  overflow: hidden;
+  color: $pf-color-text-secondary;
+  font-size: 22rpx;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-chevron {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  opacity: 0.42;
+}
+.state-card {
+  display: flex;
+  min-height: 160rpx;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 24rpx;
+  background: $pf-color-surface;
+  color: $pf-color-text-secondary;
+  font-size: 23rpx;
+}
+.state-card text {
+  margin-top: 12rpx;
+}
+.retry-action {
+  color: $pf-color-primary;
+  font-weight: 650;
+}
+.empty-activity {
+  display: flex;
+  min-height: 120rpx;
+  align-items: center;
+  padding: 0 22rpx;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 24rpx;
+  background: $pf-color-surface;
+}
+.empty-activity :deep(.pf-business-icon) {
+  background: $pf-color-primary-soft;
+}
+.empty-activity__title {
+  margin-left: 16rpx;
+  color: $pf-color-text;
+  font-size: 26rpx;
+  font-weight: 650;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 32rpx;
+  padding: 56rpx 32rpx 44rpx;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 24rpx;
+  background: $pf-color-surface;
+  text-align: center;
+}
+.empty-state :deep(.pf-business-icon) {
+  background: $pf-color-primary-soft;
+}
+.empty-state__title {
+  margin-top: 24rpx;
+  color: $pf-color-text;
+  font-size: 32rpx;
+  font-weight: 700;
+}
 </style>

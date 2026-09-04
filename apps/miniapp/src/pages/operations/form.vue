@@ -50,6 +50,7 @@ import { onLoad } from "@dcloudio/uni-app";
 import OperationForm from "../../components/OperationForm.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
+import { notifyFarmActivitiesChanged } from "../../services/home";
 import { ApiRequestError } from "../../services/http";
 import {
   createOperation,
@@ -211,6 +212,7 @@ async function handleSubmit(input: OperationInput): Promise<void> {
       await updateOperation(operationId.value, input);
     } else {
       await createOperation(plot.value.id, input);
+      notifyFarmActivitiesChanged(plot.value.farmId);
     }
     uni.showToast({ title: operationId.value ? "已保存" : "记录成功", icon: "none" });
     setTimeout(() => uni.navigateBack(), 400);

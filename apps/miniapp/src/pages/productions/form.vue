@@ -43,6 +43,7 @@ import { onLoad } from "@dcloudio/uni-app";
 import ProductionForm from "../../components/ProductionForm.vue";
 import { useUnsavedChangesGuard } from "../../composables/useUnsavedChangesGuard";
 import { clearAuthToken } from "../../services/auth";
+import { notifyFarmActivitiesChanged } from "../../services/home";
 import { ApiRequestError } from "../../services/http";
 import { createProduction, type ProductionInput } from "../../services/production";
 import { getPlot, type Plot } from "../../services/plot";
@@ -99,6 +100,7 @@ async function handleCreate(input: ProductionInput): Promise<void> {
   submitting.value = true;
   try {
     await createProduction(plot.value.id, input);
+    notifyFarmActivitiesChanged(plot.value.farmId);
     dirty.value = false;
     toastRef.value?.success("已开始种养");
     setTimeout(() => uni.navigateBack({ delta: 2 }), 400);

@@ -3,7 +3,20 @@
     <PfPageHeader
       :title="hasFarm ? currentFarmName : '未选择农场'"
       variant="tab"
-    />
+    >
+      <template #actions>
+        <view
+          class="ai-header-new pf-tappable"
+          :class="{ 'ai-header-new--disabled': isSending }"
+          :aria-disabled="isSending"
+          aria-label="新对话"
+          @tap="startNewConversation"
+        >
+          <uv-icon name="plus" size="15" color="#006C49" />
+          <text>新对话</text>
+        </view>
+      </template>
+    </PfPageHeader>
 
     <view v-if="!hasFarm" class="ai-empty-farm pf-page-content">
       <view
@@ -18,7 +31,7 @@
     </view>
 
     <view v-else-if="loadingFarmStatus" class="ai-state">
-      <uv-loading-icon mode="circle" color="#286B46" />
+      <uv-loading-icon mode="circle" color="#006C49" />
     </view>
 
     <view v-else-if="farmStatusError" class="ai-state pf-page-content">
@@ -51,17 +64,29 @@
       >
         <view class="ai-messages__content pf-page-content">
           <view v-if="!messages.length" class="ai-suggestions">
-            <view class="ai-read-only-notice">
-              <text class="ai-read-only-notice__leading">目前仅支持查询</text>
-              <text class="ai-read-only-notice__content"> · 新建和记录请使用原有功能</text>
+            <text class="ai-notice">
+              目前仅支持查询 · 新建和记录请使用原有功能
+            </text>
+            <view class="ai-intro">
+              <view class="ai-intro__badge">
+                <image class="ai-intro__sparkles" src="/static/icons/lucide/sparkles.svg" mode="aspectFit" />
+              </view>
+              <text class="ai-intro__title">您可以问我关于农场的事情</text>
+              <text class="ai-intro__subtitle">
+                智能农业助手随时为您检索地块、作物与农事动态
+              </text>
             </view>
             <button
-              v-for="suggestion in suggestions"
+              v-for="(suggestion, index) in suggestions"
               :key="suggestion"
               class="ai-suggestion pf-tappable"
               @tap="askSuggestion(suggestion)"
             >
-              {{ suggestion }}
+              <view class="ai-suggestion__index">
+                <text>{{ index + 1 }}</text>
+              </view>
+              <text class="ai-suggestion__label">{{ suggestion }}</text>
+              <PfRowChevron />
             </button>
           </view>
 
@@ -105,11 +130,11 @@
           </view>
 
           <view v-if="isSending" id="ai-pending" class="ai-pending">
-            <uv-loading-icon mode="circle" size="18" color="#286B46" />
+            <uv-loading-icon mode="circle" size="18" color="#006C49" />
           </view>
 
           <view v-if="loadingOlderMessages" class="ai-history-loading">
-            <uv-loading-icon mode="circle" size="16" color="#286B46" />
+            <uv-loading-icon mode="circle" size="16" color="#006C49" />
           </view>
 
           <view v-if="lastFailedTurn" class="ai-retry">
@@ -121,32 +146,26 @@
       </scroll-view>
 
       <view class="ai-composer">
-        <textarea
-          v-model="draft"
-          class="ai-composer__input"
-          :maxlength="MAX_MESSAGE_LENGTH"
-          :disabled="isSending"
-          auto-height
-          confirm-type="send"
-          placeholder="输入问题"
-          placeholder-class="ai-composer__placeholder"
-          @confirm="submitMessage"
-        />
-        <view
-          class="ai-composer__new pf-tappable"
-          :class="{ 'ai-composer__new--disabled': isSending }"
-          :aria-disabled="isSending"
-          @tap="startNewConversation"
-        >
-          <text>＋</text>
-        </view>
-        <view
-          class="ai-composer__send"
-          :class="{ 'ai-composer__send--disabled': !canSend }"
-          :aria-disabled="!canSend"
-          @tap="submitMessage"
-        >
-          <text>发送</text>
+        <view class="ai-composer__bar">
+          <textarea
+            v-model="draft"
+            class="ai-composer__input"
+            :maxlength="MAX_MESSAGE_LENGTH"
+            :disabled="isSending"
+            auto-height
+            confirm-type="send"
+            placeholder="输入问题"
+            placeholder-class="ai-composer__placeholder"
+            @confirm="submitMessage"
+          />
+          <view
+            class="ai-composer__send pf-tappable"
+            :class="{ 'ai-composer__send--disabled': !canSend }"
+            :aria-disabled="!canSend"
+            @tap="submitMessage"
+          >
+            <text>发送</text>
+          </view>
         </view>
       </view>
     </template>
@@ -618,6 +637,7 @@ onShow(() => {
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
+  background: $pf-color-page;
 }
 .ai-messages {
   min-height: 0;
@@ -632,24 +652,51 @@ onShow(() => {
 .ai-suggestions {
   display: flex;
   flex-direction: column;
-  gap: $pf-space-2;
-  padding-top: $pf-space-3;
+  align-items: center;
+  gap: 12rpx;
+  padding-top: $pf-space-2;
 }
-.ai-read-only-notice {
-  min-height: 48rpx;
-  box-sizing: border-box;
-  padding: 8rpx 0;
-  font-size: 24rpx;
+.ai-notice {
+  align-self: center;
+  color: $pf-color-text-muted;
+  font-size: 21rpx;
+  line-height: 1.5;
+  text-align: center;
+}
+.ai-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: $pf-space-4;
+  text-align: center;
+}
+.ai-intro__badge {
+  display: flex;
+  width: 88rpx;
+  height: 88rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: $pf-gradient-emphasis;
+  box-shadow: $pf-shadow-raised;
+}
+.ai-intro__sparkles {
+  display: block;
+  width: 48rpx;
+  height: 48rpx;
+}
+.ai-intro__title {
+  margin-top: 18rpx;
+  color: $pf-color-text;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.ai-intro__subtitle {
+  margin-top: 8rpx;
+  color: $pf-color-text-muted;
+  font-size: 22rpx;
   line-height: 1.5;
 }
-.ai-read-only-notice__leading {
-  color: $pf-color-primary;
-  font-weight: 600;
-}
-.ai-read-only-notice__content {
-  color: $pf-color-text-muted;
-}
-.ai-suggestion,
 .ai-candidate,
 .ai-state__button,
 .ai-retry__button {
@@ -662,14 +709,51 @@ onShow(() => {
   line-height: 1.4;
 }
 .ai-suggestion {
-  padding: 24rpx;
-  border: 0;
-  border-radius: $pf-radius-control;
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  margin: 0;
+  padding: 16rpx 20rpx;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 20rpx;
   background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
   text-align: left;
 }
 .ai-suggestion::after {
   border: 0;
+}
+.ai-suggestion__index {
+  display: flex;
+  width: 40rpx;
+  height: 40rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+.ai-suggestion__label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  margin-left: 18rpx;
+  color: $pf-color-text;
+  font-size: 27rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-suggestion .pf-row-chevron {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  opacity: 0.42;
 }
 .ai-message {
   display: flex;
@@ -697,9 +781,10 @@ onShow(() => {
 }
 .ai-message--user .ai-message__content {
   background: $pf-color-primary;
-  color: $pf-color-surface;
+  color: $pf-color-on-primary;
 }
 .ai-message--assistant .ai-message__content {
+  border: 1rpx solid $pf-color-divider;
   background: $pf-color-surface;
 }
 .ai-message--error .ai-message__content {
@@ -740,7 +825,7 @@ onShow(() => {
 .ai-candidate {
   min-height: 72rpx;
   padding: 0 18rpx;
-  border: 1rpx solid $pf-color-border;
+  border: 1rpx solid $pf-color-outline;
   border-radius: $pf-radius-control;
   text-align: left;
 }
@@ -767,64 +852,78 @@ onShow(() => {
   padding: 12rpx 4rpx;
 }
 .ai-composer {
-  display: flex;
   box-sizing: border-box;
-  align-items: flex-end;
-  padding: $pf-space-2 $pf-space-page-x
-    calc($pf-space-2 + env(safe-area-inset-bottom));
-  border-top: 1rpx solid $pf-color-divider;
+  padding: $pf-space-2 $pf-space-page-x $pf-space-2;
+  background: transparent;
+}
+.ai-composer__bar {
+  display: flex;
+  min-height: 88rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 8rpx 8rpx 8rpx 28rpx;
+  border: 1rpx solid $pf-color-divider;
+  border-radius: 999rpx;
   background: $pf-color-surface;
+  box-shadow: $pf-shadow-raised;
 }
 .ai-composer__input {
   display: block;
+  width: 100%;
   min-width: 0;
-  min-height: 48rpx;
+  min-height: 40rpx;
+  max-height: 160rpx;
+  box-sizing: border-box;
   flex: 1;
-  padding: 14rpx 0;
+  padding: 8rpx 0;
   color: $pf-color-text;
   font-size: 27rpx;
-  line-height: 1.45;
+  line-height: 40rpx;
 }
 .ai-composer__placeholder {
   color: $pf-color-text-muted;
-}
-.ai-composer__new {
-  display: flex;
-  width: 64rpx;
-  height: 64rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  margin-left: $pf-space-2;
-  color: $pf-color-primary;
-  font-size: 38rpx;
-  font-weight: 400;
-  line-height: 1;
-}
-.ai-composer__new--disabled {
-  color: $pf-color-text-muted;
+  font-size: 27rpx;
+  line-height: 40rpx;
 }
 .ai-composer__send {
-  position: relative;
-  z-index: 1;
   display: flex;
-  min-width: 104rpx;
-  height: 64rpx;
+  min-width: 112rpx;
+  height: 72rpx;
   box-sizing: border-box;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  margin: 0 0 0 $pf-space-2;
-  border-radius: $pf-radius-control;
+  margin-left: 8rpx;
+  padding: 0 28rpx;
+  border-radius: 36rpx;
   background: $pf-color-primary;
-  color: $pf-color-surface;
-  font-size: 25rpx;
+  color: $pf-color-on-primary;
+  font-size: 26rpx;
   font-weight: 650;
 }
 .ai-composer__send--disabled {
-  background: $pf-color-border;
+  background: $pf-color-primary;
+  color: $pf-color-on-primary;
+  opacity: 0.35;
+}
+.ai-header-new {
+  display: flex;
+  min-height: 56rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+.ai-header-new text {
+  margin-left: 6rpx;
+}
+.ai-header-new--disabled {
   color: $pf-color-text-muted;
-  opacity: 1;
+  opacity: 0.75;
 }
 .ai-state {
   display: flex;
@@ -876,7 +975,7 @@ onShow(() => {
   align-items: center;
   justify-content: center;
   padding: $pf-space-6;
-  background: rgba(23, 35, 27, 0.38);
+  background: $pf-color-overlay;
 }
 .ai-data-notice {
   width: 100%;
@@ -920,6 +1019,6 @@ onShow(() => {
   color: $pf-color-primary;
 }
 .ai-data-notice__action--pressed {
-  background: $pf-color-surface-muted;
+  background: $pf-color-primary-soft;
 }
 </style>

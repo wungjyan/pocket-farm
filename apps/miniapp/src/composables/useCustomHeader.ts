@@ -34,5 +34,9 @@ export function useCustomHeader() {
     paddingRight: `${rightPadding.value}px`,
   }));
 
-  return { headerStyle, headerInnerStyle };
+  const headerActionsStyle = computed(() => ({
+    right: `${rightPadding.value}px`,
+  }));
+
+  return { headerStyle, headerInnerStyle, headerActionsStyle };
 }

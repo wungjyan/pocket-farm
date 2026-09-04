@@ -2,6 +2,12 @@ import { request } from "./http";
 import type { QuantityUnit } from "./harvest";
 import type { Industry } from "./species";
 
+export const FARM_ACTIVITIES_CHANGED_EVENT = "pocket-farm:activities-changed";
+
+export function notifyFarmActivitiesChanged(farmId: number): void {
+  uni.$emit(FARM_ACTIVITIES_CHANGED_EVENT, farmId);
+}
+
 export type FarmActivityType =
   | "PRODUCTION_STARTED"
   | "PRODUCTION_ENDED"
