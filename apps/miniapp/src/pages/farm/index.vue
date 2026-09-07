@@ -9,40 +9,49 @@
           <text>正在汇总农场数据</text>
         </view>
         <template v-else>
-          <view class="pf-section-heading overview-heading">
+          <view class="pf-section-heading overview-section-heading">
             <text class="pf-section-title">农场概览</text>
           </view>
-          <view class="overview-panel">
-            <view class="overview-grid">
-              <view
-                class="overview-card overview-card--primary pf-tappable"
-                @tap="openPlotList('ALL')"
-              >
-                <view class="overview-card__heading">
-                  <view class="overview-card__icon">
-                    <image class="overview-card__icon-image" src="/static/icons/lucide/grid-2x2.svg" mode="aspectFit" />
-                  </view>
-                  <text class="overview-card__title">全部地块</text>
-                  <PfRowChevron />
+          <view
+            class="overview-panel pf-tappable"
+            @tap="openPlotList('ALL')"
+          >
+            <view class="overview-art" aria-hidden="true">
+              <image class="overview-art__image" src="/static/farm-card-bg.png" mode="widthFix" />
+            </view>
+            <view class="overview-body">
+              <view class="overview-heading">
+                <view class="overview-heading__icon">
+                  <image class="overview-heading__icon-image" src="/static/icons/lucide/grid-2x2.svg" mode="aspectFit" />
                 </view>
-                <view class="overview-card__value"><text>{{ plots.length }}</text><text>块</text></view>
-                <view class="overview-card__footer">
-                  <text class="overview-card__area-label">总面积</text>
-                  <text class="overview-card__area-value">{{ totalAreaLabel }} 亩</text>
+                <text class="overview-heading__title">全部地块</text>
+                <PfRowChevron />
+              </view>
+              <view class="overview-value">
+                <text class="overview-value__number">{{ formatNumber(plots.length) }}</text>
+                <text class="overview-value__unit">块</text>
+                <view class="overview-value__area">
+                  <text class="overview-value__area-label">总面积</text>
+                  <text class="overview-value__area-number">{{ totalAreaLabel }}</text>
+                  <text class="overview-value__area-unit">亩</text>
                 </view>
               </view>
-              <view class="overview-card overview-card--idle pf-tappable" @tap="openPlotList('IDLE')">
-                <view class="overview-card__heading">
-                  <view class="overview-card__icon">
-                    <image class="overview-card__icon-image" src="/static/icons/lucide/land-plot.svg" mode="aspectFit" />
+              <view class="overview-breakdown">
+                <view class="breakdown-item">
+                  <text class="breakdown-item__label">在种</text>
+                  <view class="breakdown-item__data">
+                    <text class="breakdown-item__number">{{ formatNumber(activePlotCount) }}</text>
+                    <text class="breakdown-item__unit">块</text>
                   </view>
-                  <text class="overview-card__title">闲置地块</text>
-                  <PfRowChevron />
                 </view>
-                <view class="overview-card__value"><text>{{ idlePlots.length }}</text><text>块</text></view>
-                <view class="overview-card__footer">
-                  <text class="overview-card__area-label">闲置总面积</text>
-                  <text class="overview-card__area-value">{{ idleAreaLabel }} 亩</text>
+                <view class="breakdown-item breakdown-item--idle pf-tappable" hover-class="breakdown-item--idle--pressed" @tap.stop="openPlotList('IDLE')">
+                  <text class="breakdown-item__label">闲置</text>
+                  <view class="breakdown-item__data">
+                    <text class="breakdown-item__number">{{ formatNumber(idlePlots.length) }}</text>
+                    <text class="breakdown-item__unit">块</text>
+                    <text class="breakdown-item__area">· {{ idleAreaLabel }} 亩</text>
+                  </view>
+                  <PfRowChevron />
                 </view>
               </view>
             </view>
@@ -129,6 +138,7 @@ const idlePlots = computed(() => {
   const activePlotIds = new Set(activeProductions.value.map((item) => item.plotId));
   return plots.value.filter((plot) => !activePlotIds.has(plot.id));
 });
+const activePlotCount = computed(() => plots.value.length - idlePlots.value.length);
 const activeSpeciesCount = computed(() => new Set(activeProductions.value.map((item) => item.speciesId)).size);
 const totalAreaLabel = computed(() => areaInMu(plots.value));
 const idleAreaLabel = computed(() => areaInMu(idlePlots.value));
@@ -242,59 +252,176 @@ onShow(() => {
 .overview-loading text {
   margin-top: 14rpx;
 }
-.overview-heading {
+.overview-section-heading {
   margin-top: 8rpx;
 }
-.overview-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  gap: 18rpx;
-}
 .overview-panel {
-  padding: 20rpx;
-  border: 1rpx solid rgba($pf-color-divider, 0.78);
-  border-radius: 28rpx;
-  background: $pf-color-surface;
-}
-.overview-card {
-  display: flex;
-  min-width: 0;
-  min-height: 208rpx;
-  box-sizing: border-box;
-  flex-direction: column;
-  padding: 22rpx 24rpx 20rpx;
-  border-radius: 20rpx;
-  background: $pf-color-page;
-}
-.overview-card--primary {
-  background: $pf-gradient-data;
-}
-.overview-card--idle {
+  position: relative;
+  overflow: hidden;
+  padding: 28rpx 28rpx 0;
   border: 1rpx solid $pf-color-divider;
-  background: $pf-color-surface-subtle;
+  border-radius: $pf-radius-card-lg;
+  background: $pf-color-surface;
+  box-shadow: $pf-shadow-card;
 }
-.overview-card__heading {
+.overview-art {
+  // 插画独立限制在上半区，避免卡片高度或统计内容改变时景物压住数值。
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 176rpx;
+  overflow: hidden;
+  pointer-events: none;
+}
+.overview-art__image {
+  position: absolute;
+  top: -64rpx;
+  right: 0;
+  width: 100%;
+  opacity: 0.85;
+}
+.overview-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba($pf-color-surface, 0) 52%, $pf-color-surface 100%);
+}
+.overview-body {
+  position: relative;
+  z-index: 1;
+}
+.overview-heading {
   display: flex;
   align-items: center;
 }
-.overview-card__heading .pf-row-chevron {
-  width: 28rpx;
-  height: 28rpx;
-  margin-left: auto;
+.overview-heading .pf-row-chevron {
+  width: 24rpx;
+  height: 24rpx;
+  margin-left: 6rpx;
   opacity: 0.42;
 }
-.overview-card__icon {
-  width: 28rpx;
-  height: 28rpx;
+.overview-heading__icon {
+  display: flex;
+  width: 44rpx;
+  height: 44rpx;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10rpx;
+  background: $pf-color-primary-soft;
 }
-.overview-card__icon-image {
+.overview-heading__icon-image {
   display: block;
   width: 28rpx;
   height: 28rpx;
 }
-.overview-card__title,
-.overview-card__area-label,
-.overview-card__area-value,
+.overview-heading__title {
+  min-width: 0;
+  overflow: hidden;
+  margin-left: 12rpx;
+  color: $pf-color-text;
+  font-size: $pf-font-size-body;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overview-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6rpx;
+  row-gap: 12rpx;
+  margin-top: 24rpx;
+}
+.overview-value__number {
+  color: $pf-color-primary;
+  font-size: 76rpx;
+  font-weight: 750;
+  letter-spacing: -1rpx;
+  line-height: 1.05;
+}
+.overview-value__unit {
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-label;
+  font-weight: 550;
+}
+.overview-value__area {
+  display: flex;
+  align-items: baseline;
+  margin-left: auto;
+  padding-left: 16rpx;
+  white-space: nowrap;
+}
+.overview-value__area-label {
+  margin-right: 8rpx;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+}
+.overview-value__area-number {
+  color: $pf-color-text;
+  font-size: $pf-font-size-title;
+  font-weight: 650;
+}
+.overview-value__area-unit {
+  margin-left: 4rpx;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-caption;
+}
+.overview-breakdown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  column-gap: 16rpx;
+  min-height: 96rpx;
+  margin-top: 24rpx;
+  border-top: 1rpx solid $pf-color-divider;
+}
+.breakdown-item {
+  display: flex;
+  min-height: 96rpx;
+  box-sizing: border-box;
+  align-items: center;
+}
+.breakdown-item__label {
+  margin-right: 14rpx;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+}
+.breakdown-item__data {
+  display: flex;
+  align-items: baseline;
+}
+.breakdown-item__number {
+  color: $pf-color-text;
+  font-size: $pf-font-size-title;
+  font-weight: 650;
+}
+.breakdown-item__unit {
+  margin-left: 4rpx;
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-label;
+}
+.breakdown-item__area {
+  margin-left: 10rpx;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+}
+.breakdown-item--idle {
+  margin-right: -12rpx;
+  padding: 0 12rpx;
+  border-radius: 12rpx;
+}
+.breakdown-item--idle--pressed {
+  background: $pf-color-surface-muted;
+}
+.breakdown-item--idle .pf-row-chevron {
+  width: 24rpx;
+  height: 24rpx;
+  margin-left: 10rpx;
+  opacity: 0.42;
+}
 .production-name,
 .production-meta,
 .empty-production__title,
@@ -303,78 +430,6 @@ onShow(() => {
 .records-entry__title,
 .records-entry__description {
   display: block;
-}
-.overview-card__title {
-  min-width: 0;
-  overflow: hidden;
-  margin-left: 8rpx;
-  color: $pf-color-text-secondary;
-  font-size: 22rpx;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.overview-card__value {
-  display: flex;
-  align-items: baseline;
-  margin-top: 18rpx;
-  color: $pf-color-text;
-}
-.overview-card__value > text:first-child {
-  font-size: 52rpx;
-  font-weight: 750;
-  letter-spacing: -1rpx;
-}
-.overview-card__value > text:last-child {
-  margin-left: 4rpx;
-  color: $pf-color-text-secondary;
-  font-size: 22rpx;
-  font-weight: 550;
-}
-.overview-card__footer {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 14rpx;
-  border-top: 1rpx solid $pf-color-divider;
-}
-.overview-card__area-label {
-  color: $pf-color-text-muted;
-  font-size: 20rpx;
-}
-.overview-card__area-value {
-  color: $pf-color-text;
-  font-size: 24rpx;
-  font-weight: 650;
-}
-.overview-card--primary .overview-card__title {
-  color: rgba($pf-color-on-primary, 0.85);
-}
-.overview-card--primary .overview-card__value {
-  color: $pf-color-surface;
-}
-.overview-card--primary .overview-card__value > text:last-child {
-  color: rgba($pf-color-on-primary, 0.75);
-}
-.overview-card--primary .overview-card__area-label {
-  color: rgba($pf-color-on-primary, 0.65);
-}
-.overview-card--primary .overview-card__area-value {
-  color: $pf-color-surface;
-}
-.overview-card--primary .overview-card__footer {
-  border-top-color: rgba($pf-color-on-primary, 0.2);
-}
-.overview-card--primary .overview-card__heading .pf-row-chevron {
-  opacity: 0.8;
-  filter: brightness(0) invert(1);
-}
-.overview-card--primary .overview-card__icon-image {
-  filter: brightness(0) invert(1);
-}
-.overview-card--idle .overview-card__icon-image {
-  opacity: 0.48;
 }
 .production-list {
   padding: 0;
