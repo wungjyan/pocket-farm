@@ -9,21 +9,26 @@
           :value="filterIndex"
           @change="handleFilterChange"
         >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
+          <view
+            class="filter-picker pf-tappable"
+            :class="{ 'filter-picker--active': filterValue !== 'ALL' }"
+            hover-class="filter-picker--pressed"
+          >
             <text class="filter-picker__label">{{ selectedFilterLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
+            <uv-icon name="arrow-down" size="14" :color="filterValue !== 'ALL' ? '#006C49' : '#53645A'" />
           </view>
         </picker>
         <view class="filter-toolbar__right">
           <text class="filter-count">{{ loading ? "–" : `${plotTotal} 个地块` }}</text>
           <view v-if="canManagePlots" class="create-button pf-tappable" @tap="openCreatePlot">
+            <uv-icon name="plus" size="14" color="#006C49" />
             <text>创建地块</text>
           </view>
         </view>
       </view>
 
       <view v-if="loading" class="state-card pf-card">
-        <uv-loading-icon mode="circle" color="#286B46" />
+        <uv-loading-icon mode="circle" color="#006C49" />
         <text>正在加载地块</text>
       </view>
       <view v-else-if="plotItems.length" class="plot-list">
@@ -270,21 +275,31 @@ onShow(() => loadPageData());
 
 .filter-picker {
   display: flex;
-  min-height: 88rpx;
+  min-height: 72rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 16rpx;
-  border-radius: $pf-radius-control;
+  padding: 0 $pf-space-3;
+  border: 1rpx solid $pf-color-outline;
+  border-radius: $pf-radius-pill;
+  background: $pf-color-surface;
 }
 
 .filter-picker--pressed {
   background: $pf-color-surface-muted;
 }
 
+.filter-picker--active {
+  background: $pf-color-primary-soft;
+}
+
+.filter-picker--active .filter-picker__label {
+  color: $pf-color-primary;
+}
+
 .filter-picker__label {
-  color: $pf-color-text-secondary;
-  font-size: 25rpx;
-  font-weight: 550;
+  color: $pf-color-text;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .filter-picker .uv-icon {
@@ -298,20 +313,24 @@ onShow(() => loadPageData());
 
 .filter-count {
   color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
 }
 
 .create-button {
   display: flex;
-  min-height: 64rpx;
+  min-height: 72rpx;
   align-items: center;
-  margin-left: 16rpx;
-  padding: 0 18rpx;
-  border-radius: $pf-radius-control;
+  margin-left: $pf-space-2;
+  padding: 0 $pf-space-3;
+  border-radius: $pf-radius-pill;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 22rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
+}
+
+.create-button .uv-icon {
+  margin-right: 6rpx;
 }
 
 .plot-list {
@@ -343,8 +362,8 @@ onShow(() => loadPageData());
 .plot-name {
   overflow: hidden;
   color: $pf-color-text;
-  font-size: 28rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -353,7 +372,7 @@ onShow(() => loadPageData());
   margin-top: 7rpx;
   overflow: hidden;
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: $pf-font-size-label;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -361,17 +380,17 @@ onShow(() => loadPageData());
 .species-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8rpx;
-  margin-top: 12rpx;
+  gap: $pf-space-1;
+  margin-top: $pf-space-2;
 }
 
 .species-tag {
   display: block;
   padding: 5rpx 14rpx;
-  border-radius: 999rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 20rpx;
+  font-size: $pf-font-size-caption;
   line-height: 1.25;
 }
 
@@ -387,7 +406,7 @@ onShow(() => loadPageData());
   align-items: center;
   justify-content: center;
   color: $pf-color-text-secondary;
-  font-size: 23rpx;
+  font-size: $pf-font-size-body;
 }
 
 .state-card text {
@@ -403,16 +422,16 @@ onShow(() => loadPageData());
 }
 
 .empty-state__title {
-  margin-top: 24rpx;
+  margin-top: $pf-space-3;
   color: $pf-color-text;
-  font-size: 28rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .empty-state__action {
-  margin-top: 16rpx;
+  margin-top: $pf-space-2;
   color: $pf-color-primary;
-  font-size: 23rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
 }
 </style>
