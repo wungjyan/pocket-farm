@@ -2,95 +2,96 @@
   <view class="pf-page records-page">
     <view class="pf-page-content">
       <view class="records-sticky-header">
-      <view class="records-tabs">
-        <view
-          v-for="tab in tabs"
-          :key="tab.value"
-          class="records-tab pf-tappable"
-          :class="{ 'records-tab--active': activeTab === tab.value }"
-          @tap="switchTab(tab.value)"
-        >
-          <text>{{ tab.label }}</text>
+        <view class="records-tabs">
+          <view
+            v-for="tab in tabs"
+            :key="tab.value"
+            class="records-tab"
+            :class="{ 'records-tab--active': activeTab === tab.value }"
+            hover-class="records-tab--pressed"
+            @tap="switchTab(tab.value)"
+          >
+            <text>{{ tab.label }}</text>
+          </view>
         </view>
-      </view>
-      <view v-if="activeTab === 'PRODUCTION'" class="filter-toolbar">
-        <picker
-          class="filter-picker-wrap"
-          mode="selector"
-          :range="industryOptions.map((item) => item.label)"
-          :value="industryIndex"
-          @change="handleIndustryChange"
-        >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-            <text class="filter-picker__label">{{ selectedIndustryLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-          </view>
-        </picker>
-        <picker
-          class="filter-picker-wrap"
-          mode="selector"
-          :range="varietyPickerOptions"
-          :value="varietyIndex"
-          @change="handleVarietyChange"
-        >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-            <text class="filter-picker__label">{{ selectedVarietyLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-          </view>
-        </picker>
-        <picker
-          class="filter-picker-wrap"
-          mode="selector"
-          :range="statusOptions.map((item) => item.label)"
-          :value="statusIndex"
-          @change="handleStatusChange"
-        >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-            <text class="filter-picker__label">{{ selectedStatusLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-          </view>
-        </picker>
-      </view>
-      <view v-else-if="activeTab === 'OPERATION'" class="filter-toolbar">
-        <picker
-          class="filter-picker-wrap"
-          mode="selector"
-          :range="operationTypePickerOptions"
-          :value="operationTypeIndex"
-          @change="handleOperationTypeChange"
-        >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-            <text class="filter-picker__label">{{ selectedOperationTypeLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-          </view>
-        </picker>
-      </view>
-      <view v-else class="filter-toolbar">
-        <picker
-          class="filter-picker-wrap"
-          mode="selector"
-          :range="industryOptions.map((item) => item.label)"
-          :value="harvestIndustryIndex"
-          @change="handleHarvestIndustryChange"
-        >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-            <text class="filter-picker__label">{{ selectedHarvestIndustryLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-          </view>
-        </picker>
-        <picker
-          class="filter-picker-wrap"
-          mode="selector"
-          :range="harvestSpeciesPickerOptions"
-          :value="harvestSpeciesIndex"
-          @change="handleHarvestSpeciesChange"
-        >
-          <view class="filter-picker pf-tappable" hover-class="filter-picker--pressed">
-            <text class="filter-picker__label">{{ selectedHarvestSpeciesLabel }}</text>
-            <uv-icon name="arrow-down" size="15" color="#7F8B82" />
-          </view>
-        </picker>
-      </view>
+        <view v-if="activeTab === 'PRODUCTION'" class="filter-toolbar">
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="industryOptions.map((item) => item.label)"
+            :value="industryIndex"
+            @change="handleIndustryChange"
+          >
+            <view class="filter-picker" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedIndustryLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#748178" />
+            </view>
+          </picker>
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="varietyPickerOptions"
+            :value="varietyIndex"
+            @change="handleVarietyChange"
+          >
+            <view class="filter-picker" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedVarietyLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#748178" />
+            </view>
+          </picker>
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="statusOptions.map((item) => item.label)"
+            :value="statusIndex"
+            @change="handleStatusChange"
+          >
+            <view class="filter-picker" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedStatusLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#748178" />
+            </view>
+          </picker>
+        </view>
+        <view v-else-if="activeTab === 'OPERATION'" class="filter-toolbar filter-toolbar--single">
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="operationTypePickerOptions"
+            :value="operationTypeIndex"
+            @change="handleOperationTypeChange"
+          >
+            <view class="filter-picker" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedOperationTypeLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#748178" />
+            </view>
+          </picker>
+        </view>
+        <view v-else class="filter-toolbar">
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="industryOptions.map((item) => item.label)"
+            :value="harvestIndustryIndex"
+            @change="handleHarvestIndustryChange"
+          >
+            <view class="filter-picker" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedHarvestIndustryLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#748178" />
+            </view>
+          </picker>
+          <picker
+            class="filter-picker-wrap"
+            mode="selector"
+            :range="harvestSpeciesPickerOptions"
+            :value="harvestSpeciesIndex"
+            @change="handleHarvestSpeciesChange"
+          >
+            <view class="filter-picker" hover-class="filter-picker--pressed">
+              <text class="filter-picker__label">{{ selectedHarvestSpeciesLabel }}</text>
+              <uv-icon name="arrow-down" size="15" color="#748178" />
+            </view>
+          </picker>
+        </view>
       </view>
 
       <template v-if="activeTab === 'PRODUCTION'">
@@ -801,32 +802,41 @@ onReachBottom(() => {
 
 .records-tabs {
   display: flex;
-  padding: 4rpx 4rpx 20rpx;
+  min-height: 88rpx;
+  box-sizing: border-box;
+  align-items: stretch;
+  padding: 0 4rpx;
 }
 
 .records-tab {
   position: relative;
+  display: flex;
   flex: 1;
-  padding: 12rpx 4rpx;
-  text-align: center;
+  align-items: center;
+  justify-content: center;
   color: $pf-color-text-secondary;
-  font-size: 30rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-semibold;
+  transition: color $pf-duration-fast ease, background $pf-duration-fast ease;
+}
+
+.records-tab--pressed {
+  background: $pf-color-surface-muted;
 }
 
 .records-tab--active {
   color: $pf-color-primary;
-  font-weight: 650;
+  font-weight: $pf-font-weight-bold;
 }
 
 .records-tab--active::after {
   content: "";
   position: absolute;
   right: 50%;
-  bottom: 0;
-  width: 40rpx;
-  height: 6rpx;
-  border-radius: 999rpx;
+  bottom: 8rpx;
+  width: 42rpx;
+  height: 5rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-primary;
   transform: translateX(50%);
 }
@@ -837,15 +847,15 @@ onReachBottom(() => {
   z-index: 10;
   margin-left: -$pf-space-page-x;
   margin-right: -$pf-space-page-x;
-  padding: 0 $pf-space-page-x;
+  padding: $pf-space-1 $pf-space-page-x $pf-space-2;
   background: $pf-color-page;
 }
 
 .filter-toolbar {
   display: flex;
-  min-height: 96rpx;
   align-items: center;
-  padding: 0 4rpx 10rpx;
+  gap: $pf-space-2;
+  padding: $pf-space-1 0 0;
 }
 
 .filter-picker-wrap {
@@ -854,28 +864,34 @@ onReachBottom(() => {
   min-width: 0;
 }
 
-.filter-picker-wrap + .filter-picker-wrap {
-  margin-left: 16rpx;
+.filter-toolbar--single .filter-picker-wrap {
+  flex: 0 0 calc((100% - 32rpx) / 3);
 }
 
 .filter-picker {
-  display: inline-flex;
-  min-height: 88rpx;
+  display: flex;
+  width: 100%;
+  min-height: 80rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 16rpx;
+  justify-content: center;
+  padding: 0 $pf-space-2;
+  border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
+  background: $pf-color-surface;
+  transition: background $pf-duration-fast ease, border-color $pf-duration-fast ease;
 }
 
 .filter-picker--pressed {
-  background: $pf-color-surface-muted;
+  border-color: $pf-color-outline;
+  background: $pf-color-primary-soft;
 }
 
 .filter-picker__label {
   overflow: hidden;
   color: $pf-color-text-secondary;
-  font-size: 25rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-medium;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
