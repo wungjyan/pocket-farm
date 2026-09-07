@@ -20,6 +20,7 @@
             <view
               class="select-shell plot-select"
               :class="{ 'plot-select--disabled': !plotSelectable }"
+              :hover-class="plotSelectable ? 'select-shell--pressed' : 'none'"
               @tap="handlePlotSelect"
             >
               <view v-if="initialPlot" class="plot-select__copy">
@@ -27,7 +28,7 @@
                 <text class="plot-select__meta">{{ plotMeta(initialPlot) }}</text>
               </view>
               <text v-else class="select-placeholder">请选择地块</text>
-              <uv-icon v-if="plotSelectable" name="arrow-right" size="17" color="#7F8B82" />
+              <PfRowChevron v-if="plotSelectable" />
             </view>
           </view>
         </view>
@@ -44,7 +45,7 @@
               >
                 <view class="select-shell">
                   <text>{{ plantingStandardLabels[plantingStandardIndex] }}</text>
-                  <uv-icon name="arrow-down" size="16" color="#929A93" />
+                  <uv-icon name="arrow-down" size="16" color="#748178" />
                 </view>
               </picker>
             </view>
@@ -61,7 +62,7 @@
               >
                 <view class="select-shell">
                   <text>{{ plantingMethodLabels[plantingMethodIndex] }}</text>
-                  <uv-icon name="arrow-down" size="16" color="#929A93" />
+                  <uv-icon name="arrow-down" size="16" color="#748178" />
                 </view>
               </picker>
             </view>
@@ -74,7 +75,7 @@
             <picker mode="date" :value="form.startedOn" :end="today" @change="handleStartedOnChange">
               <view class="select-shell">
                 <text>{{ form.startedOn }}</text>
-                <uv-icon name="calendar" size="17" color="#929A93" />
+                <uv-icon name="calendar" size="17" color="#748178" />
               </view>
             </picker>
           </view>
@@ -108,7 +109,7 @@
             <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
               <view class="select-shell">
                 <text>{{ workMethodLabels[workMethodIndex] }}</text>
-                <uv-icon name="arrow-down" size="16" color="#929A93" />
+                <uv-icon name="arrow-down" size="16" color="#748178" />
               </view>
             </picker>
           </view>
@@ -116,12 +117,16 @@
       </view>
 
       <view class="optional-section">
-        <view class="optional-section__trigger pf-tappable" @tap="toggleOptionalSection">
+        <view
+          class="optional-section__header"
+          hover-class="optional-section__header--pressed"
+          @tap="toggleOptionalSection"
+        >
           <view class="optional-section__heading">
+            <view class="optional-section__marker" />
             <text class="optional-section__title">选填信息</text>
-            <text v-if="filledOptionalCount" class="optional-section__count">{{ filledOptionalCount }}</text>
           </view>
-          <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#7F8B82" />
+          <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#748178" />
         </view>
 
         <view v-if="optionalExpanded" class="optional-fields">
@@ -135,8 +140,8 @@
                   clearable
                   border="none"
                   placeholder="填写品种"
-                  placeholder-style="color: #7F8B82;"
-                  color="#17231B"
+                  placeholder-style="color: #748178;"
+                  color="#17261F"
                   @input="notifyChange"
                 />
               </view>
@@ -162,7 +167,7 @@
                     <text :class="{ 'select-placeholder': !form.expectedHarvestOn }">
                       {{ form.expectedHarvestOn || "请选择预计采收时间" }}
                     </text>
-                    <uv-icon name="calendar" size="17" color="#929A93" />
+                    <uv-icon name="calendar" size="17" color="#748178" />
                   </view>
                 </picker>
               </view>
@@ -214,7 +219,7 @@
       shape="square"
       :loading="submitting"
       :loading-text="loadingText"
-      custom-style="height: 88rpx; margin-top: 42rpx; border-radius: 16rpx;"
+      custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
       @click="handleSubmit"
     >
       {{ submitLabel }}
@@ -225,6 +230,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import FixedUnitNumberField from "./FixedUnitNumberField.vue";
+import PfRowChevron from "./PfRowChevron.vue";
 import type {
   PlantingMethod,
   PlantingStandard,
@@ -328,14 +334,14 @@ const initialQuantityLabel = computed(() => {
 const plantingStandardIndex = computed(() => plantingStandardValues.indexOf(form.plantingStandard));
 const plantingMethodIndex = computed(() => plantingMethodValues.indexOf(form.plantingMethod));
 const workMethodIndex = computed(() => workMethodValues.indexOf(form.workMethod));
-const filledOptionalCount = computed(() => {
+const hasFilledOptionalValues = computed(() => {
   const optionalValues = [form.variety, form.remark];
   if (!initialQuantityRequired.value) optionalValues.push(form.initialQuantity);
   if (isPlantingIndustry.value) {
     optionalValues.push(form.expectedHarvestOn, form.plantSpacingCm);
   }
   if (isAgriculture.value) optionalValues.push(form.expectedYieldPerMu);
-  return optionalValues.filter((value) => value.trim()).length;
+  return optionalValues.some((value) => value.trim());
 });
 
 watch(
@@ -361,7 +367,7 @@ watch(
     form.plantSpacingCm = formatNumber(production?.plantSpacingCm);
     form.entryAgeDays = production?.entryAgeDays?.toString() || "";
     form.remark = production?.remark || "";
-    optionalExpanded.value = filledOptionalCount.value > 0;
+    optionalExpanded.value = hasFilledOptionalValues.value;
   },
   { immediate: true },
 );
@@ -531,23 +537,24 @@ function handleSubmit(): void {
 @import "../styles/design-tokens.scss";
 
 .production-form {
-  padding-bottom: 0;
+  padding-top: $pf-space-4;
+  padding-bottom: $pf-space-8;
 }
 
 .form-item + .form-item {
-  margin-top: $pf-space-5;
+  margin-top: $pf-space-4;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .field-required {
-  margin-left: 6rpx;
+  margin-left: $pf-space-1;
   color: $pf-color-danger;
 }
 
@@ -555,7 +562,7 @@ function handleSubmit(): void {
 .input-shell,
 .textarea-shell {
   display: flex;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
   border: 1rpx solid $pf-color-border;
@@ -565,17 +572,21 @@ function handleSubmit(): void {
 
 .select-shell {
   justify-content: space-between;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-2 0 $pf-space-3;
   color: $pf-color-text;
-  font-size: 25rpx;
+  font-size: $pf-font-size-title;
 }
 
 .input-shell {
-  padding: 0 20rpx;
+  padding: 0 $pf-space-3;
 }
 
 .input-shell :deep(.uv-input) {
   width: 100%;
+}
+
+.select-shell--pressed {
+  background: $pf-color-surface-muted;
 }
 
 .plot-select--disabled {
@@ -590,14 +601,14 @@ function handleSubmit(): void {
 
 .plot-select__name {
   color: $pf-color-text;
-  font-size: 26rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .plot-select__meta {
   margin-top: 5rpx;
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: $pf-font-size-label;
 }
 
 .select-placeholder {
@@ -606,11 +617,11 @@ function handleSubmit(): void {
 
 .species-summary {
   display: flex;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-3;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface-muted;
@@ -623,27 +634,27 @@ function handleSubmit(): void {
 
 .species-summary__name {
   color: $pf-color-text;
-  font-size: 26rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .species-summary__industry {
   margin-top: 4rpx;
   color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
 }
 
 .textarea-shell {
-  min-height: 160rpx;
+  min-height: 176rpx;
   align-items: flex-start;
-  padding: 18rpx 20rpx;
+  padding: $pf-space-3;
 }
 
 .textarea-shell textarea {
   width: 100%;
-  min-height: 110rpx;
+  min-height: 128rpx;
   color: $pf-color-text;
-  font-size: 25rpx;
+  font-size: $pf-font-size-body;
   line-height: 1.5;
 }
 
@@ -655,31 +666,40 @@ function handleSubmit(): void {
   margin-top: $pf-space-6;
 }
 
-.optional-section__trigger {
+.optional-section__header,
+.optional-section__heading {
   display: flex;
-  min-height: 56rpx;
   align-items: center;
+}
+
+.optional-section__header {
+  min-height: 64rpx;
   justify-content: space-between;
+  padding: 0 4rpx;
+}
+
+.optional-section__header--pressed {
+  opacity: 0.68;
 }
 
 .optional-section__heading {
-  display: flex;
-  align-items: baseline;
+  gap: 12rpx;
+}
+
+.optional-section__marker {
+  width: 6rpx;
+  height: 26rpx;
+  border-radius: $pf-radius-pill;
+  background: $pf-color-primary;
 }
 
 .optional-section__title {
-  color: $pf-color-text-secondary;
-  font-size: 26rpx;
-  font-weight: 600;
-}
-
-.optional-section__count {
-  margin-left: 10rpx;
-  color: $pf-color-text-muted;
-  font-size: 23rpx;
+  color: $pf-color-text;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .optional-fields {
-  margin-top: $pf-space-4;
+  margin-top: $pf-space-2;
 }
 </style>

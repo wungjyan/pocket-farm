@@ -13,8 +13,8 @@
         clearable
         border="none"
         :placeholder="placeholder"
-        placeholder-style="color: #929A93;"
-        color="#202821"
+        placeholder-style="color: #748178;"
+        color="#17261F"
         @input="handleChange"
       />
       <text class="input-unit">{{ unit }}</text>
@@ -56,30 +56,30 @@ function handleChange(value: string): void {
 
 .field-label {
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .field-optional {
-  margin-left: 8rpx;
+  margin-left: $pf-space-1;
   color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 400;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
 }
 
 .field-required {
-  margin-left: 6rpx;
-  color: #c96a45;
+  margin-left: $pf-space-1;
+  color: $pf-color-danger;
 }
 
 .input-shell {
   display: flex;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-3;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface;
@@ -91,8 +91,8 @@ function handleChange(value: string): void {
 
 .input-unit {
   flex-shrink: 0;
-  margin-left: 16rpx;
+  margin-left: $pf-space-2;
   color: $pf-color-text-secondary;
-  font-size: 25rpx;
+  font-size: $pf-font-size-body;
 }
 </style>

@@ -2,14 +2,14 @@
   <view class="pf-page species-page">
     <view class="pf-page-content">
       <view class="search-shell">
-        <uv-icon name="search" size="18" color="#929A93" />
+        <uv-icon name="search" size="18" color="#748178" />
         <uv-input
           v-model="keyword"
           border="none"
           clearable
           placeholder="搜索种类"
-          placeholder-style="color: #929A93;"
-          color="#202821"
+          placeholder-style="color: #748178;"
+          color="#17261F"
           @confirm="loadSpecies"
         />
         <text class="search-action" @click="loadSpecies">搜索</text>
@@ -27,18 +27,18 @@
         </view>
       </view>
 
-      <view v-if="loading" class="state-card pf-card">
-        <uv-loading-icon mode="circle" color="#2F7D4A" />
+      <view v-if="loading" class="state-card">
+        <uv-loading-icon mode="circle" color="#006C49" />
         <text>正在加载种类</text>
       </view>
-      <view v-else-if="loadError" class="state-card pf-card">
-        <uv-icon name="warning" size="28" color="#C96A45" />
+      <view v-else-if="loadError" class="state-card">
+        <uv-icon name="warning" size="28" color="#A9433B" />
         <text>{{ loadError }}</text>
         <uv-button
           type="primary"
           size="small"
           shape="square"
-          custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+          custom-style="margin-top: 22rpx; border-radius: 16rpx;"
           @click="loadSpecies"
         >
           重试
@@ -52,8 +52,9 @@
           <view
             v-for="item in species"
             :key="item.id"
-            class="species-card pf-card pf-tappable"
-            :class="{ 'species-card--selected': item.id === selectedSpeciesId }"
+            class="species-row"
+            :class="{ 'species-row--selected': item.id === selectedSpeciesId }"
+            hover-class="species-row--pressed"
             @tap="chooseSpecies(item)"
           >
             <view class="species-copy">
@@ -63,12 +64,17 @@
               class="species-selection"
               :class="{ 'species-selection--selected': item.id === selectedSpeciesId }"
             >
-              <uv-icon v-if="item.id === selectedSpeciesId" name="checkmark" size="15" color="#286B46" />
+              <uv-icon
+                v-if="item.id === selectedSpeciesId"
+                name="checkmark"
+                size="15"
+                color="#006C49"
+              />
             </view>
           </view>
         </view>
-        <view v-else class="state-card pf-card">
-          <uv-icon name="empty-search" size="30" color="#929A93" />
+        <view v-else class="state-card">
+          <uv-icon name="empty-search" size="30" color="#748178" />
           <text>没有找到相关种类</text>
         </view>
       </template>
@@ -148,12 +154,16 @@ onLoad((options) => {
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
+.species-page .pf-page-content {
+  padding-top: $pf-space-4;
+}
+
 .search-shell {
   display: flex;
-  min-height: 80rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-2 0 $pf-space-3;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface;
@@ -161,35 +171,46 @@ onLoad((options) => {
 
 .search-shell :deep(.uv-input) {
   flex: 1;
-  margin-left: 12rpx;
+  margin-left: $pf-space-2;
 }
 
 .search-action {
-  margin-left: 12rpx;
+  display: flex;
+  min-width: 72rpx;
+  min-height: 96rpx;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: $pf-space-2;
   color: $pf-color-primary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .industry-tabs {
   display: flex;
-  margin: 24rpx 0;
-  gap: 12rpx;
+  margin: $pf-space-3 0;
+  gap: $pf-space-1;
 }
 
 .industry-tab {
+  display: flex;
+  min-height: 64rpx;
+  box-sizing: border-box;
   flex: 1;
-  padding: 14rpx 0;
-  border-radius: 999rpx;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-surface-muted;
   color: $pf-color-text-secondary;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
   text-align: center;
 }
 
 .industry-tab--active {
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-weight: 600;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .list-toolbar {
@@ -197,30 +218,39 @@ onLoad((options) => {
   min-height: 48rpx;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 4rpx 12rpx;
+  padding: 0 4rpx $pf-space-2;
 }
 
 .list-toolbar__count {
   color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
 }
 
 .species-list {
-  display: flex;
-  flex-direction: column;
-  gap: $pf-space-2;
+  overflow: hidden;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
 }
 
-.species-card {
+.species-row {
   display: flex;
-  min-height: 112rpx;
+  min-height: 104rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 22rpx;
+  padding: 0 $pf-space-3;
 }
 
-.species-card--selected {
+.species-row + .species-row {
+  border-top: 1rpx solid $pf-color-divider;
+}
+
+.species-row--selected {
   background: $pf-color-primary-soft;
+}
+
+.species-row--pressed {
+  background: $pf-color-surface-muted;
 }
 
 .species-copy {
@@ -231,8 +261,8 @@ onLoad((options) => {
 .species-name {
   overflow: hidden;
   color: $pf-color-text;
-  font-size: 28rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -245,7 +275,7 @@ onLoad((options) => {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  margin-left: 16rpx;
+  margin-left: $pf-space-2;
   border: 2rpx solid $pf-color-border;
   border-radius: 50%;
   background: $pf-color-surface;
@@ -263,8 +293,11 @@ onLoad((options) => {
   align-items: center;
   justify-content: center;
   padding: 28rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
   color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
 }
 
 .state-card text {
