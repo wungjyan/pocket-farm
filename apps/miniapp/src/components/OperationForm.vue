@@ -13,7 +13,7 @@
             <text class="plot-select__meta">{{ plotMeta(plot) }}</text>
           </view>
           <text v-else class="select-placeholder">请选择地块</text>
-          <uv-icon v-if="plotSelectable" name="arrow-right" size="16" color="#929A93" />
+          <PfRowChevron v-if="plotSelectable" />
         </view>
       </view>
     </view>
@@ -25,7 +25,7 @@
           <text :class="{ 'select-placeholder': !selectedOperationType }">
             {{ selectedOperationType?.name || "请选择农事类型" }}
           </text>
-          <uv-icon name="arrow-right" size="16" color="#929A93" />
+          <PfRowChevron />
         </view>
       </view>
     </view>
@@ -37,7 +37,7 @@
           <text :class="{ 'select-placeholder': !selectedProduction && !hasPlot }">
             {{ selectedProduction ? productionLabel(selectedProduction) : hasPlot ? "暂不关联种养" : "请先选择地块" }}
           </text>
-          <uv-icon v-if="hasPlot" name="arrow-right" size="16" color="#929A93" />
+          <PfRowChevron v-if="hasPlot" />
         </view>
       </view>
     </view>
@@ -48,7 +48,7 @@
         <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
           <view class="select-shell">
             <text>{{ workMethodLabels[workMethodIndex] }}</text>
-            <uv-icon name="arrow-down" size="16" color="#929A93" />
+            <uv-icon name="arrow-down" size="16" color="#748178" />
           </view>
         </picker>
       </view>
@@ -60,7 +60,7 @@
         <picker mode="date" :value="form.operatedDate" :start="selectedProduction?.startedOn" :end="today" @change="handleDateChange">
           <view class="select-shell">
             <text>{{ form.operatedDate }}</text>
-            <uv-icon name="calendar" size="17" color="#929A93" />
+            <uv-icon name="calendar" size="17" color="#748178" />
           </view>
         </picker>
       </view>
@@ -72,7 +72,7 @@
         <picker mode="time" :value="form.operatedTime" @change="handleTimeChange">
           <view class="select-shell">
             <text>{{ form.operatedTime }}</text>
-            <uv-icon name="clock" size="17" color="#929A93" />
+            <uv-icon name="clock" size="17" color="#748178" />
           </view>
         </picker>
       </view>
@@ -84,17 +84,30 @@
         <picker mode="selector" :range="operatorLabels" :value="operatorIndex" @change="handleOperatorChange">
           <view class="select-shell">
             <text>{{ operatorLabels[operatorIndex] }}</text>
-            <uv-icon name="arrow-down" size="16" color="#929A93" />
+            <uv-icon name="arrow-down" size="16" color="#748178" />
           </view>
         </picker>
       </view>
     </view>
 
-    <view class="form-item">
-      <view class="field-group">
-        <text class="field-label">备注 <text class="field-optional">选填</text></text>
-        <view class="textarea-shell">
-          <textarea v-model="form.remark" maxlength="1000" auto-height placeholder="补充说明" placeholder-class="textarea-placeholder" />
+    <view class="optional-section">
+      <view
+        class="optional-section__header"
+        hover-class="optional-section__header--pressed"
+        @tap="toggleOptionalSection"
+      >
+        <view class="optional-section__heading">
+          <view class="optional-section__marker" />
+          <text class="optional-section__title">备注</text>
+        </view>
+        <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#748178" />
+      </view>
+
+      <view v-if="optionalExpanded" class="optional-fields">
+        <view class="field-group">
+          <view class="textarea-shell">
+            <textarea v-model="form.remark" maxlength="1000" auto-height placeholder="补充说明" placeholder-class="textarea-placeholder" />
+          </view>
         </view>
       </view>
     </view>
@@ -105,7 +118,7 @@
       shape="square"
       :loading="submitting"
       :loading-text="loadingText"
-      custom-style="height: 88rpx; margin-top: 42rpx; border-radius: 16rpx;"
+      custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
       @click="handleSubmit"
     >
       {{ submitLabel }}
@@ -124,6 +137,7 @@ import type {
 import type { Production, WorkMethod } from "../services/production";
 import type { Plot, PlotType } from "../services/plot";
 import { formatNumber } from "../utils/number";
+import PfRowChevron from "./PfRowChevron.vue";
 
 const workMethodValues: WorkMethod[] = ["MANUAL", "MECHANICAL"];
 const workMethodLabels = ["人工", "机械"];
@@ -190,6 +204,7 @@ const operatorIndex = computed(() => {
   return index >= 0 ? index : 0;
 });
 const initialized = ref(false);
+const optionalExpanded = ref(false);
 
 watch(
   () =>
@@ -210,6 +225,7 @@ watch(
         ? operation.operatorId
         : currentUserId;
       form.remark = operation.remark || "";
+      optionalExpanded.value = Boolean(form.remark);
       initialized.value = true;
       return;
     }
@@ -223,6 +239,7 @@ watch(
       ? currentUserId
       : members[0]?.userId || 0;
     form.remark = "";
+    optionalExpanded.value = false;
     initialized.value = true;
   },
   { immediate: true },
@@ -271,6 +288,10 @@ function handleSelectProduction(): void {
 
 function handlePlotSelect(): void {
   if (props.plotSelectable) emit("select-plot");
+}
+
+function toggleOptionalSection(): void {
+  optionalExpanded.value = !optionalExpanded.value;
 }
 
 const plotTypeLabels: Record<PlotType, string> = {
@@ -345,19 +366,20 @@ function handleSubmit(): void {
 @import "../styles/design-tokens.scss";
 
 .operation-form {
-  padding-top: 28rpx;
+  padding-top: $pf-space-4;
+  padding-bottom: $pf-space-8;
 }
 
 .form-item + .form-item {
-  margin-top: $pf-space-5;
+  margin-top: $pf-space-4;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .field-required {
@@ -368,8 +390,8 @@ function handleSubmit(): void {
 .field-optional {
   margin-left: 8rpx;
   color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 400;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
 }
 
 .select-shell,
@@ -382,12 +404,12 @@ function handleSubmit(): void {
 }
 
 .select-shell {
-  min-height: 88rpx;
+  min-height: 96rpx;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-2 0 $pf-space-3;
   color: $pf-color-text;
-  font-size: 25rpx;
+  font-size: $pf-font-size-title;
 }
 
 .select-placeholder,
@@ -400,6 +422,10 @@ function handleSubmit(): void {
   color: $pf-color-text-muted;
 }
 
+.select-shell:active {
+  background: $pf-color-surface-muted;
+}
+
 .plot-select__copy,
 .plot-select__name,
 .plot-select__meta {
@@ -408,27 +434,68 @@ function handleSubmit(): void {
 
 .plot-select__name {
   color: $pf-color-text;
-  font-size: 26rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .plot-select__meta {
   margin-top: 5rpx;
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: $pf-font-size-label;
 }
 
 .textarea-shell {
-  min-height: 160rpx;
+  min-height: 176rpx;
   align-items: flex-start;
-  padding: 18rpx 20rpx;
+  padding: $pf-space-3;
 }
 
 .textarea-shell textarea {
   width: 100%;
-  min-height: 110rpx;
+  min-height: 128rpx;
   color: $pf-color-text;
-  font-size: 25rpx;
+  font-size: $pf-font-size-body;
   line-height: 1.5;
+}
+
+.optional-section {
+  margin-top: $pf-space-6;
+}
+
+.optional-section__header,
+.optional-section__heading {
+  display: flex;
+  align-items: center;
+}
+
+.optional-section__header {
+  min-height: 64rpx;
+  justify-content: space-between;
+  padding: 0 4rpx;
+}
+
+.optional-section__header--pressed {
+  opacity: 0.68;
+}
+
+.optional-section__heading {
+  gap: 12rpx;
+}
+
+.optional-section__marker {
+  width: 6rpx;
+  height: 26rpx;
+  border-radius: $pf-radius-pill;
+  background: $pf-color-primary;
+}
+
+.optional-section__title {
+  color: $pf-color-text;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-semibold;
+}
+
+.optional-fields {
+  margin-top: $pf-space-2;
 }
 </style>

@@ -1,18 +1,18 @@
 <template>
   <view class="pf-page operation-form-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#2F7D4A" />
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载农事表单</text>
     </view>
 
     <view v-else-if="loadError" class="state-card pf-card">
-      <uv-icon name="warning" size="28" color="#C96A45" />
+      <uv-icon name="warning" size="28" color="#A9433B" />
       <text>{{ loadError }}</text>
       <uv-button
         type="primary"
         size="small"
         shape="square"
-        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+        custom-style="margin-top: 22rpx; border-radius: 16rpx;"
         @click="loadForm"
       >
         重试
@@ -183,8 +183,9 @@ function openPlotSelector(): void {
 
 function openProductionSelector(): void {
   if (!plot.value) return;
+  const selectedParameter = selectedProductionId.value ? `&selectedProductionId=${selectedProductionId.value}` : "";
   uni.navigateTo({
-    url: `/pages/operations/productions?plotId=${plot.value.id}`,
+    url: `/pages/operations/productions?plotId=${plot.value.id}${selectedParameter}`,
     events: {
       selected: (production: Production | null) => {
         selectedProductionId.value = production?.id || null;
@@ -194,8 +195,11 @@ function openProductionSelector(): void {
 }
 
 function openOperationTypeSelector(): void {
+  const selectedParameter = selectedOperationTypeId.value
+    ? `?selectedOperationTypeId=${selectedOperationTypeId.value}`
+    : "";
   uni.navigateTo({
-    url: "/pages/operation-types/index",
+    url: `/pages/operation-types/index${selectedParameter}`,
     events: {
       selected: (operationType: OperationType) => {
         selectedOperationTypeId.value = operationType.id;
