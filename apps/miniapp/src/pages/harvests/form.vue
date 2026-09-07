@@ -1,13 +1,13 @@
 <template>
   <view class="pf-page harvest-form-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#286B46" />
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载收获表单</text>
     </view>
     <view v-else-if="loadError" class="state-card pf-card">
-      <uv-icon name="warning" size="28" color="#C96A45" />
+      <uv-icon name="warning" size="28" color="#A9433B" />
       <text>{{ loadError }}</text>
-      <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 22rpx; border-radius: 12rpx;" @click="loadForm">重试</uv-button>
+      <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 22rpx; border-radius: 16rpx;" @click="loadForm">重试</uv-button>
     </view>
     <template v-else>
       <HarvestForm
@@ -82,8 +82,7 @@ async function loadContext(targetFarmId: number): Promise<void> {
 }
 
 async function loadForm(): Promise<void> {
-  const showFullPageLoading = !members.value.length;
-  if (showFullPageLoading) loading.value = true;
+  loading.value = true;
   loadError.value = "";
   try {
     if (!productionId.value) {
@@ -100,10 +99,11 @@ async function loadForm(): Promise<void> {
     }
     const productionResult = await getProduction(productionId.value);
     const plotResult = await getPlot(productionResult.plotId);
-    const [memberPage, user, existingHarvest] = await Promise.all([
-      getFarmMembers(plotResult.farmId),
-      getCurrentUser(),
+    const [existingHarvest] = await Promise.all([
       harvestId.value ? getHarvest(harvestId.value) : Promise.resolve(null),
+      !members.value.length || farmId.value !== plotResult.farmId
+        ? loadContext(plotResult.farmId)
+        : Promise.resolve(),
     ]);
     if (harvestId.value) {
       if (!existingHarvest || existingHarvest.productionId !== productionResult.id) {
@@ -120,8 +120,6 @@ async function loadForm(): Promise<void> {
     plot.value = plotResult;
     plotId.value = plotResult.id;
     farmId.value = plotResult.farmId;
-    members.value = memberPage.items;
-    currentUserId.value = user.id;
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
       handleUnauthorized();
@@ -129,7 +127,7 @@ async function loadForm(): Promise<void> {
     }
     loadError.value = error instanceof ApiRequestError ? error.message : "收获表单加载失败，请稍后再试";
   } finally {
-    if (showFullPageLoading) loading.value = false;
+    loading.value = false;
   }
 }
 
@@ -141,12 +139,11 @@ function openProductionSelector(): void {
     url: `/pages/harvests/productions?farmId=${farmId.value}${plotParameter}${selectedParameter}`,
     events: {
       selected: (selection: HarvestProductionSelection) => {
-        if (selection.production.id === productionId.value) return;
-        productionId.value = selection.production.id;
-        production.value = selection.production;
-        plotId.value = selection.plot.id;
-        plot.value = selection.plot;
-        farmId.value = selection.plot.farmId;
+        if (selection.productionId === productionId.value) return;
+        productionId.value = selection.productionId;
+        production.value = null;
+        plot.value = null;
+        void loadForm();
       },
     },
   });
@@ -188,7 +185,7 @@ onLoad((options) => {
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.harvest-form-page { padding: 0; }
-.state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 28rpx; color: $pf-color-text-secondary; font-size: 24rpx; text-align: center; }
-.state-card text { margin-top: 16rpx; }
+.harvest-form-page { min-height: 100vh; box-sizing: border-box; padding-bottom: $pf-space-page-bottom; }
+.state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; margin: $pf-space-4 $pf-space-page-x 0; padding: $pf-space-4; border: 1rpx solid $pf-color-border; border-radius: $pf-radius-card; background: $pf-color-surface; color: $pf-color-text-secondary; font-size: $pf-font-size-body; text-align: center; }
+.state-card text { margin-top: $pf-space-2; }
 </style>

@@ -1,6 +1,5 @@
 import { request } from "./http";
-import type { Plot } from "./plot";
-import type { Production, ProductionStatus, WorkMethod } from "./production";
+import type { ProductionStatus, WorkMethod } from "./production";
 import type { Industry } from "./species";
 
 export type QuantityUnit = "KG" | "HEAD" | "FEATHER" | "PIECE" | "PLANT" | "TAIL";
@@ -22,8 +21,7 @@ export interface HarvestRecord {
 }
 
 export interface HarvestProductionSelection {
-  production: Production;
-  plot: Plot;
+  productionId: number;
 }
 
 export interface HarvestPage {

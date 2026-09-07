@@ -10,7 +10,7 @@
             @tap="handleProductionSelect"
           >
             <text :class="{ 'select-placeholder': !production }">{{ productionName }}</text>
-            <uv-icon v-if="productionSelectable" name="arrow-right" size="16" color="#929A93" />
+            <PfRowChevron v-if="productionSelectable" />
           </view>
         </view>
       </view>
@@ -26,8 +26,8 @@
               clearable
               border="none"
               :placeholder="quantityPlaceholder"
-              placeholder-style="color: #929A93;"
-              color="#202821"
+              placeholder-style="color: #748178;"
+              color="#17261F"
             />
             <view class="unit-label" :class="{ 'unit-label--empty': !quantityUnit }">
               {{ selectedUnitLabel }}
@@ -42,7 +42,7 @@
           <picker mode="selector" :range="workMethodLabels" :value="workMethodIndex" @change="handleWorkMethodChange">
             <view class="select-shell">
               <text>{{ workMethodLabels[workMethodIndex] }}</text>
-              <uv-icon name="arrow-down" size="16" color="#929A93" />
+              <uv-icon name="arrow-down" size="16" color="#748178" />
             </view>
           </picker>
         </view>
@@ -54,7 +54,7 @@
           <picker mode="date" :value="form.harvestedDate" :start="production?.startedOn" :end="today" @change="handleDateChange">
             <view class="select-shell">
               <text>{{ form.harvestedDate }}</text>
-              <uv-icon name="calendar" size="17" color="#929A93" />
+              <uv-icon name="calendar" size="17" color="#748178" />
             </view>
           </picker>
         </view>
@@ -66,7 +66,7 @@
           <picker mode="time" :value="form.harvestedTime" @change="handleTimeChange">
             <view class="select-shell">
               <text>{{ form.harvestedTime }}</text>
-              <uv-icon name="clock" size="17" color="#929A93" />
+              <uv-icon name="clock" size="17" color="#748178" />
             </view>
           </picker>
         </view>
@@ -78,7 +78,7 @@
           <picker mode="selector" :range="operatorLabels" :value="operatorIndex" @change="handleOperatorChange">
             <view class="select-shell">
               <text>{{ operatorLabels[operatorIndex] }}</text>
-              <uv-icon name="arrow-down" size="16" color="#929A93" />
+              <uv-icon name="arrow-down" size="16" color="#748178" />
             </view>
           </picker>
         </view>
@@ -86,9 +86,16 @@
     </view>
 
     <view class="optional-section">
-      <view class="optional-section__trigger pf-tappable" @tap="toggleOptionalSection">
-        <text class="optional-section__title">选填信息</text>
-        <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#7F8B82" />
+      <view
+        class="optional-section__header"
+        hover-class="optional-section__header--pressed"
+        @tap="toggleOptionalSection"
+      >
+        <view class="optional-section__heading">
+          <view class="optional-section__marker" />
+          <text class="optional-section__title">选填信息</text>
+        </view>
+        <uv-icon :name="optionalExpanded ? 'arrow-up' : 'arrow-down'" size="16" color="#748178" />
       </view>
 
       <view v-if="optionalExpanded" class="optional-fields">
@@ -96,7 +103,7 @@
           <view class="field-group">
             <text class="field-label">产品名称</text>
             <view class="input-shell">
-              <uv-input v-model="form.productName" maxlength="100" border="none" placeholder="默认使用种养名称" placeholder-style="color: #929A93;" color="#202821" />
+              <uv-input v-model="form.productName" maxlength="100" border="none" placeholder="默认使用种养名称" placeholder-style="color: #748178;" color="#17261F" />
             </view>
           </view>
         </view>
@@ -105,7 +112,7 @@
           <view class="field-group">
             <text class="field-label">等级</text>
             <view class="input-shell">
-              <uv-input v-model="form.grade" maxlength="100" border="none" placeholder="如一级、二级" placeholder-style="color: #929A93;" color="#202821" />
+              <uv-input v-model="form.grade" maxlength="100" border="none" placeholder="如一级、二级" placeholder-style="color: #748178;" color="#17261F" />
             </view>
           </view>
         </view>
@@ -127,7 +134,7 @@
       shape="square"
       :loading="submitting"
       :loading-text="loadingText"
-      custom-style="height: 88rpx; margin-top: 42rpx; border-radius: 16rpx;"
+      custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
       @click="handleSubmit"
     >
       {{ submitLabel }}
@@ -141,6 +148,7 @@ import type { FarmMember } from "../services/farm";
 import type { HarvestInput, HarvestRecord, QuantityUnit } from "../services/harvest";
 import type { Production, WorkMethod } from "../services/production";
 import { formatNumber } from "../utils/number";
+import PfRowChevron from "./PfRowChevron.vue";
 
 const unitLabels: Record<QuantityUnit, string> = {
   KG: "公斤",
@@ -238,6 +246,7 @@ watch(
       form.productName = harvest.productName || "";
       form.grade = harvest.grade || "";
       form.remark = harvest.remark || "";
+      optionalExpanded.value = Boolean(harvest.productName || harvest.grade || harvest.remark);
       initialized.value = true;
       return;
     }
@@ -344,23 +353,28 @@ function handleSubmit(): void {
 <style lang="scss" scoped>
 @import "../styles/design-tokens.scss";
 
-.harvest-form { padding-top: 28rpx; padding-bottom: $pf-space-page-bottom; }
-.form-item + .form-item { margin-top: $pf-space-5; }
-.field-label { display: block; margin-bottom: 14rpx; color: $pf-color-text; font-size: 27rpx; font-weight: 600; }
-.field-required { margin-left: 6rpx; color: $pf-color-danger; }
+.harvest-form { padding-top: $pf-space-4; padding-bottom: $pf-space-8; }
+.form-item + .form-item { margin-top: $pf-space-4; }
+.field-label { display: block; margin-bottom: 12rpx; color: $pf-color-text; font-size: $pf-font-size-title; font-weight: $pf-font-weight-semibold; }
+.field-required { margin-left: $pf-space-1; color: $pf-color-danger; }
 .quantity-shell, .input-shell, .select-shell, .textarea-shell { display: flex; box-sizing: border-box; border: 1rpx solid $pf-color-border; border-radius: $pf-radius-control; background: $pf-color-surface; }
-.quantity-shell, .input-shell, .select-shell { min-height: 88rpx; align-items: center; }
-.quantity-shell, .input-shell { padding: 0 20rpx; }
+.quantity-shell, .input-shell, .select-shell { min-height: 96rpx; align-items: center; }
+.quantity-shell, .input-shell { padding: 0 $pf-space-3; }
 .quantity-shell :deep(.uv-input), .input-shell :deep(.uv-input) { flex: 1; }
-.unit-label { min-width: 92rpx; box-sizing: border-box; padding-left: 18rpx; border-left: 1rpx solid $pf-color-divider; color: $pf-color-text-secondary; font-size: 24rpx; text-align: right; }
+.unit-label { min-width: 104rpx; box-sizing: border-box; padding-left: $pf-space-3; border-left: 1rpx solid $pf-color-divider; color: $pf-color-text-secondary; font-size: $pf-font-size-body; text-align: right; }
 .unit-label--empty { color: $pf-color-text-muted; }
-.select-shell { justify-content: space-between; padding: 0 20rpx; color: $pf-color-text; font-size: 25rpx; }
-.select-shell--disabled { background: $pf-color-surface-muted; color: $pf-color-text-secondary; }
+.select-shell { justify-content: space-between; padding: 0 $pf-space-2 0 $pf-space-3; color: $pf-color-text; font-size: $pf-font-size-title; }
+.select-shell--disabled { background: $pf-color-surface-muted; color: $pf-color-text-muted; }
+.select-shell:active { background: $pf-color-surface-muted; }
 .select-placeholder, .textarea-placeholder { color: $pf-color-text-muted; }
-.textarea-shell { min-height: 160rpx; align-items: flex-start; padding: 18rpx 20rpx; }
-.textarea-shell textarea { width: 100%; min-height: 110rpx; color: $pf-color-text; font-size: 25rpx; line-height: 1.5; }
+.textarea-shell { min-height: 176rpx; align-items: flex-start; padding: $pf-space-3; }
+.textarea-shell textarea { width: 100%; min-height: 128rpx; color: $pf-color-text; font-size: $pf-font-size-body; line-height: 1.5; }
 .optional-section { margin-top: $pf-space-6; }
-.optional-section__trigger { display: flex; min-height: 56rpx; align-items: center; justify-content: space-between; }
-.optional-section__title { color: $pf-color-text-secondary; font-size: 26rpx; font-weight: 600; }
-.optional-fields { margin-top: $pf-space-4; }
+.optional-section__header, .optional-section__heading { display: flex; align-items: center; }
+.optional-section__header { min-height: 64rpx; justify-content: space-between; padding: 0 4rpx; }
+.optional-section__header--pressed { opacity: 0.68; }
+.optional-section__heading { gap: 12rpx; }
+.optional-section__marker { width: 6rpx; height: 26rpx; border-radius: $pf-radius-pill; background: $pf-color-primary; }
+.optional-section__title { color: $pf-color-text; font-size: $pf-font-size-section; font-weight: $pf-font-weight-semibold; }
+.optional-fields { margin-top: $pf-space-2; }
 </style>
