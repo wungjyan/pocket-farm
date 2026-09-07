@@ -1,10 +1,6 @@
 <template>
   <view class="pf-page profile-page">
-    <view class="page-intro">
-      <text class="page-description">修改应用内展示的昵称，后续记录会使用这个名称。</text>
-    </view>
-
-    <view class="form-card pf-card">
+    <view class="profile-form">
       <text class="field-label">昵称</text>
       <view class="input-shell" :class="{ 'input-shell--focused': inputFocused }">
         <uv-input
@@ -13,13 +9,12 @@
           clearable
           border="none"
           placeholder="请输入昵称"
-          placeholder-style="color: #929A93;"
-          color="#202821"
+          placeholder-style="color: #748178;"
+          color="#17261F"
           @focus="inputFocused = true"
           @blur="inputFocused = false"
         />
       </view>
-      <text class="field-help">昵称会显示在首页和生产记录中</text>
 
       <uv-button
         type="primary"
@@ -27,7 +22,7 @@
         shape="square"
         :loading="saving"
         loading-text="保存中"
-        custom-style="height: 88rpx; margin-top: 36rpx; border-radius: 16rpx;"
+        custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
         @click="handleSave"
       >
         保存修改
@@ -99,38 +94,23 @@ onShow(loadUser);
 @import "../../styles/design-tokens.scss";
 
 .profile-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
-}
-
-.page-intro {
-  padding: 12rpx 4rpx 28rpx;
-}
-
-.page-description {
-  display: block;
-  color: $pf-color-text-secondary;
-  font-size: 25rpx;
-  line-height: 1.55;
-}
-
-.form-card {
-  padding: 28rpx 24rpx;
+  padding: $pf-space-4 $pf-space-page-x $pf-space-page-bottom;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .input-shell {
   display: flex;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-3;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface;
@@ -142,13 +122,5 @@ onShow(loadUser);
 
 .input-shell :deep(.uv-input) {
   width: 100%;
-}
-
-.field-help {
-  display: block;
-  margin-top: 14rpx;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
-  line-height: 1.45;
 }
 </style>

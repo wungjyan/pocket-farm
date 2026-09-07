@@ -98,10 +98,10 @@ onShow(loadUser);
 
 .group-title {
   display: block;
-  margin: 0 4rpx 14rpx;
+  margin: 0 4rpx $pf-space-2;
   color: $pf-color-text;
-  font-size: 26rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .group-title--spaced {
@@ -111,23 +111,23 @@ onShow(loadUser);
 .settings-list {
   overflow: hidden;
   border: 1rpx solid $pf-color-border;
-  border-radius: 14rpx;
+  border-radius: $pf-radius-card;
   background: $pf-color-surface;
 }
 
 .setting-row {
   display: flex;
-  min-height: 104rpx;
+  min-height: 108rpx;
   align-items: center;
-  padding: 0 24rpx;
+  padding: 0 $pf-space-3;
 }
 
 .setting-label {
   min-width: 0;
   flex: 1;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-medium;
 }
 
 .setting-value {
@@ -135,7 +135,7 @@ onShow(loadUser);
   max-width: 360rpx;
   margin-right: 12rpx;
   color: $pf-color-text-secondary;
-  font-size: 25rpx;
+  font-size: $pf-font-size-body;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -147,7 +147,7 @@ onShow(loadUser);
 
 .setting-divider {
   height: 1rpx;
-  margin-left: 24rpx;
+  margin-left: $pf-space-3;
   background: $pf-color-divider;
 }
 
@@ -157,11 +157,11 @@ onShow(loadUser);
   align-items: center;
   justify-content: center;
   margin-top: $pf-space-6;
-  border: 1rpx solid $pf-color-border;
-  border-radius: 14rpx;
+  border: 1rpx solid $pf-color-danger-disabled;
+  border-radius: $pf-radius-control;
   background: $pf-color-surface;
   color: $pf-color-danger;
-  font-size: 26rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 </style>

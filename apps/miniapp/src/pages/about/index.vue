@@ -45,7 +45,7 @@ function openAgreement(type: "user" | "privacy"): void {
 }
 
 .about-content {
-  padding: $pf-space-8 $pf-space-page-x $pf-space-page-bottom;
+  padding: $pf-space-6 $pf-space-page-x $pf-space-page-bottom;
 }
 
 .about-brand {
@@ -63,22 +63,21 @@ function openAgreement(type: "user" | "privacy"): void {
 .about-brand__name {
   margin-top: $pf-space-3;
   color: $pf-color-text;
-  font-size: 34rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-bold;
 }
 
 .about-brand__version {
   margin-top: $pf-space-1;
   color: $pf-color-text-muted;
-  font-size: 23rpx;
+  font-size: $pf-font-size-label;
 }
 
 .about-list {
   overflow: hidden;
-  margin-top: 96rpx;
+  margin-top: $pf-space-8;
   border: 1rpx solid $pf-color-border;
-  border-radius: $pf-radius-control;
+  border-radius: $pf-radius-card;
   background: $pf-color-surface;
 }
 
@@ -92,8 +91,8 @@ function openAgreement(type: "user" | "privacy"): void {
 .about-row__label {
   flex: 1;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-medium;
 }
 
 .about-divider {
