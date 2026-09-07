@@ -1,18 +1,18 @@
 <template>
   <view class="pf-page harvest-detail-page">
-    <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#286B46" />
+    <view v-if="loading" class="state-card">
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载收获记录</text>
     </view>
 
-    <view v-else-if="loadError" class="state-card pf-card">
+    <view v-else-if="loadError" class="state-card">
       <uv-icon name="warning" size="28" color="#A9433B" />
       <text>{{ loadError }}</text>
       <uv-button
         type="primary"
         size="small"
         shape="square"
-        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+        custom-style="margin-top: 22rpx; border-radius: 16rpx;"
         @click="loadDetail"
       >
         重试
@@ -20,67 +20,88 @@
     </view>
 
     <view v-else-if="harvest && production && plot" class="pf-page-content">
-      <view class="detail-card pf-card">
-        <view class="detail-heading">
-          <text class="detail-title">{{ harvest.productName || production.speciesName }}</text>
+      <view class="detail-summary">
+        <view class="detail-summary__top">
+          <view class="detail-summary__copy">
+            <text class="detail-summary__title">{{
+              harvest.productName || production.speciesName
+            }}</text>
+            <text class="detail-summary__meta">{{
+              harvestDateLabel(harvest.harvestedAt)
+            }}</text>
+          </view>
+          <view
+            v-if="!readOnly"
+            class="detail-summary__edit pf-tappable"
+            @tap="openEdit"
+          >
+            <uv-icon name="edit-pen" size="14" color="#006C49" />
+            <text>编辑</text>
+          </view>
         </view>
-
-        <view class="detail-list">
-          <view class="detail-row">
-            <text class="detail-label">收获时间</text>
-            <text class="detail-value">{{ harvestDateLabel(harvest.harvestedAt) }}</text>
-          </view>
-          <view class="detail-row">
-            <text class="detail-label">地块</text>
-            <text class="detail-value">{{ plot.name }}</text>
-          </view>
-          <view class="detail-row">
-            <text class="detail-label">关联种养</text>
-            <text class="detail-value">{{ productionLabel }}</text>
-          </view>
-          <view class="detail-row">
-            <text class="detail-label">数量</text>
-            <text class="detail-value detail-value--quantity">{{ quantityLabel }}</text>
-          </view>
-          <view class="detail-row">
-            <text class="detail-label">作业方式</text>
-            <text class="detail-value">{{ workMethodLabel(harvest.workMethod) }}</text>
-          </view>
-          <view class="detail-row">
-            <text class="detail-label">操作人</text>
-            <text class="detail-value">{{ memberName(harvest.operatorId) }}</text>
-          </view>
-          <view v-if="harvest.createdBy !== harvest.operatorId" class="detail-row">
-            <text class="detail-label">记录人</text>
-            <text class="detail-value">{{ memberName(harvest.createdBy) }}</text>
-          </view>
-          <view v-if="harvest.grade" class="detail-row">
-            <text class="detail-label">等级</text>
-            <text class="detail-value">{{ harvest.grade }}</text>
-          </view>
-          <view v-if="harvest.remark" class="detail-row detail-row--stack">
-            <text class="detail-label">备注</text>
-            <text class="detail-value">{{ harvest.remark }}</text>
+        <view class="detail-summary__divider" />
+        <view class="detail-summary__metric">
+          <text class="detail-summary__metric-label">数量</text>
+          <view class="detail-summary__metric-value">
+            <text>{{ formatNumber(harvest.quantity) }}</text>
+            <text class="detail-summary__metric-unit">{{
+              unitLabels[harvest.unit]
+            }}</text>
           </view>
         </view>
       </view>
 
-      <view v-if="!readOnly" class="action-grid">
-        <button
-          class="action-button action-button--primary"
-          hover-class="action-button--primary-pressed"
-          @tap="openEdit"
-        >
-          编辑收获记录
-        </button>
-        <button
-          class="action-button action-button--danger"
-          hover-class="action-button--danger-pressed"
-          @tap="confirmDelete"
-        >
-          删除收获记录
-        </button>
+      <view class="pf-section-heading">
+        <text class="pf-section-title">收获信息</text>
       </view>
+      <view class="detail-list">
+        <view class="detail-row">
+          <text class="detail-label">地块</text>
+          <text class="detail-value">{{ plot.name }}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">关联种养</text>
+          <text class="detail-value">{{ productionLabel }}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">作业方式</text>
+          <text class="detail-value">{{
+            workMethodLabel(harvest.workMethod)
+          }}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">操作人</text>
+          <text class="detail-value">{{
+            memberName(harvest.operatorId)
+          }}</text>
+        </view>
+        <view
+          v-if="harvest.createdBy !== harvest.operatorId"
+          class="detail-row"
+        >
+          <text class="detail-label">记录人</text>
+          <text class="detail-value">{{
+            memberName(harvest.createdBy)
+          }}</text>
+        </view>
+        <view v-if="harvest.grade" class="detail-row">
+          <text class="detail-label">等级</text>
+          <text class="detail-value">{{ harvest.grade }}</text>
+        </view>
+        <view v-if="harvest.remark" class="detail-row detail-row--stack">
+          <text class="detail-label">备注</text>
+          <text class="detail-value">{{ harvest.remark }}</text>
+        </view>
+      </view>
+
+      <button
+        v-if="!readOnly"
+        class="delete-button"
+        hover-class="delete-button--pressed"
+        @tap="confirmDelete"
+      >
+        删除收获记录
+      </button>
     </view>
 
     <uv-toast ref="toastRef" />
@@ -137,11 +158,6 @@ const productionLabel = computed(() => {
   if (!value) return "关联种养";
   return `${value.speciesName}${value.variety ? ` · ${value.variety}` : ""}`;
 });
-const quantityLabel = computed(() => {
-  const value = harvest.value;
-  return value ? `${formatNumber(value.quantity)} ${unitLabels[value.unit]}` : "";
-});
-
 function handleUnauthorized(): void {
   clearAuthToken();
   uni.reLaunch({ url: "/pages/auth/login" });
@@ -201,7 +217,7 @@ function confirmDelete(): void {
   uni.showModal({
     title: "删除收获记录？",
     content: "删除后无法恢复，确定要继续吗？",
-    confirmColor: "#C96A45",
+    confirmColor: "#A9433B",
     success: async (result) => {
       if (!result.confirm || !harvest.value) return;
       deleting.value = true;
@@ -239,117 +255,181 @@ onShow(() => {
 }
 
 .harvest-detail-page .pf-page-content {
-  padding-top: $pf-space-3;
+  padding-top: $pf-space-4;
 }
 
-.detail-card {
-  padding: 28rpx;
+.detail-summary {
+  padding: $pf-space-4 28rpx 28rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
 }
 
-.detail-heading {
+.detail-summary__top {
   display: flex;
-  align-items: center;
-  padding-bottom: $pf-space-3;
-  border-bottom: 1rpx solid $pf-color-divider;
+  align-items: flex-start;
 }
 
-.detail-title {
+.detail-summary__copy {
   min-width: 0;
   flex: 1;
+}
+
+.detail-summary__title,
+.detail-summary__meta,
+.detail-summary__metric-label {
+  display: block;
+}
+
+.detail-summary__title {
   overflow: hidden;
   color: $pf-color-text;
-  font-size: 34rpx;
-  font-weight: 700;
+  font-size: 40rpx;
+  font-weight: $pf-font-weight-bold;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $pf-space-4;
-  padding: $pf-space-3 0;
-  border-bottom: 1rpx solid $pf-color-divider;
+.detail-summary__meta {
+  margin-top: $pf-space-1;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+  line-height: 1.45;
 }
 
-.detail-row:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.detail-summary__edit {
+  display: flex;
+  min-width: 112rpx;
+  min-height: 72rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: 18rpx;
+  padding: 0 $pf-space-2;
+  border-radius: $pf-radius-control;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
+}
+
+.detail-summary__edit text {
+  margin-left: $pf-space-1;
+}
+
+.detail-summary__divider {
+  height: 1rpx;
+  margin: 28rpx 0 $pf-space-3;
+  background: $pf-color-divider;
+}
+
+.detail-summary__metric-label {
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+}
+
+.detail-summary__metric-value {
+  display: flex;
+  align-items: baseline;
+  margin-top: $pf-space-1;
+  color: $pf-color-text;
+}
+
+.detail-summary__metric-value > text:first-child {
+  font-size: 48rpx;
+  font-weight: $pf-font-weight-bold;
+  letter-spacing: -1rpx;
+}
+
+.detail-summary__metric-unit {
+  margin-left: 6rpx;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
+}
+
+.harvest-detail-page .pf-section-heading {
+  margin-top: $pf-space-5;
+}
+
+.detail-list {
+  overflow: hidden;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
+}
+
+.detail-row {
+  display: flex;
+  min-height: 104rpx;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  gap: $pf-space-4;
+  padding: 0 $pf-space-3;
+}
+
+.detail-row + .detail-row {
+  border-top: 1rpx solid $pf-color-divider;
 }
 
 .detail-row--stack {
   flex-direction: column;
-  gap: $pf-space-2;
+  align-items: flex-start;
+  gap: $pf-space-1;
+  padding-top: $pf-space-3;
+  padding-bottom: $pf-space-3;
 }
 
 .detail-label {
   flex-shrink: 0;
-  color: $pf-color-text-muted;
-  font-size: 23rpx;
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-body;
   line-height: 1.45;
 }
 
 .detail-value {
   min-width: 0;
+  max-width: 62%;
   color: $pf-color-text;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
   line-height: 1.45;
   text-align: right;
   word-break: break-all;
 }
 
-.detail-value--quantity {
-  color: $pf-color-harvest;
-  font-weight: 650;
-}
-
 .detail-row--stack .detail-value {
+  max-width: 100%;
+  color: $pf-color-text-secondary;
+  font-weight: $pf-font-weight-medium;
   text-align: left;
 }
 
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $pf-space-2;
-  margin-top: $pf-space-4;
-}
-
-.action-button {
+.delete-button {
   display: flex;
   width: 100%;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  padding: 0 12rpx;
-  border: 1rpx solid $pf-color-border;
+  margin: $pf-space-5 0 0;
+  padding: 0 $pf-space-2;
+  border: 1rpx solid $pf-color-danger-soft;
   border-radius: $pf-radius-control;
-  background: $pf-color-surface;
-  color: $pf-color-text;
-  font-size: 25rpx;
-  font-weight: 600;
+  background: $pf-color-danger-soft;
+  color: $pf-color-danger;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
   line-height: 1.25;
 }
 
-.action-button::after {
+.delete-button::after {
   border: 0;
 }
 
-.action-button--primary {
-  border-color: $pf-color-harvest-soft;
-  background: $pf-color-harvest-soft;
-  color: $pf-color-harvest;
-}
-
-.action-button--danger {
-  border-color: transparent;
-  background: $pf-color-danger-soft;
-  color: $pf-color-danger;
-}
-
-.action-button--primary-pressed,
-.action-button--danger-pressed {
+.delete-button--pressed {
   opacity: 0.72;
 }
 
@@ -362,8 +442,11 @@ onShow(() => {
   justify-content: center;
   margin: $pf-space-3 $pf-space-page-x 0;
   padding: 28rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
   color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
   text-align: center;
 }
 

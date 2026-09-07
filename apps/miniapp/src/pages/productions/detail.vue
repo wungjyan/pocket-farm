@@ -1,7 +1,7 @@
 <template>
   <view class="pf-page production-detail-page">
     <view v-if="loading" class="state-card">
-      <uv-loading-icon mode="circle" color="#286B46" />
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载种养信息</text>
     </view>
 
@@ -39,7 +39,7 @@
             class="production-header__edit pf-tappable"
             @tap="openEdit"
           >
-            <uv-icon name="edit-pen" size="13" color="#286B46" />
+            <uv-icon name="edit-pen" size="14" color="#006C49" />
             <text>编辑</text>
           </view>
         </view>
@@ -124,34 +124,39 @@
       <view class="pf-section-heading">
         <text class="pf-section-title">操作</text>
       </view>
-      <view class="action-grid">
+      <view class="action-area">
+        <view class="action-list">
+          <view
+            v-if="production.status === 'ACTIVE'"
+            class="action-entry"
+            hover-class="action-entry--pressed"
+            @tap="openCreateHarvest"
+          >
+            <text>记录{{ harvestActionLabel }}</text>
+            <PfRowChevron />
+          </view>
+          <view
+            class="action-entry"
+            hover-class="action-entry--pressed"
+            @tap="openHarvests"
+          >
+            <text>查看{{ harvestActionLabel }}记录</text>
+            <PfRowChevron />
+          </view>
+          <view
+            v-if="production.status === 'ACTIVE'"
+            class="action-entry"
+            hover-class="action-entry--pressed"
+            @tap="openEndProduction"
+          >
+            <text>{{ endActionLabel }}</text>
+            <PfRowChevron />
+          </view>
+        </view>
         <button
           v-if="production.status === 'ACTIVE'"
-          class="action-button action-button--primary"
-          hover-class="action-button--primary-pressed"
-          @tap="openCreateHarvest"
-        >
-          记录{{ harvestActionLabel }}
-        </button>
-        <button
-          class="action-button action-button--secondary"
-          hover-class="action-button--pressed"
-          @tap="openHarvests"
-        >
-          查看{{ harvestActionLabel }}记录
-        </button>
-        <button
-          v-if="production.status === 'ACTIVE'"
-          class="action-button action-button--secondary"
-          hover-class="action-button--pressed"
-          @tap="openEndProduction"
-        >
-          {{ endActionLabel }}
-        </button>
-        <button
-          v-if="production.status === 'ACTIVE'"
-          class="action-button action-button--danger"
-          hover-class="action-button--danger-pressed"
+          class="delete-button"
+          hover-class="delete-button--pressed"
           @tap="confirmDelete"
         >
           删除种养记录
@@ -166,6 +171,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import {
@@ -340,7 +346,7 @@ function confirmDelete(): void {
   uni.showModal({
     title: "删除种养记录？",
     content: "删除后无法恢复，确定要继续吗？",
-    confirmColor: "#C96A45",
+    confirmColor: "#A9433B",
     success: async (result) => {
       if (!result.confirm || !production.value) return;
       deleting.value = true;
@@ -382,20 +388,20 @@ onShow(() => {
 }
 
 .production-detail-page .pf-page-content {
-  padding-top: $pf-space-3;
+  padding-top: $pf-space-4;
 }
 
 /* 种养信息卡 */
 .production-header {
-  padding: 28rpx;
-  border-radius: 20rpx;
+  padding: $pf-space-4 28rpx 28rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
   background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
 }
 
 .production-header__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .production-header__copy {
@@ -419,8 +425,8 @@ onShow(() => {
 .production-header__name {
   overflow: hidden;
   color: $pf-color-text;
-  font-size: 38rpx;
-  font-weight: 700;
+  font-size: 40rpx;
+  font-weight: $pf-font-weight-bold;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -432,10 +438,11 @@ onShow(() => {
   flex-shrink: 1;
   margin-left: 12rpx;
   padding: 4rpx 12rpx;
-  border-radius: 999rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 19rpx;
+  font-size: $pf-font-size-caption;
+  font-weight: $pf-font-weight-medium;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -443,26 +450,29 @@ onShow(() => {
 
 .production-header__meta {
   overflow: hidden;
-  margin-top: 4rpx;
+  margin-top: $pf-space-1;
   color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
+  line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .production-header__edit {
   display: flex;
-  min-height: 60rpx;
+  min-width: 112rpx;
+  min-height: 72rpx;
   box-sizing: border-box;
   flex-shrink: 0;
   align-items: center;
   margin-left: 18rpx;
-  padding: 0 24rpx;
-  border-radius: 999rpx;
+  justify-content: center;
+  padding: 0 $pf-space-2;
+  border-radius: $pf-radius-control;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 24rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .production-header__edit text {
@@ -471,7 +481,7 @@ onShow(() => {
 
 .production-header__divider {
   height: 1rpx;
-  margin: 24rpx 0 22rpx;
+  margin: 28rpx 0 $pf-space-3;
   background: $pf-color-divider;
 }
 
@@ -483,43 +493,43 @@ onShow(() => {
 
 .production-header__metric-label {
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: $pf-font-size-label;
 }
 
 .production-header__metric-value {
   display: flex;
   align-items: baseline;
-  margin-top: 6rpx;
+  margin-top: $pf-space-1;
   color: $pf-color-text;
 }
 
 .production-header__metric-value > text:first-child {
-  font-size: 46rpx;
-  font-weight: 750;
+  font-size: 48rpx;
+  font-weight: $pf-font-weight-bold;
   letter-spacing: -1rpx;
 }
 
 .production-header__metric-unit {
   margin-left: 6rpx;
-  font-size: 22rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
 }
 
 .production-header__metric-missing {
   margin-top: 6rpx;
   color: $pf-color-text-secondary;
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .status-chip {
   flex-shrink: 0;
   padding: 6rpx 18rpx;
-  border-radius: 999rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-surface-muted;
   color: $pf-color-text-muted;
-  font-size: 22rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
   line-height: 1.4;
 }
 
@@ -529,19 +539,23 @@ onShow(() => {
 }
 
 /* 种养信息 */
+.production-detail-page .pf-section-heading {
+  margin-top: $pf-space-5;
+}
+
 .info-card {
   overflow: hidden;
-  border-radius: 20rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
   background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
 }
 
 .info-row {
   display: flex;
-  min-height: 92rpx;
+  min-height: 104rpx;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28rpx;
+  padding: 0 $pf-space-3;
 }
 
 .info-row + .info-row {
@@ -550,22 +564,22 @@ onShow(() => {
 
 .info-label {
   color: $pf-color-text-secondary;
-  font-size: 25rpx;
+  font-size: $pf-font-size-body;
 }
 
 .info-value {
   max-width: 62%;
   color: $pf-color-text;
-  font-size: 25rpx;
-  font-weight: 550;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
   text-align: right;
 }
 
 .info-row--stack {
   flex-direction: column;
   align-items: flex-start;
-  gap: 8rpx;
-  padding: 24rpx 28rpx;
+  gap: $pf-space-1;
+  padding: $pf-space-3;
 }
 
 .info-row--stack .info-value {
@@ -577,56 +591,61 @@ onShow(() => {
 }
 
 /* 操作 */
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
+.action-area {
+  display: flex;
+  flex-direction: column;
+  gap: $pf-space-3;
 }
 
-.action-button {
+.action-list {
+  overflow: hidden;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
+}
+
+.action-entry {
   display: flex;
-  width: 100%;
-  min-height: 88rpx;
+  min-height: 104rpx;
   box-sizing: border-box;
   align-items: center;
-  justify-content: center;
-  padding: 0 12rpx;
-  border: 1rpx solid $pf-color-border;
-  border-radius: $pf-radius-control;
-  background: $pf-color-surface;
+  justify-content: space-between;
+  padding: 0 $pf-space-2 0 $pf-space-3;
   color: $pf-color-text;
-  font-size: 25rpx;
-  font-weight: 600;
-  line-height: 1.25;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
-.action-button::after {
-  border: 0;
+.action-entry + .action-entry {
+  border-top: 1rpx solid $pf-color-divider;
 }
 
-.action-button--primary {
-  border-color: $pf-color-primary-soft;
-  background: $pf-color-primary-soft;
-  color: $pf-color-primary;
-}
-
-.action-button--primary-pressed {
-  border-color: $pf-color-primary-soft;
-  background: $pf-color-primary-soft;
-  opacity: 0.72;
-}
-
-.action-button--pressed {
+.action-entry--pressed {
   background: $pf-color-surface-muted;
 }
 
-.action-button--danger {
-  border-color: transparent;
+.delete-button {
+  display: flex;
+  width: 100%;
+  min-height: 96rpx;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $pf-space-2;
+  border: 1rpx solid $pf-color-danger-soft;
+  border-radius: $pf-radius-control;
   background: $pf-color-danger-soft;
   color: $pf-color-danger;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
+  line-height: 1.25;
 }
 
-.action-button--danger-pressed {
+.delete-button::after {
+  border: 0;
+}
+
+.delete-button--pressed {
   opacity: 0.72;
 }
 
@@ -639,11 +658,11 @@ onShow(() => {
   align-items: center;
   justify-content: center;
   margin: $pf-space-3 $pf-space-page-x 0;
-  border-radius: 20rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
   background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
   color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
 }
 
 .state-card text {
