@@ -2,29 +2,27 @@
   <view class="pf-page harvests-page">
     <view class="pf-page-content">
       <view v-if="loading" class="state-card pf-card">
-        <uv-loading-icon mode="circle" color="#286B46" />
+        <uv-loading-icon mode="circle" color="#006C49" />
         <text>正在加载收获记录</text>
       </view>
       <view v-else-if="loadError" class="state-card pf-card">
-        <uv-icon name="warning" size="28" color="#C96A45" />
+        <uv-icon name="warning" size="28" color="#A9433B" />
         <text>{{ loadError }}</text>
-        <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 22rpx; border-radius: 12rpx;" @click="loadHarvests">重试</uv-button>
+        <uv-button type="primary" size="small" shape="square" custom-style="margin-top: 24rpx; border-radius: 16rpx;" @click="loadHarvests">重试</uv-button>
       </view>
       <template v-else-if="plot">
         <view class="page-toolbar">
           <view class="page-context">
-            <view class="page-context__scope">
-              <text class="page-context__label">{{ contextLabel }}</text>
-              <text class="page-context__value">{{ contextValue }}</text>
-            </view>
-            <text class="page-context__separator">·</text>
-            <view class="page-context__count">
-              <text class="page-context__label">收获记录共</text>
-              <text class="page-context__value">{{ formatNumber(totalCount) }}</text>
-              <text class="page-context__label">条</text>
-            </view>
+            <text class="page-context__name">{{ contextValue }}</text>
+            <text class="page-context__meta">{{ contextMeta }}</text>
           </view>
-          <view v-if="canCreate" class="page-action pf-tappable" @tap="openCreate">
+          <view
+            v-if="canCreate"
+            class="page-action pf-tappable"
+            hover-class="page-action--pressed"
+            @tap="openCreate"
+          >
+            <uv-icon name="plus" size="14" color="#006C49" />
             <text>记录{{ production ? actionLabel : "收获" }}</text>
           </view>
         </view>
@@ -34,6 +32,7 @@
             v-for="harvest in harvests"
             :key="harvest.id"
             class="harvest-card pf-card pf-tappable"
+            hover-class="harvest-card--pressed"
             @tap="openDetail(harvest)"
           >
             <view class="harvest-copy">
@@ -41,15 +40,15 @@
                 <text class="harvest-name">{{ harvest.productName || productionFor(harvest)?.speciesName || "收获" }}</text>
                 <text v-if="isLocked(harvest)" class="harvest-status">种养已结束</text>
               </view>
-              <text class="harvest-summary">
-                {{ harvestActionLabel(harvest) }}：<text class="harvest-quantity">{{ formatNumber(harvest.quantity) }} {{ unitLabel(harvest.unit) }}</text>
-              </text>
-              <text class="harvest-meta">操作时间：{{ harvestDateLabel(harvest.harvestedAt) }}</text>
-              <text class="harvest-meta">操作人：{{ memberName(harvest.operatorId) }}{{ creatorLabel(harvest) }}</text>
+              <view class="harvest-summary">
+                <text class="harvest-summary__label">{{ harvestActionLabel(harvest) }}</text>
+                <text class="harvest-quantity">{{ formatNumber(harvest.quantity) }} {{ unitLabel(harvest.unit) }}</text>
+              </view>
+              <text class="harvest-meta">{{ harvestDateLabel(harvest.harvestedAt) }} · 操作人：{{ memberName(harvest.operatorId) }}{{ creatorLabel(harvest) }}</text>
             </view>
             <PfRowChevron />
           </view>
-          <uv-load-more v-if="hasMore || loadingMore" :status="loadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
+          <uv-load-more v-if="hasMore || loadingMore" :status="loadingMore ? 'loading' : 'nomore'" icon-color="#006C49" color="#748178" />
         </view>
         <PfEmptyState v-else icon="shopping-basket" title="还没有收获记录" />
       </template>
@@ -105,10 +104,13 @@ const actionLabel = computed(() => {
   if (production.value?.industry === "FISHERY") return "捕捞";
   return "采收";
 });
-const contextLabel = computed(() => production.value ? "种养" : "地块");
 const contextValue = computed(() => production.value
   ? `${production.value.speciesName}${production.value.variety ? ` · ${production.value.variety}` : ""}`
   : plot.value?.name || "地块");
+const contextMeta = computed(() => {
+  const count = `共 ${formatNumber(totalCount.value)} 条收获记录`;
+  return production.value && plot.value ? `${plot.value.name} · ${count}` : count;
+});
 const canCreate = computed(() => production.value
   ? production.value.status === "ACTIVE"
   : productions.value.some((item) => item.status === "ACTIVE"));
@@ -253,24 +255,167 @@ onReachBottom(() => {
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
-.page-toolbar { display: flex; min-height: 96rpx; align-items: center; justify-content: space-between; padding: 0 4rpx 10rpx; }
-.page-context { min-width: 0; flex: 1; display: flex; align-items: center; overflow: hidden; color: $pf-color-text-secondary; font-size: 24rpx; white-space: nowrap; }
-.page-context__scope { display: flex; min-width: 0; flex: 0 1 auto; align-items: center; overflow: hidden; }
-.page-context__value { overflow: hidden; margin: 0 $pf-space-1; color: $pf-color-harvest; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.page-context__scope .page-context__value { min-width: 0; flex: 1; }
-.page-context__separator { flex-shrink: 0; margin-right: $pf-space-1; color: $pf-color-text-muted; }
-.page-context__count { display: flex; align-items: center; }
-.page-context__count, .page-context__label { flex-shrink: 0; }
-.page-action { display: flex; min-height: 88rpx; flex-shrink: 0; align-items: center; margin-left: $pf-space-3; padding: 0 $pf-space-1; color: $pf-color-harvest; font-size: 25rpx; font-weight: 600; }
-.harvest-list { display: flex; flex-direction: column; gap: $pf-space-2; }
-.harvest-card { display: flex; align-items: center; padding: $pf-space-3; }
-.harvest-copy { min-width: 0; flex: 1; margin-right: $pf-space-2; }
-.harvest-title-line { display: flex; min-width: 0; align-items: center; gap: 10rpx; }
-.harvest-name { overflow: hidden; color: $pf-color-text; font-size: 28rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.harvest-status { flex-shrink: 0; padding: 3rpx 8rpx; border-radius: 8rpx; background: $pf-color-surface-muted; color: $pf-color-text-muted; font-size: 19rpx; }
-.harvest-summary { display: block; margin-top: $pf-space-2; color: $pf-color-text-secondary; font-size: 22rpx; line-height: 1.35; }
-.harvest-quantity { color: $pf-color-harvest; font-size: 24rpx; font-weight: 650; }
-.harvest-meta { display: block; margin-top: $pf-space-1; overflow: hidden; color: $pf-color-text-muted; font-size: 22rpx; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 28rpx; color: $pf-color-text-secondary; font-size: 24rpx; text-align: center; }
-.state-card text { margin-top: 16rpx; }
+.harvests-page .pf-page-content {
+  padding-top: $pf-space-4;
+}
+
+.page-toolbar {
+  display: flex;
+  min-height: 112rpx;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rpx $pf-space-3;
+}
+
+.page-context {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.page-context__name,
+.page-context__meta,
+.harvest-name,
+.harvest-meta {
+  display: block;
+}
+
+.page-context__name {
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-context__meta {
+  overflow: hidden;
+  margin-top: $pf-space-1;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-action {
+  display: flex;
+  min-height: 72rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: $pf-space-3;
+  padding: 0 $pf-space-2;
+  border-radius: $pf-radius-control;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
+}
+
+.page-action text {
+  margin-left: 6rpx;
+}
+
+.page-action--pressed {
+  opacity: 0.68;
+}
+
+.harvest-list {
+  display: flex;
+  flex-direction: column;
+  gap: $pf-space-2;
+}
+
+.harvest-card {
+  display: flex;
+  min-height: 176rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: $pf-space-3;
+}
+
+.harvest-card--pressed {
+  background: $pf-color-surface-muted;
+}
+
+.harvest-copy {
+  min-width: 0;
+  flex: 1;
+  margin-right: $pf-space-2;
+}
+
+.harvest-title-line {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.harvest-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: $pf-color-text;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.harvest-status {
+  flex-shrink: 0;
+  padding: 4rpx 10rpx;
+  border-radius: $pf-radius-pill;
+  background: $pf-color-surface-muted;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-caption;
+  line-height: 1.3;
+}
+
+.harvest-summary {
+  display: flex;
+  align-items: baseline;
+  margin-top: $pf-space-2;
+}
+
+.harvest-summary__label {
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-label;
+}
+
+.harvest-quantity {
+  margin-left: $pf-space-1;
+  color: $pf-color-primary;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
+}
+
+.harvest-meta {
+  overflow: hidden;
+  margin-top: $pf-space-1;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.state-card {
+  display: flex;
+  min-height: 220rpx;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $pf-space-4;
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-body;
+  text-align: center;
+}
+
+.state-card text {
+  margin-top: $pf-space-2;
+}
 </style>

@@ -1,7 +1,7 @@
 <template>
   <view class="pf-page production-end-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#286B46" />
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载种养信息</text>
     </view>
     <view v-else-if="loadError" class="state-card pf-card">
@@ -11,23 +11,35 @@
         type="primary"
         size="small"
         shape="square"
-        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+        custom-style="margin-top: 24rpx; border-radius: 16rpx;"
         @click="loadProduction"
       >重试</uv-button>
     </view>
-    <template v-else-if="production && plot">
+    <view v-else-if="production && plot" class="pf-page-content">
       <view class="production-summary">
-        <text class="production-summary__name">{{ production.speciesName }}</text>
-        <text class="production-summary__plot">{{ plot.name }}</text>
+        <view class="production-summary__icon">
+          <image src="/static/icons/lucide/sprout.svg" mode="aspectFit" />
+        </view>
+        <view class="production-summary__copy">
+          <text class="production-summary__name">{{ productionName }}</text>
+          <text class="production-summary__meta">{{ plot.name }} · {{ production.startedOn }} 开始</text>
+        </view>
+        <text class="production-summary__status">进行中</text>
       </view>
 
-      <view class="end-form pf-card">
+      <view class="end-form">
         <view class="field-group">
           <text class="field-label">结束日期</text>
-          <picker mode="date" :value="endedOn" :start="production.startedOn" :end="today" @change="handleDateChange">
-            <view class="select-shell">
+          <picker
+            mode="date"
+            :value="endedOn"
+            :start="production.startedOn"
+            :end="today"
+            @change="handleDateChange"
+          >
+            <view class="select-shell" hover-class="select-shell--pressed">
               <text>{{ endedOn }}</text>
-              <uv-icon name="calendar" size="17" color="#7F8B82" />
+              <uv-icon name="calendar" size="17" color="#748178" />
             </view>
           </picker>
         </view>
@@ -38,11 +50,11 @@
           shape="square"
           :loading="submitting"
           loading-text="结束中"
-          custom-style="height: 88rpx; margin-top: 42rpx; border-radius: 16rpx;"
+          custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
           @click="confirmEnd"
         >确认{{ endActionName }}</uv-button>
       </view>
-    </template>
+    </view>
     <uv-toast ref="toastRef" />
   </view>
 </template>
@@ -64,6 +76,11 @@ const loadError = ref("");
 const today = formatToday();
 const endedOn = ref(today);
 const toastRef = ref<{ error: (message: string) => void } | null>(null);
+const productionName = computed(() => {
+  const value = production.value;
+  if (!value) return "";
+  return `${value.speciesName}${value.variety ? ` · ${value.variety}` : ""}`;
+});
 const endActionName = computed(() => {
   if (production.value?.industry === "AGRICULTURE" || production.value?.industry === "FORESTRY") {
     return "结束种植";
@@ -119,7 +136,7 @@ function confirmEnd(): void {
   uni.showModal({
     title: `确认${endActionName.value}？`,
     content: endedOn.value,
-    confirmColor: "#286B46",
+    confirmColor: "#006C49",
     success: async (result) => {
       if (!result.confirm || !production.value) return;
       submitting.value = true;
@@ -150,56 +167,108 @@ onLoad((options) => {
 @import "../../styles/design-tokens.scss";
 
 .production-end-page {
-  min-height: 100vh;
-  box-sizing: border-box;
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
+  padding-bottom: $pf-space-page-bottom;
+}
+
+.production-end-page .pf-page-content {
+  padding-top: $pf-space-4;
 }
 
 .production-summary {
-  padding: 12rpx 4rpx 28rpx;
+  display: flex;
+  min-height: 120rpx;
+  box-sizing: border-box;
+  align-items: center;
+  padding: $pf-space-3;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
+}
+
+.production-summary__icon {
+  display: flex;
+  width: 64rpx;
+  height: 64rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: $pf-radius-control;
+  background: $pf-color-primary-soft;
+}
+
+.production-summary__icon image {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.production-summary__copy {
+  min-width: 0;
+  flex: 1;
+  margin-left: $pf-space-2;
 }
 
 .production-summary__name,
-.production-summary__plot,
+.production-summary__meta,
 .field-label {
   display: block;
 }
 
 .production-summary__name {
+  overflow: hidden;
   color: $pf-color-text;
-  font-size: 38rpx;
-  font-weight: 700;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.production-summary__plot {
-  margin-top: 10rpx;
-  color: $pf-color-text-secondary;
-  font-size: 24rpx;
+.production-summary__meta {
+  overflow: hidden;
+  margin-top: $pf-space-1;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.production-summary__status {
+  flex-shrink: 0;
+  margin-left: $pf-space-2;
+  padding: 6rpx 16rpx;
+  border-radius: $pf-radius-pill;
+  background: $pf-color-primary-soft;
+  color: $pf-color-primary;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
 }
 
 .end-form {
-  padding: 28rpx 24rpx;
+  margin-top: $pf-space-5;
 }
 
 .field-label {
-  margin-bottom: 14rpx;
+  margin-bottom: $pf-space-2;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .select-shell {
   display: flex;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-3;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface;
   color: $pf-color-text;
-  font-size: 25rpx;
+  font-size: $pf-font-size-body;
+}
+
+.select-shell--pressed {
+  background: $pf-color-surface-muted;
 }
 
 .state-card {
@@ -209,13 +278,17 @@ onLoad((options) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 28rpx;
+  margin: $pf-space-4 $pf-space-page-x 0;
+  padding: $pf-space-4;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-card;
+  background: $pf-color-surface;
   color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
   text-align: center;
 }
 
 .state-card text {
-  margin-top: 16rpx;
+  margin-top: $pf-space-2;
 }
 </style>
