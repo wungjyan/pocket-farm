@@ -1,18 +1,18 @@
 <template>
   <view class="pf-page members-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#2F7D4A" />
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载成员</text>
     </view>
 
     <view v-else-if="loadError" class="state-card pf-card">
-      <uv-icon name="warning" size="28" color="#C96A45" />
+      <uv-icon name="warning" size="28" color="#A9433B" />
       <text>{{ loadError }}</text>
       <uv-button
         type="primary"
         size="small"
         shape="square"
-        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+        custom-style="margin-top: 24rpx; border-radius: 16rpx;"
         @click="loadMembers"
       >
         重试
@@ -20,75 +20,86 @@
     </view>
 
     <template v-else>
-      <view class="page-intro">
-        <text class="page-title">成员管理</text>
-        <text class="page-description">{{ members.length }} 位成员 · 只展示昵称和角色</text>
+      <view class="member-section">
+        <text class="section-label">成员</text>
+        <view class="member-list pf-card">
+          <view v-for="member in members" :key="member.id" class="member-row">
+            <view class="member-avatar">
+              <text>{{ avatarText(member) }}</text>
+            </view>
+            <view class="member-copy">
+              <view class="member-name-line">
+                <text class="member-name">{{ displayName(member) }}</text>
+                <text v-if="member.userId === currentUserId" class="self-badge">我</text>
+              </view>
+              <text class="member-joined">加入于 {{ formatDate(member.joinedAt) }}</text>
+            </view>
+
+            <picker
+              v-if="canManage(member)"
+              mode="selector"
+              :range="roleLabels"
+              :value="roleIndex(member.role)"
+              @change="handleRoleChange(member, $event)"
+            >
+              <view class="role-control">
+                <text>{{ roleLabel(member.role) }}</text>
+                <uv-icon name="arrow-down" size="14" color="#748178" />
+              </view>
+            </picker>
+            <text v-else class="role-text">{{ roleLabel(member.role) }}</text>
+            <view
+              v-if="canManage(member)"
+              class="remove-control pf-tappable"
+              @tap.stop="handleRemove(member)"
+            >
+              <uv-icon name="trash" size="18" color="#A9433B" />
+            </view>
+          </view>
+        </view>
       </view>
 
-      <view class="member-list pf-card">
-        <view v-for="member in members" :key="member.id" class="member-row">
-          <view class="member-avatar">
-            <text>{{ avatarText(member) }}</text>
+      <view v-if="canManageMembers" class="add-section">
+        <text class="section-label">添加成员</text>
+        <view class="field-group">
+          <text class="field-label">手机号</text>
+          <view class="input-shell" :class="{ 'input-shell--focused': phoneFocused }">
+            <uv-input
+              v-model="phoneNumber"
+              type="number"
+              maxlength="11"
+              clearable
+              border="none"
+              placeholder="请输入 11 位手机号"
+              placeholder-style="color: #748178;"
+              color="#17261F"
+              @focus="phoneFocused = true"
+              @blur="phoneFocused = false"
+            />
           </view>
-          <view class="member-copy">
-            <view class="member-name-line">
-              <text class="member-name">{{ displayName(member) }}</text>
-              <text v-if="member.userId === currentUserId" class="self-badge">我</text>
-            </view>
-            <text class="member-joined">加入于 {{ formatDate(member.joinedAt) }}</text>
-          </view>
+        </view>
 
+        <view class="field-group">
+          <text class="field-label">加入角色</text>
           <picker
-            v-if="canManage(member)"
             mode="selector"
             :range="roleLabels"
-            :value="roleIndex(member.role)"
-            @change="handleRoleChange(member, $event)"
+            :value="addRoleIndex"
+            @change="handleAddRoleChange"
           >
-            <view class="role-control">
-              <text>{{ roleLabel(member.role) }}</text>
-              <uv-icon name="arrow-down" size="14" color="#929A93" />
-            </view>
-          </picker>
-          <text v-else class="role-text">{{ roleLabel(member.role) }}</text>
-          <view v-if="canManage(member)" class="remove-control" @tap.stop="handleRemove(member)">
-            <uv-icon name="trash" size="18" color="#C96A45" />
-          </view>
-        </view>
-      </view>
-
-      <view v-if="canManageMembers" class="section-label">添加已注册用户</view>
-      <view v-if="canManageMembers" class="add-card pf-card">
-        <text class="add-help">通过手机号精确查找已注册用户，手机号不会展示在成员列表中。</text>
-        <view class="input-shell" :class="{ 'input-shell--focused': phoneFocused }">
-          <uv-input
-            v-model="phoneNumber"
-            type="number"
-            maxlength="11"
-            clearable
-            border="none"
-            placeholder="请输入 11 位手机号"
-            placeholder-style="color: #929A93;"
-            color="#202821"
-            @focus="phoneFocused = true"
-            @blur="phoneFocused = false"
-          />
-        </view>
-        <view class="add-options">
-          <text class="option-label">加入角色</text>
-          <picker mode="selector" :range="roleLabels" :value="addRoleIndex" @change="handleAddRoleChange">
-            <view class="role-control role-control--add">
+            <view class="select-shell">
               <text>{{ roleLabels[addRoleIndex] }}</text>
-              <uv-icon name="arrow-down" size="14" color="#929A93" />
+              <uv-icon name="arrow-down" size="16" color="#748178" />
             </view>
           </picker>
         </view>
+
         <uv-button
           type="primary"
           shape="square"
           :loading="adding"
           loading-text="添加中"
-          custom-style="height: 82rpx; margin-top: 28rpx; border-radius: 16rpx;"
+          custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
           @click="handleAdd"
         >
           添加成员
@@ -256,7 +267,7 @@ function handleRemove(member: FarmMember): void {
   uni.showModal({
     title: "移除成员",
     content: `确定移除“${displayName(member)}”吗？`,
-    confirmColor: "#C96A45",
+    confirmColor: "#A9433B",
     success: async (result) => {
       if (!result.confirm) return;
       try {
@@ -287,28 +298,7 @@ onShow(() => {
 @import "../../styles/design-tokens.scss";
 
 .members-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
-}
-
-.page-intro {
-  padding: 12rpx 4rpx 28rpx;
-}
-
-.page-title,
-.page-description {
-  display: block;
-}
-
-.page-title {
-  color: $pf-color-text;
-  font-size: 38rpx;
-  font-weight: 700;
-}
-
-.page-description {
-  margin-top: 10rpx;
-  color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  padding: $pf-space-4 $pf-space-page-x $pf-space-page-bottom;
 }
 
 .member-list {
@@ -317,9 +307,9 @@ onShow(() => {
 
 .member-row {
   display: flex;
-  min-height: 104rpx;
+  min-height: 112rpx;
   align-items: center;
-  padding: 0 20rpx;
+  padding: 0 24rpx;
 }
 
 .member-row + .member-row {
@@ -328,22 +318,22 @@ onShow(() => {
 
 .member-avatar {
   display: flex;
-  width: 60rpx;
-  height: 60rpx;
+  width: 56rpx;
+  height: 56rpx;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 20rpx;
+  border-radius: $pf-radius-control;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: 650;
 }
 
 .member-copy {
   min-width: 0;
   flex: 1;
-  margin: 0 16rpx;
+  margin: 0 $pf-space-2;
 }
 
 .member-name-line {
@@ -352,88 +342,96 @@ onShow(() => {
 }
 
 .member-name {
-  max-width: 300rpx;
+  max-width: 270rpx;
   overflow: hidden;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .self-badge {
-  margin-left: 8rpx;
-  padding: 3rpx 8rpx;
-  border-radius: 8rpx;
+  margin-left: $pf-space-1;
+  padding: 4rpx 10rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-surface-muted;
   color: $pf-color-text-muted;
-  font-size: 19rpx;
+  font-size: $pf-font-size-caption;
 }
 
 .member-joined {
   display: block;
-  margin-top: 6rpx;
+  margin-top: 4rpx;
   color: $pf-color-text-muted;
-  font-size: 21rpx;
+  font-size: $pf-font-size-caption;
 }
 
 .role-control {
   display: flex;
-  min-width: 116rpx;
+  min-width: 120rpx;
+  min-height: 56rpx;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  padding: 10rpx 12rpx;
-  border-radius: 12rpx;
+  padding: 0 14rpx;
+  border-radius: $pf-radius-control;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
+  font-weight: 600;
 }
 
 .role-control text {
-  margin-right: 6rpx;
+  margin-right: $pf-space-1;
 }
 
 .role-text {
-  min-width: 116rpx;
+  min-width: 120rpx;
   color: $pf-color-text-secondary;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
   text-align: center;
 }
 
 .remove-control {
   display: flex;
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   align-items: center;
   justify-content: flex-end;
-  margin-left: 8rpx;
+  margin-left: $pf-space-1;
 }
 
 .section-label {
-  margin: 38rpx 8rpx 14rpx;
-  color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 600;
-}
-
-.add-card {
-  padding: 24rpx 22rpx;
-}
-
-.add-help {
   display: block;
-  color: $pf-color-text-secondary;
-  font-size: 23rpx;
-  line-height: 1.5;
+  margin: 0 4rpx $pf-space-2;
+  color: $pf-color-text;
+  font-size: $pf-font-size-section;
+  font-weight: 720;
+}
+
+.add-section {
+  margin-top: $pf-space-6;
+}
+
+.field-group + .field-group {
+  margin-top: $pf-space-4;
+}
+
+.field-label {
+  display: block;
+  margin: 0 4rpx $pf-space-2;
+  color: $pf-color-text;
+  font-size: $pf-font-size-body;
+  font-weight: 650;
 }
 
 .input-shell {
   display: flex;
-  min-height: 84rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
-  margin-top: 20rpx;
-  padding: 0 18rpx;
+  padding: 0 24rpx;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface;
@@ -447,20 +445,18 @@ onShow(() => {
   width: 100%;
 }
 
-.add-options {
+.select-shell {
   display: flex;
+  min-height: 96rpx;
+  box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
-  margin-top: 22rpx;
-}
-
-.option-label {
-  color: $pf-color-text-secondary;
-  font-size: 24rpx;
-}
-
-.role-control--add {
-  min-width: 150rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-control;
+  background: $pf-color-surface;
+  color: $pf-color-text;
+  font-size: $pf-font-size-body;
 }
 
 .state-card {

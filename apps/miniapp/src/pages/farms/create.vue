@@ -1,10 +1,6 @@
 <template>
   <view class="pf-page create-farm-page">
-    <view class="page-intro">
-      <text class="page-description">创建后，你会自动成为这个农场的农场主。</text>
-    </view>
-
-    <FarmForm submit-label="创建农场" loading-text="创建中" :submitting="submitting" @submit="handleCreate" />
+    <FarmForm :framed="false" submit-label="创建农场" loading-text="创建中" :submitting="submitting" @submit="handleCreate" />
 
     <uv-toast ref="toastRef" />
   </view>
@@ -68,17 +64,6 @@ async function handleCreate(input: { name: string; region: string | null }): Pro
 @import "../../styles/design-tokens.scss";
 
 .create-farm-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
-}
-
-.page-intro {
-  padding: 12rpx 4rpx 28rpx;
-}
-
-.page-description {
-  display: block;
-  color: $pf-color-text-secondary;
-  font-size: 25rpx;
-  line-height: 1.55;
+  padding: $pf-space-4 $pf-space-page-x $pf-space-page-bottom;
 }
 </style>

@@ -9,8 +9,8 @@
           clearable
           border="none"
           placeholder="例如：开心农场"
-          placeholder-style="color: #929A93;"
-          color="#202821"
+          placeholder-style="color: #748178;"
+          color="#17261F"
           @focus="nameFocused = true"
           @blur="nameFocused = false"
           @input="notifyChange"
@@ -27,8 +27,8 @@
           clearable
           border="none"
           placeholder="例如：上海市浦东新区"
-          placeholder-style="color: #929A93;"
-          color="#202821"
+          placeholder-style="color: #748178;"
+          color="#17261F"
           @focus="regionFocused = true"
           @blur="regionFocused = false"
           @input="notifyChange"
@@ -42,7 +42,7 @@
       shape="square"
       :loading="submitting"
       :loading-text="loadingText"
-      custom-style="height: 88rpx; margin-top: 42rpx; border-radius: 16rpx;"
+      custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
       @click="handleSubmit"
     >
       {{ submitLabel }}
@@ -109,19 +109,19 @@ function notifyChange(): void {
 @import "../styles/design-tokens.scss";
 
 .farm-form--card {
-  padding: 28rpx 24rpx;
+  padding: $pf-space-4 $pf-space-3;
 }
 
 .field-group--region {
-  margin-top: 32rpx;
+  margin-top: $pf-space-4;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .field-required {
@@ -130,16 +130,16 @@ function notifyChange(): void {
 
 .field-optional {
   color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 400;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
 }
 
 .input-shell {
   display: flex;
-  min-height: 88rpx;
+  min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 0 20rpx;
+  padding: 0 $pf-space-3;
   border: 1rpx solid $pf-color-border;
   border-radius: $pf-radius-control;
   background: $pf-color-surface;

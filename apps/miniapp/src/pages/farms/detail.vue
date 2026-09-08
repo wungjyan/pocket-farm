@@ -1,18 +1,18 @@
 <template>
   <view class="pf-page farm-settings-page">
     <view v-if="loading" class="state-card pf-card">
-      <uv-loading-icon mode="circle" color="#2F7D4A" />
+      <uv-loading-icon mode="circle" color="#006C49" />
       <text>正在加载农场设置</text>
     </view>
 
     <view v-else-if="loadError" class="state-card pf-card">
-      <uv-icon name="warning" size="28" color="#C96A45" />
+      <uv-icon name="warning" size="28" color="#A9433B" />
       <text>{{ loadError }}</text>
       <uv-button
         type="primary"
         size="small"
         shape="square"
-        custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+        custom-style="margin-top: 22rpx; border-radius: 16rpx;"
         @click="loadSettings"
       >
         重试
@@ -30,13 +30,12 @@
 
       <view v-if="canEdit" class="section-label">基本设置</view>
       <view v-if="canEdit" class="menu-card pf-card">
-        <view class="menu-row" @tap="openEdit">
+        <view class="menu-row pf-tappable" @click="openEdit">
           <view class="menu-icon">
-            <uv-icon name="edit-pen" size="20" color="#2F7D4A" />
+            <uv-icon name="edit-pen" size="20" color="#006C49" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">基本信息</text>
-            <text class="menu-description">农场名称、所在地区</text>
           </view>
           <PfRowChevron />
         </view>
@@ -44,13 +43,12 @@
 
       <view v-if="canManageMembers" class="section-label">成员与权限</view>
       <view v-if="canManageMembers" class="menu-card pf-card">
-        <view class="menu-row" @tap="openMembers">
+        <view class="menu-row pf-tappable" @click="openMembers">
           <view class="menu-icon">
-            <uv-icon name="account" size="20" color="#2F7D4A" />
+            <uv-icon name="account" size="20" color="#006C49" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">成员管理</text>
-            <text class="menu-description">添加成员并设置农场角色</text>
           </view>
           <PfRowChevron />
         </view>
@@ -60,11 +58,11 @@
         <view class="section-label">危险操作</view>
         <view class="danger-card pf-card">
           <view
-            class="danger-row"
+            class="danger-row pf-tappable"
             @click="handleLeave"
           >
             <view class="danger-icon">
-              <uv-icon name="close-circle" size="20" color="#C96A45" />
+              <uv-icon name="close-circle" size="20" color="#A9433B" />
             </view>
             <view class="danger-copy">
               <text class="danger-title">退出农场</text>
@@ -152,9 +150,10 @@ function handleLeave(): void {
     uni.showModal({
       title: "暂时无法退出",
       content: "请先在成员管理中设置其他农场主。",
-      confirmText: "去成员管理",
+      // 微信 showModal 的 confirmText 最多 4 个字符，超长会导致弹窗静默失败
+      confirmText: "去处理",
       cancelText: "取消",
-      confirmColor: "#2F7D4A",
+      confirmColor: "#006C49",
       success: (result) => {
         if (result.confirm) openMembers();
       },
@@ -164,7 +163,7 @@ function handleLeave(): void {
   uni.showModal({
     title: "退出农场",
     content: "退出后将无法继续查看这个农场，确定要退出吗？",
-    confirmColor: "#C96A45",
+    confirmColor: "#A9433B",
     success: async (result) => {
       if (!result.confirm) return;
       try {
@@ -199,11 +198,11 @@ onShow(() => {
 @import "../../styles/design-tokens.scss";
 
 .farm-settings-page {
-  padding: 28rpx $pf-space-page-x $pf-space-page-bottom;
+  padding: $pf-space-4 $pf-space-page-x $pf-space-page-bottom;
 }
 
 .settings-summary {
-  padding: 12rpx 4rpx 4rpx;
+  padding: 0 4rpx;
 }
 
 .settings-summary__topline {
@@ -216,35 +215,35 @@ onShow(() => {
   min-width: 0;
   overflow: hidden;
   color: $pf-color-text;
-  font-size: 38rpx;
-  font-weight: 700;
+  font-size: $pf-font-size-section;
+  font-weight: $pf-font-weight-bold;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .role-badge {
   flex-shrink: 0;
-  margin-left: 16rpx;
-  padding: 8rpx 14rpx;
-  border-radius: 999rpx;
+  margin-left: $pf-space-2;
+  padding: 6rpx 12rpx;
+  border-radius: $pf-radius-pill;
   background: $pf-color-primary-soft;
   color: $pf-color-primary;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
+  font-weight: $pf-font-weight-medium;
 }
 
 .settings-summary__code {
   display: block;
-  margin-top: 10rpx;
+  margin-top: $pf-space-1;
   color: $pf-color-text-secondary;
-  font-size: 23rpx;
-  letter-spacing: 1rpx;
+  font-size: $pf-font-size-label;
 }
 
 .section-label {
-  margin: 38rpx 8rpx 14rpx;
-  color: $pf-color-text-muted;
-  font-size: 23rpx;
-  font-weight: 600;
+  margin: $pf-space-5 4rpx $pf-space-2;
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .danger-card {
@@ -262,18 +261,18 @@ onShow(() => {
 }
 
 .menu-row {
-  min-height: 96rpx;
-  padding: 0 22rpx;
+  min-height: 104rpx;
+  padding: 0 $pf-space-3;
 }
 
 .menu-icon,
 .danger-icon {
   display: flex;
-  width: 52rpx;
-  height: 52rpx;
+  width: 48rpx;
+  height: 48rpx;
   align-items: center;
   justify-content: center;
-  border-radius: 16rpx;
+  border-radius: $pf-radius-control;
   background: $pf-color-primary-soft;
 }
 
@@ -281,11 +280,10 @@ onShow(() => {
 .danger-copy {
   min-width: 0;
   flex: 1;
-  margin: 0 18rpx;
+  margin: 0 $pf-space-2;
 }
 
 .menu-title,
-.menu-description,
 .danger-title {
   display: block;
 }
@@ -293,35 +291,29 @@ onShow(() => {
 .menu-title,
 .danger-title {
   color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 500;
-}
-
-.menu-description {
-  margin-top: 6rpx;
-  color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-medium;
 }
 
 .danger-section {
-  margin-top: 6rpx;
+  margin-top: 0;
 }
 
 .danger-card {
-  border-color: #f1d9d0;
+  border-color: $pf-color-danger-disabled;
 }
 
 .danger-row {
-  min-height: 96rpx;
-  padding: 0 22rpx;
+  min-height: 104rpx;
+  padding: 0 $pf-space-3;
 }
 
 .danger-icon {
-  background: #fff1ec;
+  background: $pf-color-danger-soft;
 }
 
 .danger-title {
-  color: #c96a45;
+  color: $pf-color-danger;
 }
 
 .state-card {
@@ -331,12 +323,12 @@ onShow(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 28rpx;
+  padding: $pf-space-4;
   color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
 }
 
 .state-card text {
-  margin-top: 16rpx;
+  margin-top: $pf-space-2;
 }
 </style>

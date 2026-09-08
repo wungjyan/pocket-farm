@@ -2,20 +2,18 @@
   <view class="pf-page farms-page">
     <view class="pf-page-content">
       <view v-if="loading" class="state-card pf-card">
-        <!-- uv-loading-icon 的 color 只接受字符串，取值对应 $pf-color-primary -->
-        <uv-loading-icon mode="circle" color="#286B46" />
+        <uv-loading-icon mode="circle" color="#006C49" />
         <text>正在加载农场</text>
       </view>
 
       <view v-else-if="loadError" class="state-card pf-card">
-        <!-- 取值对应 $pf-color-danger -->
         <uv-icon name="warning" size="28" color="#A9433B" />
         <text>{{ loadError }}</text>
         <uv-button
           type="primary"
           size="small"
           shape="square"
-          custom-style="margin-top: 22rpx; border-radius: 12rpx;"
+          custom-style="margin-top: 22rpx; border-radius: 16rpx;"
           @click="loadFarms"
         >
           重试
@@ -47,7 +45,7 @@
         class="create-action pf-tappable"
         @click="openCreateFarm"
       >
-        <uv-icon name="plus" size="14" color="#286B46" />
+        <uv-icon name="plus" size="14" color="#006C49" />
         <text>创建农场</text>
       </view>
     </view>
@@ -129,17 +127,21 @@ onShow(loadFarms);
 <style lang="scss" scoped>
 @import "../../styles/design-tokens.scss";
 
+.farms-page .pf-page-content {
+  padding-top: $pf-space-4;
+}
+
 .farm-row {
   display: flex;
-  min-height: 132rpx;
+  min-height: 128rpx;
   box-sizing: border-box;
   align-items: center;
-  padding: 24rpx;
+  padding: $pf-space-3;
   transition: background $pf-duration-fast ease;
 }
 
 .farm-row + .farm-row {
-  margin-top: 12rpx;
+  margin-top: $pf-space-2;
 }
 
 .farm-row--selected {
@@ -150,7 +152,7 @@ onShow(loadFarms);
 .farm-row__copy {
   min-width: 0;
   flex: 1;
-  margin-right: 18rpx;
+  margin-right: $pf-space-2;
 }
 
 .farm-row__name {
@@ -158,23 +160,23 @@ onShow(loadFarms);
   overflow: hidden;
   max-width: 100%;
   color: $pf-color-text;
-  font-size: 31rpx;
-  font-weight: 700;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .farm-row__meta {
   display: block;
-  margin-top: 8rpx;
+  margin-top: 6rpx;
   color: $pf-color-text-muted;
-  font-size: 22rpx;
+  font-size: $pf-font-size-label;
 }
 
 .farm-row__selection {
   display: flex;
-  width: 40rpx;
-  height: 40rpx;
+  width: 36rpx;
+  height: 36rpx;
   box-sizing: border-box;
   flex-shrink: 0;
   align-items: center;
@@ -195,17 +197,17 @@ onShow(loadFarms);
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  margin-top: 24rpx;
-  border: 2rpx dashed $pf-color-border;
+  margin-top: $pf-space-2;
+  border: 1rpx dashed $pf-color-outline;
   border-radius: $pf-radius-card;
   background: $pf-color-surface;
   color: $pf-color-primary;
-  font-size: 27rpx;
-  font-weight: 650;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
 
 .create-action text {
-  margin-left: 10rpx;
+  margin-left: $pf-space-1;
 }
 
 .state-card {
@@ -215,13 +217,13 @@ onShow(loadFarms);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-top: 28rpx;
-  padding: 28rpx;
+  margin-top: $pf-space-4;
+  padding: $pf-space-4;
   color: $pf-color-text-secondary;
-  font-size: 24rpx;
+  font-size: $pf-font-size-body;
 }
 
 .state-card text {
-  margin-top: 16rpx;
+  margin-top: $pf-space-2;
 }
 </style>
