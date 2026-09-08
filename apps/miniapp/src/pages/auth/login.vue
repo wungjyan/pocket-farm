@@ -1,5 +1,5 @@
 <template>
-  <view class="login-page">
+  <view class="pf-page login-page">
     <view class="login-content">
       <view class="brand-block">
         <image
@@ -9,7 +9,6 @@
           aria-label="掌农记"
         />
         <text class="brand-title">掌农记</text>
-        <text class="brand-subtitle">记录种养与农事</text>
       </view>
 
       <view class="login-form">
@@ -27,8 +26,8 @@
                 clearable
                 border="none"
                 placeholder="请输入手机号"
-                placeholder-style="color: #929A93;"
-                color="#202821"
+                placeholder-style="color: #748178;"
+                color="#17261F"
                 :adjust-position="true"
                 :cursor-spacing="24"
                 @focus="phoneFocused = true"
@@ -48,8 +47,8 @@
                 maxlength="6"
                 border="none"
                 placeholder="请输入验证码"
-                placeholder-style="color: #929A93;"
-                color="#202821"
+                placeholder-style="color: #748178;"
+                color="#17261F"
                 :adjust-position="true"
                 :cursor-spacing="24"
                 @focus="codeFocused = true"
@@ -57,13 +56,16 @@
               />
             </view>
             <view class="code-divider" />
-            <text
+            <view
               class="code-action"
               :class="{ 'code-action--disabled': countdown > 0 }"
+              :hover-class="countdown > 0 ? 'none' : 'code-action--pressed'"
+              role="button"
+              :aria-disabled="countdown > 0"
               @tap="handleGetCode"
             >
-              {{ countdown > 0 ? `${countdown}s 后重新获取` : "获取验证码" }}
-            </text>
+              <text>{{ countdown > 0 ? `${countdown}s 后重新获取` : "获取验证码" }}</text>
+            </view>
           </view>
         </view>
 
@@ -73,17 +75,22 @@
           shape="square"
           :loading="submitting"
           loading-text="登录中"
-          custom-style="height: 96rpx; margin-top: 44rpx; border-radius: 16rpx;"
+          custom-style="height: 96rpx; margin-top: 40rpx; border-radius: 16rpx;"
           @click="handleLogin"
         >
           登录
         </uv-button>
-
       </view>
     </view>
 
-    <view class="agreement">
-      <view class="agreement-check pf-tappable" @tap="toggleAgreement">
+    <view
+      class="agreement pf-tappable"
+      role="checkbox"
+      :aria-checked="agreementAccepted"
+      aria-label="同意用户协议和隐私政策"
+      @tap="toggleAgreement"
+    >
+      <view class="agreement-check">
         <view class="agreement-check__icon" :class="{ 'agreement-check__icon--checked': agreementAccepted }">
           <uv-icon v-if="agreementAccepted" name="checkbox-mark" size="16" color="#FFFFFF" />
         </view>
@@ -233,16 +240,16 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@import "../../styles/design-tokens.scss";
+
 .login-page {
   display: flex;
-  min-height: 100vh;
-  box-sizing: border-box;
   flex-direction: column;
-  padding: 72rpx 48rpx calc(32rpx + env(safe-area-inset-bottom));
-  background: #f7f8f3;
+  padding: $pf-space-6 $pf-space-page-x calc($pf-space-3 + env(safe-area-inset-bottom));
 }
 
 .login-content {
+  width: 100%;
   flex: 1;
 }
 
@@ -253,27 +260,21 @@ onUnmounted(() => {
 }
 
 .brand-mark {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 22rpx;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: $pf-radius-card-compact;
 }
 
 .brand-title {
-  margin-top: 24rpx;
-  color: #202821;
-  font-size: 42rpx;
-  font-weight: 700;
+  margin-top: $pf-space-2;
+  color: $pf-color-text;
+  font-size: 40rpx;
+  font-weight: $pf-font-weight-bold;
   letter-spacing: 2rpx;
 }
 
-.brand-subtitle {
-  margin-top: 12rpx;
-  color: #667068;
-  font-size: 26rpx;
-}
-
 .login-form {
-  margin-top: 84rpx;
+  margin-top: 96rpx;
 }
 
 .field-group {
@@ -281,15 +282,15 @@ onUnmounted(() => {
 }
 
 .code-field-group {
-  margin-top: 32rpx;
+  margin-top: $pf-space-4;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 14rpx;
-  color: #202821;
-  font-size: 28rpx;
-  font-weight: 500;
+  margin-bottom: $pf-space-2;
+  color: $pf-color-text;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -300,14 +301,14 @@ onUnmounted(() => {
   min-height: 96rpx;
   box-sizing: border-box;
   align-items: center;
-  border: 1rpx solid #e2e6e0;
-  border-radius: 16rpx;
-  background: #ffffff;
-  transition: border-color 0.2s ease;
+  border: 1rpx solid $pf-color-border;
+  border-radius: $pf-radius-control;
+  background: $pf-color-surface;
+  transition: border-color $pf-duration-fast ease;
 }
 
 .input-shell--focused {
-  border-color: #2f7d4a;
+  border-color: $pf-color-primary;
 }
 
 .country-code {
@@ -316,9 +317,10 @@ onUnmounted(() => {
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  border-right: 1rpx solid #ecefeb;
-  color: #202821;
-  font-size: 30rpx;
+  border-right: 1rpx solid $pf-color-divider;
+  color: $pf-color-text;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-medium;
   line-height: 1;
   white-space: nowrap;
 }
@@ -328,7 +330,7 @@ onUnmounted(() => {
   min-width: 0;
   flex: 1;
   align-items: center;
-  padding: 0 24rpx;
+  padding: 0 $pf-space-3;
 }
 
 .input-control :deep(.uv-input) {
@@ -338,44 +340,56 @@ onUnmounted(() => {
 .code-divider {
   width: 1rpx;
   height: 40rpx;
-  background: #ecefeb;
+  background: $pf-color-divider;
 }
 
 .code-action {
-  display: block;
-  min-width: 172rpx;
-  padding: 0 20rpx;
+  display: flex;
+  min-width: 192rpx;
+  min-height: 94rpx;
   box-sizing: border-box;
-  color: #2f7d4a;
-  font-size: 25rpx;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $pf-space-2;
+  color: $pf-color-primary;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-semibold;
   line-height: 1.4;
   text-align: center;
   white-space: nowrap;
 }
 
 .code-action--disabled {
-  color: #929a93;
+  color: $pf-color-text-muted;
+}
+
+.code-action--pressed {
+  background: $pf-color-primary-soft;
 }
 
 .agreement {
   display: flex;
+  min-height: 80rpx;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 36rpx;
-  color: #929a93;
-  font-size: 23rpx;
+  margin-top: $pf-space-4;
+  padding: $pf-space-1 0;
+  color: $pf-color-text-muted;
+  font-size: $pf-font-size-label;
   line-height: 1.6;
   text-align: center;
 }
 
 .agreement-check {
   display: flex;
-  width: 36rpx;
-  height: 36rpx;
+  width: 48rpx;
+  height: 48rpx;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  margin-right: 4rpx;
+  margin-right: 2rpx;
 }
 
 .agreement-check__icon {
@@ -385,17 +399,18 @@ onUnmounted(() => {
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  border: 2rpx solid #7f8b82;
+  border: 2rpx solid $pf-color-text-muted;
   border-radius: 6rpx;
-  background: #ffffff;
+  background: $pf-color-surface;
 }
 
 .agreement-check__icon--checked {
-  border-color: #286b46;
-  background: #286b46;
+  border-color: $pf-color-primary;
+  background: $pf-color-primary;
 }
 
 .agreement-link {
-  color: #2f7d4a;
+  color: $pf-color-primary;
+  font-weight: $pf-font-weight-medium;
 }
 </style>
