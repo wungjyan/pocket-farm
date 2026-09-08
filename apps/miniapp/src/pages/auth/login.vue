@@ -101,12 +101,13 @@
       <text class="agreement-link" @tap.stop="openAgreement('privacy')">《隐私政策》</text>
     </view>
 
-    <uv-toast ref="toastRef" />
+    <PfToast ref="toastRef" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { onUnmounted, reactive, ref, watch } from "vue";
+import PfToast, { type PfToastOptions } from "../../components/PfToast.vue";
 import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
 import { login } from "../../services/user";
@@ -126,21 +127,16 @@ const phoneFocused = ref(false);
 const codeFocused = ref(false);
 const agreementAccepted = ref(false);
 const toastRef = ref<{
-  show: (options: {
-    message: string;
-    type?: "error" | "success" | "warning" | "primary" | "default";
-    overlay?: boolean;
-    position?: "top" | "center" | "bottom";
-  }) => void;
+  show: (options: PfToastOptions) => void;
 } | null>(null);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 function showError(message: string): void {
-  toastRef.value?.show({ message, type: "error", overlay: false, position: "top" });
+  toastRef.value?.show({ message, type: "error" });
 }
 
 function showMessage(message: string): void {
-  toastRef.value?.show({ message, overlay: false, position: "top" });
+  toastRef.value?.show({ message });
 }
 
 function isValidPhoneNumber(phoneNumber: string): boolean {
@@ -172,7 +168,7 @@ function handleGetCode(): void {
     countdown.value -= 1;
   }, 1000);
 
-  showMessage("演示模式，使用验证码 8888 登录");
+  showMessage("测试验证码：8888");
 }
 
 function toggleAgreement(): void {
@@ -216,7 +212,12 @@ async function handleLogin(): Promise<void> {
     await initializeFarmSession();
     uni.reLaunch({ url: "/pages/home/index" });
   } catch (error) {
-    const message = error instanceof ApiRequestError ? error.message : "登录失败，请稍后再试";
+    const message =
+      error instanceof ApiRequestError && error.code === "UNAUTHORIZED"
+        ? "手机号或验证码错误"
+        : error instanceof ApiRequestError
+          ? error.message
+          : "登录失败，请稍后再试";
     showError(message);
   } finally {
     submitting.value = false;
