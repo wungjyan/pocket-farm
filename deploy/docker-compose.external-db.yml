@@ -1,0 +1,34 @@
+# Server-only deployment with an existing external MySQL database. The API image
+# must already exist in the local Docker image store. Configure the external
+# database connection through DATABASE_URL in api.env.
+services:
+  api:
+    image: ${API_IMAGE:-wungjyan/pocket-farm-api:20260902-1}
+    pull_policy: never
+    restart: unless-stopped
+    env_file:
+      - api.env
+    # 数据库穿透端口位于当前 Docker 宿主机时，可取消以下注释，
+    # 并在 DATABASE_URL 中使用 host.docker.internal 作为数据库主机名。
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8887:8000"
+    healthcheck:
+      test:
+        ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  migrate:
+    image: ${API_IMAGE:-wungjyan/pocket-farm-api:20260902-1}
+    pull_policy: never
+    env_file:
+      - api.env
+    # 数据库穿透端口位于当前 Docker 宿主机时，应与 api 服务同时启用此配置。
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    command: ["alembic", "upgrade", "head"]
+    profiles: ["migration"]

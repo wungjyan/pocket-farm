@@ -53,8 +53,14 @@ Upload the archive and checksum to the server, then run:
   sha256sum -c $(basename "${ARCHIVE}").sha256
   docker load -i $(basename "${ARCHIVE}")
 
-Start the imported image from deploy/ with:
-  API_IMAGE=${IMAGE} docker compose -f docker-compose.server.yml up -d mysql
+Start the imported image from deploy/ with one of the following options.
+
+Use the MySQL service managed by Compose:
+  docker compose -f docker-compose.server.yml up -d mysql
   API_IMAGE=${IMAGE} docker compose -f docker-compose.server.yml --profile migration run --rm migrate
   API_IMAGE=${IMAGE} docker compose -f docker-compose.server.yml up -d api
+
+Use an existing external MySQL database configured in api.env:
+  API_IMAGE=${IMAGE} docker compose -f docker-compose.external-db.yml --profile migration run --rm migrate
+  API_IMAGE=${IMAGE} docker compose -f docker-compose.external-db.yml up -d api
 EOF
