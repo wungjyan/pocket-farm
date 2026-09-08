@@ -58,19 +58,7 @@
           </view>
           <uv-load-more v-if="hasMore || loadingMore" :status="loadingMore ? 'loading' : 'nomore'" icon-color="#2F7D4A" color="#7F8B82" />
         </view>
-        <view v-else class="empty-card pf-card">
-          <uv-icon name="calendar" size="30" color="#929A93" />
-          <text class="empty-card__title">还没有农事记录</text>
-          <uv-button
-            type="primary"
-            size="small"
-            shape="square"
-            custom-style="margin-top: 24rpx; border-radius: 12rpx;"
-            @click="openCreate"
-          >
-            记农事
-          </uv-button>
-        </view>
+        <PfEmptyState v-else icon="shovel" title="还没有农事记录" />
       </template>
     </view>
     <uv-toast ref="toastRef" />
@@ -80,6 +68,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onReachBottom, onShow } from "@dcloudio/uni-app";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
@@ -338,7 +327,6 @@ onReachBottom(() => {
   margin-top: $pf-space-2;
 }
 
-.empty-card,
 .state-card {
   display: flex;
   min-height: 220rpx;
@@ -350,14 +338,6 @@ onReachBottom(() => {
   color: $pf-color-text-secondary;
   font-size: 24rpx;
   text-align: center;
-}
-
-.empty-card__title {
-  display: block;
-  margin-top: 14rpx;
-  color: $pf-color-text;
-  font-size: 27rpx;
-  font-weight: 600;
 }
 
 .state-card text {

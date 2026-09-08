@@ -34,10 +34,7 @@
           </view>
         </view>
       </template>
-      <view v-else class="state-card">
-        <uv-icon name="calendar" size="30" color="#748178" />
-        <text>暂无可用农事类型</text>
-      </view>
+      <PfEmptyState v-else icon="shovel" title="暂无可用农事类型" />
     </view>
   </view>
 </template>
@@ -45,6 +42,7 @@
 <script setup lang="ts">
 import { getCurrentInstance, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getOperationTypes, type OperationType } from "../../services/operation";

@@ -73,18 +73,23 @@
             </view>
           </view>
         </view>
-        <view v-else class="state-card">
-          <uv-icon name="empty-search" size="30" color="#748178" />
-          <text>没有找到相关种类</text>
-        </view>
+        <PfEmptyState
+          v-else
+          :icon="hasSpeciesFilters ? 'search-x' : 'sprout'"
+          :title="hasSpeciesFilters ? '没有找到相关种类' : '暂无可用种类'"
+          :action-text="hasSpeciesFilters ? '重置筛选' : ''"
+          action-type="text"
+          @action="resetFilters"
+        />
       </template>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance, ref } from "vue";
+import { computed, getCurrentInstance, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import { clearAuthToken } from "../../services/auth";
 import { ApiRequestError } from "../../services/http";
 import { getSpecies, type Industry, type Species } from "../../services/species";
@@ -106,6 +111,9 @@ const species = ref<Species[]>([]);
 const loading = ref(false);
 const loadError = ref("");
 const selectedSpeciesId = ref(0);
+const hasSpeciesFilters = computed(
+  () => Boolean(keyword.value.trim()) || selectedIndustry.value !== null,
+);
 let openerEventChannel: OpenerEventChannel | null = null;
 
 function handleUnauthorized(): void {
@@ -132,6 +140,12 @@ async function loadSpecies(): Promise<void> {
 
 function selectIndustry(industry: Industry | null): void {
   selectedIndustry.value = industry;
+  loadSpecies();
+}
+
+function resetFilters(): void {
+  keyword.value = "";
+  selectedIndustry.value = null;
   loadSpecies();
 }
 

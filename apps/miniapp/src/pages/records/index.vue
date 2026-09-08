@@ -129,7 +129,7 @@
           </view>
           <uv-load-more v-if="productions.length && (productionHasMore || productionLoadingMore)" :status="productionLoadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
-        <PfEmptyState v-else />
+        <PfEmptyState v-else icon="sprout" title="暂无种养记录" />
       </template>
 
       <template v-else-if="activeTab === 'OPERATION'">
@@ -157,7 +157,7 @@
           </view>
           <uv-load-more v-if="operations.length && (operationHasMore || operationLoadingMore)" :status="operationLoadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
-        <PfEmptyState v-else />
+        <PfEmptyState v-else icon="shovel" title="暂无农事记录" />
       </template>
 
       <template v-else>
@@ -188,7 +188,7 @@
           </view>
           <uv-load-more v-if="harvests.length && (harvestHasMore || harvestLoadingMore)" :status="harvestLoadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
-        <PfEmptyState v-else />
+        <PfEmptyState v-else icon="shopping-basket" title="暂无收获记录" />
       </template>
     </view>
 

@@ -121,17 +121,15 @@
           <PfRowChevron />
         </view>
       </view>
-      <view
+      <PfEmptyState
         v-else
-        class="production-empty pf-tappable"
-        @tap="openCreateProduction"
-      >
-        <PfBusinessIcon name="sprout" />
-        <text class="production-empty__title">这个地块目前空闲</text>
-        <text v-if="canManageProductions" class="production-empty__action"
-          >去开始</text
-        >
-      </view>
+        variant="inline"
+        icon="sprout"
+        title="这个地块目前空闲"
+        :action-text="canManageProductions ? '去开始' : ''"
+        action-type="text"
+        @action="openCreateProduction"
+      />
 
       <template v-if="endedProductions.length">
         <view class="pf-section-heading">
@@ -185,6 +183,7 @@
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarm, type Farm } from "../../services/farm";
@@ -616,32 +615,6 @@ onShow(() => {
   font-size: 21rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.production-empty {
-  display: flex;
-  min-height: 112rpx;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 20rpx;
-  background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
-}
-
-.production-empty__title {
-  min-width: 0;
-  flex: 1;
-  margin-left: 16rpx;
-  color: $pf-color-text;
-  font-size: 25rpx;
-  font-weight: 600;
-}
-
-.production-empty__action {
-  flex-shrink: 0;
-  color: $pf-color-primary;
-  font-size: 23rpx;
-  font-weight: 600;
 }
 
 /* 生产记录 */

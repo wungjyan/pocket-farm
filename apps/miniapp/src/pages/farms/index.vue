@@ -38,7 +38,7 @@
         </view>
       </view>
 
-      <PfEmptyState v-else icon="land-plot" text="还没有可用农场" />
+      <PfEmptyState v-else icon="land-plot" title="还没有可用农场" />
 
       <view
         v-if="!loading && !loadError"

@@ -51,11 +51,7 @@
           </view>
           <uv-load-more v-if="hasMore || loadingMore" :status="loadingMore ? 'loading' : 'nomore'" icon-color="#286B46" color="#7F8B82" />
         </view>
-        <view v-else class="empty-card pf-card">
-          <uv-icon name="order" size="30" color="#286B46" />
-          <text class="empty-card__title">还没有收获记录</text>
-          <uv-button v-if="canCreate" type="primary" size="small" shape="square" custom-style="margin-top: 24rpx; border-radius: 12rpx;" @click="openCreate">记录收获</uv-button>
-        </view>
+        <PfEmptyState v-else icon="shopping-basket" title="还没有收获记录" />
       </template>
     </view>
     <uv-toast ref="toastRef" />
@@ -65,6 +61,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onReachBottom, onShow } from "@dcloudio/uni-app";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { getFarmMembers, type FarmMember } from "../../services/farm";
@@ -274,7 +271,6 @@ onReachBottom(() => {
 .harvest-summary { display: block; margin-top: $pf-space-2; color: $pf-color-text-secondary; font-size: 22rpx; line-height: 1.35; }
 .harvest-quantity { color: $pf-color-harvest; font-size: 24rpx; font-weight: 650; }
 .harvest-meta { display: block; margin-top: $pf-space-1; overflow: hidden; color: $pf-color-text-muted; font-size: 22rpx; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.empty-card, .state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 28rpx; color: $pf-color-text-secondary; font-size: 24rpx; text-align: center; }
-.empty-card__title { display: block; margin-top: 14rpx; color: $pf-color-text; font-size: 27rpx; font-weight: 600; }
+.state-card { display: flex; min-height: 220rpx; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; padding: 28rpx; color: $pf-color-text-secondary; font-size: 24rpx; text-align: center; }
 .state-card text { margin-top: 16rpx; }
 </style>

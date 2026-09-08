@@ -112,10 +112,12 @@
             </view>
           </view>
         </view>
-        <view v-else class="empty-activity">
-          <PfBusinessIcon name="clock-3" />
-          <text class="empty-activity__title">还没有生产动态</text>
-        </view>
+        <PfEmptyState
+          v-else
+          variant="inline"
+          icon="clock-3"
+          title="还没有生产动态"
+        />
       </template>
 
       <view v-else class="empty-state">
@@ -139,6 +141,7 @@
 import { computed, ref } from "vue";
 import { onLoad, onShow, onUnload } from "@dcloudio/uni-app";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -440,7 +443,6 @@ onShow(() => {
 .feed-day__label,
 .feed-title,
 .feed-meta,
-.empty-activity__title,
 .empty-state__title {
   display: block;
 }
@@ -740,24 +742,6 @@ onShow(() => {
 }
 .retry-action {
   color: $pf-color-primary;
-  font-weight: 650;
-}
-.empty-activity {
-  display: flex;
-  min-height: 120rpx;
-  align-items: center;
-  padding: 0 22rpx;
-  border: 1rpx solid $pf-color-divider;
-  border-radius: 24rpx;
-  background: $pf-color-surface;
-}
-.empty-activity :deep(.pf-business-icon) {
-  background: $pf-color-primary-soft;
-}
-.empty-activity__title {
-  margin-left: 16rpx;
-  color: $pf-color-text;
-  font-size: 26rpx;
   font-weight: 650;
 }
 .empty-state {

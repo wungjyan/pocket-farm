@@ -45,10 +45,11 @@
             <view v-if="index < options.length - 1" class="production-row__divider" />
           </view>
         </view>
-        <view v-else class="state-card">
-          <uv-icon name="list" size="30" color="#748178" />
-          <text>当前范围内没有进行中的种养</text>
-        </view>
+        <PfEmptyState
+          v-else
+          icon="sprout"
+          title="当前范围内没有进行中的种养"
+        />
         <uv-load-more
           v-if="options.length && (hasMore || loadingMore)"
           :status="loadingMore ? 'loading' : 'loadmore'"
@@ -63,6 +64,7 @@
 <script setup lang="ts">
 import { getCurrentInstance, ref } from "vue";
 import { onLoad, onReachBottom } from "@dcloudio/uni-app";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import { clearAuthToken } from "../../services/auth";
 import type { HarvestProductionSelection } from "../../services/harvest";
 import { ApiRequestError } from "../../services/http";

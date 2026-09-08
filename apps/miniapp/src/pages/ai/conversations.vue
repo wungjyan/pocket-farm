@@ -53,24 +53,13 @@
         />
       </view>
 
-      <view v-else class="conversations-empty">
-        <view class="conversations-empty__icon">
-          <image
-            class="conversations-empty__icon-image"
-            src="/static/icons/lucide/sparkles.svg"
-            mode="aspectFit"
-          />
-        </view>
-        <text class="conversations-empty__title">暂无对话</text>
-        <uv-button
-          type="primary"
-          shape="square"
-          custom-style="width: 208rpx; height: 80rpx; margin-top: 24rpx; border-radius: 16rpx;"
-          @click="startNewConversation"
-        >
-          开始对话
-        </uv-button>
-      </view>
+      <PfEmptyState
+        v-else
+        icon="sparkles"
+        title="暂无对话"
+        action-text="开始对话"
+        @action="startNewConversation"
+      />
     </view>
   </view>
 </template>
@@ -78,6 +67,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onReachBottom, onShow } from "@dcloudio/uni-app";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import {
   deleteAIConversation,
@@ -309,35 +299,4 @@ onReachBottom(() => {
   font-size: $pf-font-size-body;
 }
 
-.conversations-empty {
-  display: flex;
-  min-height: 360rpx;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: $pf-space-6 $pf-space-4;
-}
-
-.conversations-empty__icon {
-  display: flex;
-  width: 72rpx;
-  height: 72rpx;
-  align-items: center;
-  justify-content: center;
-  border-radius: 22rpx;
-  background: $pf-color-primary-soft;
-}
-
-.conversations-empty__icon-image {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.conversations-empty__title {
-  margin-top: $pf-space-3;
-  color: $pf-color-text-secondary;
-  font-size: $pf-font-size-body;
-  font-weight: $pf-font-weight-medium;
-}
 </style>

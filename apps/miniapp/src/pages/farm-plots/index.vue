@@ -49,11 +49,14 @@
           <PfRowChevron />
         </view>
       </view>
-      <view v-else class="empty-state pf-card">
-        <PfBusinessIcon name="land-plot" size="empty" />
-        <text class="empty-state__title">没有符合条件的地块</text>
-        <text v-if="filterValue !== 'ALL'" class="empty-state__action pf-tappable" @tap="clearFilter">查看全部地块</text>
-      </view>
+      <PfEmptyState
+        v-else
+        :icon="filterValue === 'ALL' ? 'land-plot' : 'search-x'"
+        :title="filterValue === 'ALL' ? '还没有地块' : '没有符合条件的地块'"
+        :action-text="filterValue === 'ALL' ? '' : '查看全部地块'"
+        action-type="text"
+        @action="clearFilter"
+      />
     </view>
 
     <uv-toast ref="toastRef" />
@@ -63,7 +66,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
-import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
@@ -353,9 +356,7 @@ onShow(() => loadPageData());
 }
 
 .plot-name,
-.plot-meta,
-.empty-state__title,
-.empty-state__action {
+.plot-meta {
   display: block;
 }
 
@@ -413,25 +414,4 @@ onShow(() => loadPageData());
   margin-top: 14rpx;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 42rpx 28rpx 36rpx;
-  text-align: center;
-}
-
-.empty-state__title {
-  margin-top: $pf-space-3;
-  color: $pf-color-text;
-  font-size: $pf-font-size-title;
-  font-weight: $pf-font-weight-semibold;
-}
-
-.empty-state__action {
-  margin-top: $pf-space-2;
-  color: $pf-color-primary;
-  font-size: $pf-font-size-body;
-  font-weight: $pf-font-weight-semibold;
-}
 </style>

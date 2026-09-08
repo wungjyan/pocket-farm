@@ -56,17 +56,14 @@
           </view>
         </view>
       </view>
-      <view v-else class="empty-state pf-card">
-        <PfBusinessIcon name="land-plot" size="empty" />
-        <text class="empty-state__title">还没有地块</text>
-        <uv-button
-          v-if="canManagePlots"
-          type="primary"
-          shape="square"
-          custom-style="width: 100%; height: 88rpx; margin-top: 32rpx; border-radius: 16rpx;"
-          @click="openCreatePlot"
-        >创建地块</uv-button>
-      </view>
+      <PfEmptyState
+        v-else
+        :icon="filterValue === 'ALL' ? 'land-plot' : 'search-x'"
+        :title="filterValue === 'ALL' ? '还没有地块' : '没有符合条件的地块'"
+        :action-text="filterValue === 'ALL' ? '' : '查看全部地块'"
+        action-type="text"
+        @action="clearFilter"
+      />
     </view>
 
     <uv-toast ref="toastRef" />
@@ -76,7 +73,7 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
-import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import { clearAuthToken } from "../../services/auth";
 import { useFarmContext } from "../../services/farm-context";
 import { ApiRequestError } from "../../services/http";
@@ -147,6 +144,12 @@ function handleFilterChange(event: { detail: { value: number | string } }): void
   const selected = filterOptions.value[Number(event.detail.value)];
   if (!selected || selected.value === filterValue.value) return;
   filterValue.value = selected.value;
+  loadPlots();
+}
+
+function clearFilter(): void {
+  if (filterValue.value === "ALL") return;
+  filterValue.value = "ALL";
   loadPlots();
 }
 
@@ -278,8 +281,7 @@ onShow(() => loadPageData());
 }
 
 .list-toolbar__count,
-.plot-name,
-.empty-state__title {
+.plot-name {
   display: block;
 }
 
@@ -414,18 +416,6 @@ onShow(() => loadPageData());
 
 .state-card text {
   margin-top: $pf-space-2;
-}
-
-.empty-state {
-  padding: 42rpx 28rpx 30rpx;
-  text-align: center;
-}
-
-.empty-state__title {
-  margin-top: $pf-space-3;
-  color: $pf-color-text;
-  font-size: $pf-font-size-section;
-  font-weight: $pf-font-weight-semibold;
 }
 
 </style>

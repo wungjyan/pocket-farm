@@ -79,13 +79,15 @@
               <PfRowChevron />
             </view>
           </view>
-          <view v-else class="empty-production pf-card">
-            <PfBusinessIcon name="list" />
-            <view class="empty-production__copy">
-              <text class="empty-production__title">没有进行中的种养</text>
-            </view>
-            <text class="empty-production__action" @tap="openStartProduction">去开始</text>
-          </view>
+          <PfEmptyState
+            v-else
+            variant="inline"
+            icon="sprout"
+            title="没有进行中的种养"
+            action-text="去开始"
+            action-type="text"
+            @action="openStartProduction"
+          />
 
           <view class="records-entry pf-tappable" @tap="openRecords">
             <PfBusinessIcon name="clock-3" />
@@ -114,6 +116,7 @@
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import PfBusinessIcon from "../../components/PfBusinessIcon.vue";
+import PfEmptyState from "../../components/PfEmptyState.vue";
 import PfPageHeader from "../../components/PfPageHeader.vue";
 import PfRowChevron from "../../components/PfRowChevron.vue";
 import { clearAuthToken } from "../../services/auth";
@@ -424,7 +427,6 @@ onShow(() => {
 }
 .production-name,
 .production-meta,
-.empty-production__title,
 .empty-state__title,
 .empty-state__description,
 .records-entry__title,
@@ -493,34 +495,6 @@ onShow(() => {
   font-size: 21rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.empty-production {
-  display: flex;
-  min-height: 112rpx;
-  align-items: center;
-  padding: 0 24rpx;
-  border: 1rpx solid $pf-color-divider;
-  border-radius: 24rpx;
-  background: $pf-color-surface;
-  box-shadow: $pf-shadow-card;
-}
-.empty-production :deep(.pf-business-icon) {
-  background: $pf-color-primary-soft;
-}
-.empty-production__copy {
-  min-width: 0;
-  flex: 1;
-  margin-left: 16rpx;
-}
-.empty-production__title {
-  color: $pf-color-text;
-  font-size: 25rpx;
-  font-weight: 600;
-}
-.empty-production__action {
-  color: $pf-color-primary;
-  font-size: 23rpx;
-  font-weight: 650;
 }
 .records-entry {
   display: flex;
