@@ -16,12 +16,15 @@
 
       <template v-if="hasFarm">
         <view class="hero-action pf-tappable" @tap="openCreateProduction">
+          <image
+            class="hero-action__decoration"
+            src="/static/home-start-production-bg.svg"
+            mode="scaleToFill"
+            aria-hidden="true"
+          />
           <view class="hero-action__copy">
             <text class="hero-action__title">开始种养</text>
-            <text class="hero-action__description">开始新的种养</text>
-          </view>
-          <view class="hero-action__icon">
-            <PfBusinessIcon name="sprout" size="empty" variant="plain" />
+            <text class="hero-action__description">建立种养档案</text>
           </view>
         </view>
 
@@ -459,32 +462,29 @@ onShow(() => {
 .hero-action {
   position: relative;
   display: flex;
-  min-height: 176rpx;
+  min-height: 164rpx;
   box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
-  padding: 28rpx 32rpx;
-  border-radius: 28rpx;
-  background: $pf-gradient-action;
+  padding: 28rpx 208rpx 28rpx 32rpx;
+  border-radius: $pf-radius-card-lg;
+  background: $pf-color-primary-strong;
   box-shadow: $pf-shadow-action;
-}
-
-.hero-action::after {
-  position: absolute;
-  top: -80rpx;
-  right: -48rpx;
-  width: 250rpx;
-  height: 250rpx;
-  border-radius: 50%;
-  background: rgba($pf-mint-200, 0.12);
-  content: "";
 }
 
 .hero-action__copy {
   position: relative;
   z-index: 1;
   min-width: 0;
+}
+
+.hero-action__decoration {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .hero-action__title {
@@ -498,29 +498,9 @@ onShow(() => {
 .hero-action__description {
   display: block;
   margin-top: 10rpx;
-  color: rgba($pf-color-on-primary, 0.75);
-  font-size: 23rpx;
-  font-weight: 500;
-}
-
-.hero-action__icon {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  width: 96rpx;
-  height: 96rpx;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  margin-left: 24rpx;
-  border-radius: 30rpx;
-  background: rgba($pf-color-on-primary, 0.14);
-}
-
-.hero-action__icon :deep(.pf-business-icon__image) {
-  width: 52rpx;
-  height: 52rpx;
-  filter: brightness(0) invert(1);
+  color: rgba($pf-color-on-primary, 0.72);
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-medium;
 }
 
 .quick-actions {
