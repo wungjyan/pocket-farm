@@ -880,19 +880,20 @@ onShow(() => {
   display: block;
   width: 100%;
   min-width: 0;
+  height: 40rpx;
   min-height: 40rpx;
   max-height: 160rpx;
   box-sizing: border-box;
   flex: 1;
-  padding: 8rpx 0;
+  padding: 4rpx 0;
   color: $pf-color-text;
-  font-size: 27rpx;
-  line-height: 40rpx;
+  font-size: 28rpx;
+  line-height: 32rpx;
 }
 .ai-composer__placeholder {
   color: $pf-color-text-muted;
-  font-size: 27rpx;
-  line-height: 40rpx;
+  font-size: 28rpx;
+  line-height: 32rpx;
 }
 .ai-composer__send {
   display: flex;
