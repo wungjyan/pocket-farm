@@ -265,6 +265,7 @@ const pendingDataNotice = ref<PendingDataNotice | null>(null);
 const conversationMessagePage = ref(1);
 const conversationMessageTotal = ref(0);
 const loadingOlderMessages = ref(false);
+const displayedConversationId = ref<number | null>(null);
 let activeTurn = 0;
 
 const canSend = computed(
@@ -279,6 +280,7 @@ watch(
   (farmId, previousFarmId) => {
     if (farmId === previousFarmId) return;
     resetConversation();
+    displayedConversationId.value = null;
     clearAIConversation();
     if (farmId) void initializePage();
   },
@@ -311,6 +313,7 @@ function startNewConversation(): void {
     return;
   }
   resetConversation();
+  displayedConversationId.value = null;
   clearAIConversation();
 }
 
@@ -493,6 +496,7 @@ async function ensureConversation(farmId: number): Promise<number> {
   if (active?.farmId === farmId) return active.id;
   const conversation = await createAIConversation(farmId);
   selectAIConversation(conversation);
+  displayedConversationId.value = conversation.id;
   return conversation.id;
 }
 
@@ -624,6 +628,11 @@ function openReference(reference: AIReference): void {
 }
 
 onShow(() => {
+  const activeConversationId = activeConversation.value?.id ?? null;
+  if (activeConversationId !== displayedConversationId.value) {
+    resetConversation();
+    displayedConversationId.value = activeConversationId;
+  }
   void initializePage();
 });
 </script>

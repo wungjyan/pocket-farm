@@ -1,51 +1,75 @@
 <template>
   <view class="pf-page conversations-page">
     <view class="pf-page-content">
-      <view v-if="loading" class="conversations-state">
-        <uv-loading-icon mode="circle" color="#286B46" />
+      <view v-if="loading" class="conversations-state pf-card">
+        <uv-loading-icon mode="circle" color="#006C49" />
+        <text>正在加载对话</text>
       </view>
 
-      <view v-else-if="loadError" class="conversations-state">
+      <view v-else-if="loadError" class="conversations-state pf-card">
         <text>{{ loadError }}</text>
-        <view class="conversations-state__action pf-tappable" @tap="loadConversations">
-          <text>重试</text>
-        </view>
+        <uv-button
+          type="primary"
+          size="small"
+          shape="square"
+          custom-style="margin-top: 24rpx; border-radius: 16rpx;"
+          @click="loadConversations"
+        >
+          重试
+        </uv-button>
       </view>
 
-      <view v-else-if="conversations.length" class="conversation-list">
-        <view
-          v-for="conversation in conversations"
-          :key="conversation.id"
-          class="conversation-row pf-tappable"
-          @tap="openConversation(conversation)"
-        >
-          <view class="conversation-row__copy">
-            <text class="conversation-row__title">{{ conversation.title }}</text>
-            <text class="conversation-row__meta">
-              {{ conversation.farmName }} · {{ dateLabel(conversation.updatedAt) }}
-            </text>
-          </view>
+      <view v-else-if="conversations.length" class="conversation-content">
+        <view class="conversation-list pf-card">
           <view
-            class="conversation-row__delete"
-            hover-class="conversation-row__delete--pressed"
-            @tap.stop="confirmDelete(conversation)"
+            v-for="conversation in conversations"
+            :key="conversation.id"
+            class="conversation-row pf-tappable"
+            @tap="openConversation(conversation)"
           >
-            <uv-icon name="trash" size="20" color="#A9433B" />
+            <view class="conversation-row__copy">
+              <text class="conversation-row__title">{{ conversation.title }}</text>
+              <text class="conversation-row__meta">
+                {{ conversation.farmName }} · {{ dateLabel(conversation.updatedAt) }}
+              </text>
+            </view>
+            <view
+              class="conversation-row__delete"
+              hover-class="conversation-row__delete--pressed"
+              @tap.stop="confirmDelete(conversation)"
+            >
+              <view class="conversation-row__delete-icon">
+                <uv-icon name="trash" size="18" color="#A9433B" />
+              </view>
+            </view>
+            <PfRowChevron />
           </view>
-          <PfRowChevron />
         </view>
         <uv-load-more
           v-if="hasMore() || loadingMore"
           :status="loadingMore ? 'loading' : 'nomore'"
-          icon-color="#286B46"
-          color="#7F8B82"
+          icon-color="#006C49"
+          color="#748178"
         />
       </view>
 
-      <view v-else class="conversations-state">
-        <view class="conversations-state__action pf-tappable" @tap="startNewConversation">
-          <text>新对话</text>
+      <view v-else class="conversations-empty">
+        <view class="conversations-empty__icon">
+          <image
+            class="conversations-empty__icon-image"
+            src="/static/icons/lucide/sparkles.svg"
+            mode="aspectFit"
+          />
         </view>
+        <text class="conversations-empty__title">暂无对话</text>
+        <uv-button
+          type="primary"
+          shape="square"
+          custom-style="width: 208rpx; height: 80rpx; margin-top: 24rpx; border-radius: 16rpx;"
+          @click="startNewConversation"
+        >
+          开始对话
+        </uv-button>
       </view>
     </view>
   </view>
@@ -72,7 +96,8 @@ const loadingMore = ref(false);
 const loadError = ref("");
 const page = ref(1);
 const total = ref(0);
-const { selectAIConversation, clearAIConversation } = useAIConversationContext();
+const { activeConversation, selectAIConversation, clearAIConversation } =
+  useAIConversationContext();
 const { currentFarm, selectFarmAndPersist } = useFarmContext();
 
 function handleUnauthorized(): void {
@@ -172,6 +197,7 @@ async function removeConversation(conversation: AIConversation): Promise<void> {
     await deleteAIConversation(conversation.id);
     conversations.value = conversations.value.filter((item) => item.id !== conversation.id);
     total.value -= 1;
+    if (activeConversation.value?.id === conversation.id) clearAIConversation();
     uni.showToast({ title: "已删除", icon: "none" });
   } catch (error) {
     if (error instanceof ApiRequestError && error.statusCode === 401) {
@@ -200,17 +226,26 @@ onReachBottom(() => {
 .conversation-list {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
+
 .conversation-row {
   display: flex;
-  min-height: 124rpx;
+  min-height: 112rpx;
   align-items: center;
+  padding: 0 $pf-space-3;
   border-bottom: 1rpx solid $pf-color-divider;
 }
+
+.conversation-row:last-child {
+  border-bottom: 0;
+}
+
 .conversation-row__copy {
   min-width: 0;
   flex: 1;
 }
+
 .conversation-row__title,
 .conversation-row__meta {
   display: block;
@@ -220,45 +255,89 @@ onReachBottom(() => {
 }
 .conversation-row__title {
   color: $pf-color-text;
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: $pf-font-size-title;
+  font-weight: $pf-font-weight-semibold;
 }
+
 .conversation-row__meta {
   margin-top: $pf-space-1;
   color: $pf-color-text-muted;
-  font-size: 23rpx;
+  font-size: $pf-font-size-label;
 }
+
 .conversation-row__delete {
   display: flex;
-  width: 72rpx;
-  height: 72rpx;
+  width: 80rpx;
+  height: 80rpx;
   align-items: center;
   justify-content: center;
 }
+
+.conversation-row__delete-icon {
+  display: flex;
+  width: 56rpx;
+  height: 56rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: $pf-radius-control;
+  background: $pf-color-danger-soft;
+}
+
 .conversation-row__delete--pressed {
   opacity: 0.55;
 }
+
 .conversation-row .pf-row-chevron {
   width: 32rpx;
   height: 32rpx;
   opacity: 0.5;
 }
+
+.conversation-content :deep(.uv-load-more) {
+  margin-top: $pf-space-2;
+}
+
 .conversations-state {
   display: flex;
   min-height: 260rpx;
+  box-sizing: border-box;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: $pf-color-text-secondary;
-  font-size: 27rpx;
+  padding: $pf-space-4;
+  font-size: $pf-font-size-body;
 }
-.conversations-state__action {
+
+.conversations-empty {
   display: flex;
-  min-height: 72rpx;
+  min-height: 360rpx;
+  box-sizing: border-box;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  padding: $pf-space-6 $pf-space-4;
+}
+
+.conversations-empty__icon {
+  display: flex;
+  width: 72rpx;
+  height: 72rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22rpx;
+  background: $pf-color-primary-soft;
+}
+
+.conversations-empty__icon-image {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.conversations-empty__title {
   margin-top: $pf-space-3;
-  color: $pf-color-primary;
-  font-size: 27rpx;
-  font-weight: 600;
+  color: $pf-color-text-secondary;
+  font-size: $pf-font-size-body;
+  font-weight: $pf-font-weight-medium;
 }
 </style>
